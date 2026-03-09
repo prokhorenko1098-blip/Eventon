@@ -791,11 +791,11 @@ function renderFeed(filter='all') {
           <div class="market-title">${m.title}</div>
         </div>
       </div>
-      <div class="market-bar"><div class="market-bar-fill" style="width:${d.yes}%"></div></div>
+      <div class="market-bar"><div class="market-bar-fill" id="card-bar-${m.id}" style="width:${d.yes}%"></div></div>
       <div class="market-meta">
         <div class="market-prob">
-          <span class="prob-yes">${t.yesLabel} ${d.yes}%</span>
-          <span class="prob-no">${t.noLabel} ${100-d.yes}%</span>
+          <span class="prob-yes" id="card-yes-${m.id}">${t.yesLabel} ${d.yes.toFixed(0)}%</span>
+          <span class="prob-no" id="card-no-${m.id}">${t.noLabel} ${(100-d.yes).toFixed(0)}%</span>
         </div>
         <div>
           <div class="market-vol">◈ ${d.vol.toLocaleString()}</div>
@@ -1018,10 +1018,24 @@ setInterval(() => {
     d.history.push(d.yes);
     if (d.history.length > 12) d.history.shift();
   });
-  if (currentScreen==='home') renderFeed(currentFilter);
+
+  // Обновляем только цифры — карточки не перерисовываем, мерцания нет
+  if (currentScreen==='home') {
+    const t = T[lang];
+    Object.keys(MARKET_DATA).forEach(id => {
+      const d = MARKET_DATA[id];
+      const yesEl = document.getElementById('card-yes-'+id);
+      const noEl  = document.getElementById('card-no-'+id);
+      const barEl = document.getElementById('card-bar-'+id);
+      if (!yesEl) return;
+      yesEl.textContent = t.yesLabel+' '+d.yes.toFixed(0)+'%';
+      noEl.textContent  = t.noLabel+' '+(100-d.yes).toFixed(0)+'%';
+      barEl.style.width = d.yes+'%';
+    });
+  }
+
   if (currentScreen==='detail' && currentMarketId) {
     const d = MARKET_DATA[currentMarketId];
-    const t = T[lang];
     document.getElementById('d-yes-prob').textContent = d.yes.toFixed(0)+'%';
     document.getElementById('d-no-prob').textContent = (100-d.yes).toFixed(0)+'%';
     document.getElementById('d-bar').style.width = d.yes+'%';
