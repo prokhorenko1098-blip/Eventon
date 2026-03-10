@@ -1541,8 +1541,6 @@ function showBetToast(msg, side) {
 const SUPABASE_URL = 'https://puwyrjejaaqfhcjwgrog.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_k19dhvmixv_YnZDkCTSygg_s9cNqCfW';
 
-const SESSION_ID = 'sess_' + Math.random().toString(36).substring(2) + Date.now();
-
 async function supaFetch(path, method='GET', body=null) {
   const opts = {
     method,
@@ -1560,8 +1558,10 @@ async function supaFetch(path, method='GET', body=null) {
 }
 
 async function pingOnline() {
+  // Wait until we have a user ID
+  if (!userTelegramId) return;
   await supaFetch('/rest/v1/online_users', 'POST', {
-    session_id: SESSION_ID,
+    session_id: userTelegramId,
     last_seen: new Date().toISOString()
   });
 }
@@ -1583,7 +1583,7 @@ async function cleanupOldSessions() {
   await supaFetch('/rest/v1/online_users?last_seen=lt.' + tenMinAgo, 'DELETE');
 }
 
-pingOnline().then(fetchOnlineCount);
+// Ping starts after user is initialized (see initTelegramUser)
 setInterval(async () => { await pingOnline(); await fetchOnlineCount(); }, 30000);
 setInterval(cleanupOldSessions, 5 * 60 * 1000);
 
@@ -1621,6 +1621,8 @@ function initTelegramUser() {
     localStorage.setItem('eventon_uid', userTelegramId);
   }
   loadUserBalance();
+  // Now that we have a stable user ID, ping online counter
+  pingOnline().then(fetchOnlineCount);
 }
 
 function generateDepositComment() {
