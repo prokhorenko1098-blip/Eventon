@@ -1784,8 +1784,59 @@ async function adminConfirmDeposit(comment, telegramId, amount) {
   }
 }
 
+// ── LOAD MARKETS FROM SUPABASE ───────────────────────────────────
+async function loadMarketsFromSupabase() {
+  try {
+    const data = await supaFetch('/rest/v1/markets?active=eq.true&order=id.asc&select=*');
+    if (!data || !data.length) return; // fallback to hardcoded
+
+    // Rebuild ALL_MARKETS and MARKET_DATA from Supabase
+    const newMarkets = data.map(m => ({
+      id: m.id,
+      emoji: m.emoji,
+      cat: m.cat,
+      title_ru: m.title_ru,
+      title_uk: m.title_uk,
+      title_en: m.title_en,
+      yes: m.yes_prob,
+      vol: m.volume,
+      trades: m.trades,
+      deadline: String(m.deadline_days),
+    }));
+
+    // Update MARKET_DATA
+    newMarkets.forEach(m => {
+      const history = [];
+      let val = m.yes + (Math.random()-0.5)*15;
+      for (let i=0;i<8;i++) {
+        val = Math.max(3,Math.min(97,val+(Math.random()-0.5)*5));
+        history.push(Math.round(val));
+      }
+      history[history.length-1] = m.yes;
+      MARKET_DATA[m.id] = { yes:m.yes, vol:m.vol, trades:m.trades, deadline:m.deadline, history };
+    });
+
+    // Update translations
+    ['ru','uk','en'].forEach(l => {
+      T[l].markets = newMarkets.map(m => ({
+        id: m.id,
+        emoji: m.emoji,
+        cat: m.cat,
+        title: m['title_'+l],
+      }));
+    });
+
+    renderFeed(currentFilter);
+    console.log('Loaded', newMarkets.length, 'markets from Supabase');
+  } catch(e) {
+    console.log('Markets load error, using hardcoded:', e);
+  }
+}
+
 // Init on load
 setTimeout(initTelegramUser, 500);
+setTimeout(loadMarketsFromSupabase, 800);
+setInterval(loadMarketsFromSupabase, 10 * 60 * 1000); // refresh every 10min
 
 // Poll balance every 30 seconds
 setInterval(loadUserBalance, 30000);
