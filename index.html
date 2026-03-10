@@ -1759,9 +1759,13 @@ async function confirmDeposit() {
         '<div style="font-size:11px;color:var(--muted);margin-top:3px;">' + codeLabel + ': <span style="color:var(--yes);font-family:monospace;font-weight:700;letter-spacing:0.1em;">' + currentDepositComment + '</span></div>' +
       '</div>' +
     '</div>' +
-    '<a href="' + tonDeepLink + '" onclick="setTimeout(()=>{window.open(\'' + tonUniversal + '\',\'_blank\')},800)" style="display:block;background:linear-gradient(135deg,var(--ton),#006ab5);border-radius:14px;padding:16px;text-align:center;color:#fff;font-size:16px;font-weight:700;text-decoration:none;margin-bottom:10px;">💎 ' + openLabel + '</a>' +
-    '<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px;">' + (lang==='en'?'or copy address manually':lang==='uk'?'або скопіюйте адресу вручну':'или скопируйте адрес вручную') + '</div>' +
-    '<div onclick="navigator.clipboard.writeText(\'' + OWNER_TON_ADDRESS + '\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:11px;color:var(--ton);word-break:break-all;cursor:pointer;text-align:center;">' + OWNER_TON_ADDRESS + '</div>';
+    // Button 1: Tonkeeper in Telegram (Mini App)
+    '<a href="https://t.me/wallet/start?startapp=transfer-' + OWNER_TON_ADDRESS + '_' + nanoTon + '_' + comment + '" target="_blank" style="display:block;background:linear-gradient(135deg,#0098ea,#006ab5);border-radius:14px;padding:14px 16px;text-align:center;color:#fff;font-size:15px;font-weight:700;text-decoration:none;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;"><span>✈️</span> Tonkeeper в Telegram</a>' +
+    // Button 2: Tonkeeper app / web
+    '<a href="' + tonDeepLink + '" onclick="setTimeout(()=>{window.open(\'' + tonUniversal + '\',\'_blank\')},600)" style="display:block;background:var(--surface2);border:1px solid rgba(0,152,234,0.3);border-radius:14px;padding:14px 16px;text-align:center;color:var(--ton);font-size:15px;font-weight:700;text-decoration:none;margin-bottom:8px;">💎 Tonkeeper App</a>' +
+    // Button 3: Copy address
+    '<div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:6px;">' + (lang==='en'?'or copy wallet address':lang==='uk'?'або скопіюйте адресу':'или скопируйте адрес') + '</div>' +
+    '<div onclick="navigator.clipboard.writeText(\'' + OWNER_TON_ADDRESS + '\').then(()=>showBetToast(\'✓ Скопировано\',\'yes\'))" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:11px;color:var(--ton);word-break:break-all;cursor:pointer;text-align:center;">' + OWNER_TON_ADDRESS + '</div>';
 
   document.getElementById('pending-modal').classList.remove('hidden');
 }
