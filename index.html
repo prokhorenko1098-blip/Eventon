@@ -1718,36 +1718,52 @@ async function confirmDeposit() {
     return;
   }
 
+  const btn = document.getElementById('deposit-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ ...';
+
   // Save pending transaction to Supabase
-  await supaFetch('/rest/v1/transactions', 'POST', {
-    telegram_id: userTelegramId,
-    amount: currentDepositAmount,
-    type: 'deposit',
-    comment: currentDepositComment,
-    status: 'pending'
-  });
+  try {
+    await supaFetch('/rest/v1/transactions', 'POST', {
+      telegram_id: userTelegramId,
+      amount: currentDepositAmount,
+      type: 'deposit',
+      comment: currentDepositComment,
+      status: 'pending'
+    });
+  } catch(e) { console.log('Supabase save error:', e); }
+
+  btn.disabled = false;
+  btn.textContent = lang==='en'?'Open wallet':lang==='uk'?'Відкрити гаманець':'Открыть кошелёк';
 
   // Close deposit modal
   document.getElementById('deposit-modal').classList.add('hidden');
 
-  // Build TON transfer link
+  // Build TON transfer links
   const nanoTon = Math.round(currentDepositAmount * 1e9);
-  const tonLink = 'ton://transfer/' + OWNER_TON_ADDRESS + '?amount=' + nanoTon + '&text=' + encodeURIComponent(currentDepositComment);
+  const comment = encodeURIComponent(currentDepositComment);
+  // ton:// works on mobile with Tonkeeper installed
+  const tonDeepLink = 'ton://transfer/' + OWNER_TON_ADDRESS + '?amount=' + nanoTon + '&text=' + comment;
+  // Universal link works everywhere (opens Tonkeeper web or app)
+  const tonUniversal = 'https://app.tonkeeper.com/transfer/' + OWNER_TON_ADDRESS + '?amount=' + nanoTon + '&text=' + comment;
 
-  // Show pending info
+  const openLabel = lang==='en'?'Open Tonkeeper':lang==='uk'?'Відкрити Tonkeeper':'Открыть Tonkeeper';
+  const awaitLabel = lang==='en'?'Awaiting payment':lang==='uk'?'Очікуємо оплату':'Ожидаем оплату';
+  const codeLabel = lang==='en'?'Code':'Код';
+
   document.getElementById('pending-deposit-info').innerHTML =
     '<div class="pending-deposit-card">' +
-    '<div class="pending-dot"></div>' +
-    '<div>' +
-    '<div style="font-size:13px;font-weight:700;">' + currentDepositAmount + ' TON → ' + lang==='en'?'Awaiting':'Ожидание' + '</div>' +
-    '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + (lang==='en'?'Code':'Код') + ': <span style="color:var(--yes);font-family:monospace;font-weight:700;">' + currentDepositComment + '</span></div>' +
-    '</div></div>' +
-    '<a href="' + tonLink + '" style="display:block;background:linear-gradient(135deg,var(--ton),#006ab5);border-radius:14px;padding:16px;text-align:center;color:#fff;font-size:16px;font-weight:700;text-decoration:none;margin-bottom:10px;">💎 ' + (lang==='en'?'Open Tonkeeper':lang==='uk'?'Відкрити Tonkeeper':'Открыть Tonkeeper') + '</a>';
+      '<div class="pending-dot"></div>' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:700;">' + currentDepositAmount + ' TON — ' + awaitLabel + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:3px;">' + codeLabel + ': <span style="color:var(--yes);font-family:monospace;font-weight:700;letter-spacing:0.1em;">' + currentDepositComment + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<a href="' + tonDeepLink + '" onclick="setTimeout(()=>{window.open(\'' + tonUniversal + '\',\'_blank\')},800)" style="display:block;background:linear-gradient(135deg,var(--ton),#006ab5);border-radius:14px;padding:16px;text-align:center;color:#fff;font-size:16px;font-weight:700;text-decoration:none;margin-bottom:10px;">💎 ' + openLabel + '</a>' +
+    '<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px;">' + (lang==='en'?'or copy address manually':lang==='uk'?'або скопіюйте адресу вручну':'или скопируйте адрес вручную') + '</div>' +
+    '<div onclick="navigator.clipboard.writeText(\'' + OWNER_TON_ADDRESS + '\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:11px;color:var(--ton);word-break:break-all;cursor:pointer;text-align:center;">' + OWNER_TON_ADDRESS + '</div>';
 
   document.getElementById('pending-modal').classList.remove('hidden');
-
-  // Also try to open the wallet directly
-  setTimeout(() => { window.location.href = tonLink; }, 300);
 }
 
 // ── ADMIN: Confirm deposit (called from admin panel) ──────────────
