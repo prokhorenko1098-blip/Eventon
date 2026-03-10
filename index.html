@@ -178,6 +178,72 @@
 
   .fade-in { animation: fadeIn 0.4s ease; }
 
+
+  /* ── DEPOSIT ── */
+  .deposit-btn {
+    background: linear-gradient(135deg, var(--ton), #006ab5);
+    border: none; border-radius: 14px; padding: 14px;
+    font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 700;
+    color: #fff; width: 100%; cursor: pointer; margin-top: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s;
+  }
+  .deposit-btn:active { transform: scale(0.97); opacity: 0.9; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 300; display: flex; align-items: flex-end;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-sheet {
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px; width: 100%;
+    animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border2); border-radius: 99px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .deposit-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .deposit-amount-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 6px; font-size: 13px; font-weight: 700;
+    color: var(--text); cursor: pointer; text-align: center; transition: all 0.15s;
+    font-family: 'Geist', sans-serif;
+  }
+  .deposit-amount-btn.selected { background: var(--ton); border-color: var(--ton); color: #fff; }
+  .deposit-amount-btn:active { transform: scale(0.95); }
+  .deposit-input-wrap { position: relative; margin-bottom: 16px; }
+  .deposit-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 14px 50px 14px 16px;
+    font-size: 18px; font-weight: 700; color: var(--text);
+    font-family: 'Geist Mono', monospace; outline: none;
+  }
+  .deposit-input:focus { border-color: var(--ton); }
+  .deposit-input-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--ton); font-weight: 700; font-size: 14px; }
+  .deposit-comment-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .deposit-comment-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .deposit-comment-val { font-family: 'Geist Mono', monospace; font-size: 16px; font-weight: 700; color: var(--yes); letter-spacing: 0.1em; }
+  .deposit-confirm-btn {
+    background: linear-gradient(135deg, var(--ton), #006ab5);
+    border: none; border-radius: 14px; padding: 16px;
+    font-family: 'Geist', sans-serif; font-size: 16px; font-weight: 700;
+    color: #fff; width: 100%; cursor: pointer; transition: all 0.2s;
+  }
+  .deposit-confirm-btn:active { transform: scale(0.97); }
+  .deposit-confirm-btn:disabled { opacity: 0.5; }
+  .pending-deposit-card {
+    background: var(--surface2); border: 1px solid rgba(0,152,234,0.2);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .pending-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ton); animation: pulse 1.5s infinite; flex-shrink: 0; }
+
   /* ── TONCONNECT BUTTON ── */
   .ton-connect-btn {
     background: linear-gradient(135deg, #0098ea, #006ab5);
@@ -534,9 +600,12 @@
           <div id="balance-usd" style="font-size:17px;font-weight:700;color:var(--yes);margin-top:4px;">≈ <span id="balance-usd-val">загрузка...</span></div>
           <div class="balance-sub" id="balance-sub"></div>
           <div class="balance-pnl">
-            <span class="pnl-positive">+38.5 TON</span>
+            <span class="pnl-positive" id="pnl-amount">+0 TON</span>
             <span class="pnl-label" id="pnl-label"></span>
           </div>
+          <button class="deposit-btn" onclick="openDepositModal()">
+            💎 <span id="deposit-btn-label">Пополнить баланс</span>
+          </button>
         </div>
       </div>
       <div style="padding:0 16px 10px;"><div class="section-title" id="positions-title"></div></div>
@@ -594,6 +663,41 @@
       <div class="overlay-sub" id="overlay-sub"></div>
       <div class="overlay-detail" id="overlay-detail"></div>
       <button class="cta-btn" onclick="closeOverlay()" id="overlay-ok-btn"></button>
+    </div>
+  </div>
+
+  <!-- ══ DEPOSIT MODAL ══ -->
+  <div class="modal-overlay hidden" id="deposit-modal" onclick="closeDepositModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="deposit-modal-title">💎 Пополнить баланс</div>
+      <div class="modal-sub" id="deposit-modal-sub">Выберите сумму и переведите TON через свой кошелёк. Укажите код в комментарии — это обязательно!</div>
+      <div class="deposit-amounts" id="deposit-amounts-grid"></div>
+      <div class="deposit-input-wrap">
+        <input class="deposit-input" type="number" id="deposit-amount-input" inputmode="decimal" placeholder="0.0" oninput="onDepositAmountInput()" />
+        <div class="deposit-input-suffix">TON</div>
+      </div>
+      <div class="deposit-comment-box">
+        <div>
+          <div class="deposit-comment-label" id="deposit-comment-label">Ваш код (обязательно!)</div>
+          <div class="deposit-comment-val" id="deposit-comment-val">EVT-0000</div>
+        </div>
+        <button onclick="copyDepositComment()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:'Geist',sans-serif;">Копировать</button>
+      </div>
+      <button class="deposit-confirm-btn" id="deposit-confirm-btn" onclick="confirmDeposit()">
+        <span id="deposit-confirm-label">Открыть кошелёк</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PENDING DEPOSITS ══ -->
+  <div class="modal-overlay hidden" id="pending-modal" onclick="closePendingModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">⏳ Ожидание перевода</div>
+      <div class="modal-sub" id="pending-modal-sub">Переведите TON с комментарием. Как только мы получим перевод — баланс обновится автоматически.</div>
+      <div id="pending-deposit-info"></div>
+      <button onclick="closePendingModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;width:100%;font-family:'Geist',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:8px;">Закрыть</button>
     </div>
   </div>
 
@@ -1493,6 +1597,176 @@ setInterval(()=>{
   addLiveBet();
   setTimeout(addLiveBet, 1200+Math.random()*800);
 }, 3500+Math.random()*2000);
+
+
+// ══════════════════════════════════════════════════════════════════
+// ── DEPOSIT SYSTEM ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+const OWNER_TON_ADDRESS = 'UQBzbya6szQcMYujoUB85GCvPa2LV6ijVE62uyknqdEL5rBJ';
+const DEPOSIT_AMOUNTS = [1, 5, 10, 25, 50, 100, 250, 500];
+
+let currentDepositAmount = 0;
+let currentDepositComment = '';
+let userTelegramId = null;
+let userBalance = 0;
+
+// Generate Telegram user ID from WebApp or random for demo
+function initTelegramUser() {
+  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
+    const u = Telegram.WebApp.initDataUnsafe.user;
+    userTelegramId = String(u.id);
+  } else {
+    // Demo mode - use stored ID or generate new
+    userTelegramId = localStorage.getItem('eventon_uid') || 'demo_' + Math.random().toString(36).substring(2,10);
+    localStorage.setItem('eventon_uid', userTelegramId);
+  }
+  loadUserBalance();
+}
+
+function generateDepositComment() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'EVT-';
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+async function loadUserBalance() {
+  try {
+    // Try to get user from Supabase
+    const data = await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId + '&select=balance,username');
+    if (data && data.length > 0) {
+      userBalance = parseFloat(data[0].balance) || 0;
+    } else {
+      // Create user if not exists
+      await supaFetch('/rest/v1/users', 'POST', {
+        telegram_id: userTelegramId,
+        username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'user_' + userTelegramId.slice(-4),
+        balance: 0
+      });
+      userBalance = 0;
+    }
+    updateBalanceDisplay();
+  } catch(e) {
+    console.log('Balance load error:', e);
+  }
+}
+
+function updateBalanceDisplay() {
+  const el = document.getElementById('portfolio-balance');
+  if (el) el.innerHTML = userBalance.toFixed(2) + ' <span style="font-size:20px;color:var(--ton)">◈</span>';
+  // Update header balance too
+  const hdr = document.querySelector('.header-ton-val');
+  if (hdr) hdr.textContent = userBalance.toFixed(1);
+}
+
+function openDepositModal() {
+  currentDepositComment = generateDepositComment();
+  document.getElementById('deposit-comment-val').textContent = currentDepositComment;
+  document.getElementById('deposit-amount-input').value = '';
+  currentDepositAmount = 0;
+
+  // Render amount buttons
+  const t = T[lang];
+  document.getElementById('deposit-modal-title').textContent = lang==='en'?'💎 Add funds':lang==='uk'?'💎 Поповнити баланс':'💎 Пополнить баланс';
+  document.getElementById('deposit-modal-sub').textContent = lang==='en'?'Choose amount and transfer TON. Include the code in comment — required!':lang==='uk'?'Оберіть суму та переведіть TON. Вкажіть код у коментарі — це обов\'язково!':'Выберите сумму и переведите TON. Укажите код в комментарии — обязательно!';
+  document.getElementById('deposit-comment-label').textContent = lang==='en'?'Your code (required!)':lang==='uk'?'Ваш код (обов\'язково!)':'Ваш код (обязательно!)';
+  document.getElementById('deposit-confirm-label').textContent = lang==='en'?'Open wallet':lang==='uk'?'Відкрити гаманець':'Открыть кошелёк';
+
+  const grid = document.getElementById('deposit-amounts-grid');
+  grid.innerHTML = DEPOSIT_AMOUNTS.map(a => 
+    '<div class="deposit-amount-btn" onclick="selectDepositAmount(' + a + ')">' + a + ' TON</div>'
+  ).join('');
+
+  document.getElementById('deposit-modal').classList.remove('hidden');
+}
+
+function closeDepositModal(e) {
+  if (!e || e.target === document.getElementById('deposit-modal')) {
+    document.getElementById('deposit-modal').classList.add('hidden');
+  }
+}
+
+function closePendingModal(e) {
+  if (!e || e.target === document.getElementById('pending-modal')) {
+    document.getElementById('pending-modal').classList.add('hidden');
+  }
+}
+
+function selectDepositAmount(amount) {
+  currentDepositAmount = amount;
+  document.getElementById('deposit-amount-input').value = amount;
+  document.querySelectorAll('.deposit-amount-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseFloat(btn.textContent) === amount);
+  });
+}
+
+function onDepositAmountInput() {
+  currentDepositAmount = parseFloat(document.getElementById('deposit-amount-input').value) || 0;
+  document.querySelectorAll('.deposit-amount-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseFloat(btn.textContent) === currentDepositAmount);
+  });
+}
+
+function copyDepositComment() {
+  navigator.clipboard.writeText(currentDepositComment).catch(() => {});
+  showBetToast(lang==='en'?'Code copied!':lang==='uk'?'Код скопійовано!':'Код скопирован!', 'yes');
+}
+
+async function confirmDeposit() {
+  if (!currentDepositAmount || currentDepositAmount < 0.1) {
+    showBetToast(lang==='en'?'Enter amount':lang==='uk'?'Введіть суму':'Введите сумму', 'no');
+    return;
+  }
+
+  // Save pending transaction to Supabase
+  await supaFetch('/rest/v1/transactions', 'POST', {
+    telegram_id: userTelegramId,
+    amount: currentDepositAmount,
+    type: 'deposit',
+    comment: currentDepositComment,
+    status: 'pending'
+  });
+
+  // Close deposit modal
+  document.getElementById('deposit-modal').classList.add('hidden');
+
+  // Build TON transfer link
+  const nanoTon = Math.round(currentDepositAmount * 1e9);
+  const tonLink = 'ton://transfer/' + OWNER_TON_ADDRESS + '?amount=' + nanoTon + '&text=' + encodeURIComponent(currentDepositComment);
+
+  // Show pending info
+  document.getElementById('pending-deposit-info').innerHTML =
+    '<div class="pending-deposit-card">' +
+    '<div class="pending-dot"></div>' +
+    '<div>' +
+    '<div style="font-size:13px;font-weight:700;">' + currentDepositAmount + ' TON → ' + lang==='en'?'Awaiting':'Ожидание' + '</div>' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + (lang==='en'?'Code':'Код') + ': <span style="color:var(--yes);font-family:monospace;font-weight:700;">' + currentDepositComment + '</span></div>' +
+    '</div></div>' +
+    '<a href="' + tonLink + '" style="display:block;background:linear-gradient(135deg,var(--ton),#006ab5);border-radius:14px;padding:16px;text-align:center;color:#fff;font-size:16px;font-weight:700;text-decoration:none;margin-bottom:10px;">💎 ' + (lang==='en'?'Open Tonkeeper':lang==='uk'?'Відкрити Tonkeeper':'Открыть Tonkeeper') + '</a>';
+
+  document.getElementById('pending-modal').classList.remove('hidden');
+
+  // Also try to open the wallet directly
+  setTimeout(() => { window.location.href = tonLink; }, 300);
+}
+
+// ── ADMIN: Confirm deposit (called from admin panel) ──────────────
+async function adminConfirmDeposit(comment, telegramId, amount) {
+  // Update transaction status
+  await supaFetch('/rest/v1/transactions?comment=eq.' + comment, 'PATCH', { status: 'completed' });
+  // Add balance to user
+  const userData = await supaFetch('/rest/v1/users?telegram_id=eq.' + telegramId + '&select=balance');
+  if (userData && userData.length > 0) {
+    const newBalance = parseFloat(userData[0].balance) + parseFloat(amount);
+    await supaFetch('/rest/v1/users?telegram_id=eq.' + telegramId, 'PATCH', { balance: newBalance });
+  }
+}
+
+// Init on load
+setTimeout(initTelegramUser, 500);
+
+// Poll balance every 30 seconds
+setInterval(loadUserBalance, 30000);
 
 </script>
 </body>
