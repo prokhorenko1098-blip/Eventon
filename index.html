@@ -935,6 +935,10 @@ ALL_MARKETS.forEach(m => {
 // ── TRANSLATIONS ──────────────────────────────────────────────────
 const T = {
   uk: {
+    navMarkets: 'Ринки',
+    navBet: 'Ставки',
+    navPortfolio: 'Портфель',
+    navRating: 'Рейтинг',
     greeting: 'Ласкаво просимо 👋',
     heroLabel: 'Загальний обсяг ринків',
     heroSub: '↑ +12.4% за останні 24 години',
@@ -942,7 +946,7 @@ const T = {
     statUsers: 'Учасників сьогодні',
     tabs: ['🔥 Всі', '⚽ Спорт', '🗳 Політика', '₿ Крипто', '🎬 Культура'],
     tabKeys: ['all','sport','politics','crypto','culture'],
-    navMarkets: 'Ринки', navPortfolio: 'Портфель', navRating: 'Рейтинг',
+
     portfolioTitle: 'Мій портфель',
     balanceLabel: 'Баланс гаманця',
     balanceSub: 'Баланс гаманця у TON',
@@ -974,6 +978,10 @@ const T = {
     posStatLabels: ['Токенів','Пот. ціна','P&L'],
   },
   ru: {
+    navMarkets: 'Рынки',
+    navBet: 'Ставки',
+    navPortfolio: 'Портфель',
+    navRating: 'Рейтинг',
     greeting: 'Добро пожаловать 👋',
     heroLabel: 'Общий объём рынков',
     heroSub: '↑ +12.4% за последние 24 часа',
@@ -981,7 +989,7 @@ const T = {
     statUsers: 'Участников сегодня',
     tabs: ['🔥 Все', '⚽ Спорт', '🗳 Политика', '₿ Крипто', '🎬 Культура'],
     tabKeys: ['all','sport','politics','crypto','culture'],
-    navMarkets: 'Рынки', navPortfolio: 'Портфель', navRating: 'Рейтинг',
+
     portfolioTitle: 'Мой портфель',
     balanceLabel: 'Баланс кошелька',
     balanceSub: 'Баланс кошелька в TON',
@@ -1013,6 +1021,10 @@ const T = {
     posStatLabels: ['Токенов','Тек. цена','P&L'],
   },
   en: {
+    navMarkets: 'Markets',
+    navBet: 'Bet',
+    navPortfolio: 'Portfolio',
+    navRating: 'Rating',
     greeting: 'Welcome 👋',
     heroLabel: 'Total market volume',
     heroSub: '↑ +12.4% in the last 24 hours',
@@ -1020,7 +1032,7 @@ const T = {
     statUsers: 'Participants today',
     tabs: ['🔥 All', '⚽ Sport', '🗳 Politics', '₿ Crypto', '🎬 Culture'],
     tabKeys: ['all','sport','politics','crypto','culture'],
-    navMarkets: 'Markets', navPortfolio: 'Portfolio', navRating: 'Ranking',
+
     portfolioTitle: 'My Portfolio',
     balanceLabel: 'Wallet balance',
     balanceSub: 'Wallet balance in TON',
@@ -1113,7 +1125,9 @@ function applyTranslations() {
   document.getElementById('hero-sub').textContent = t.heroSub;
   document.getElementById('stat-markets').textContent = t.statMarkets;
   document.getElementById('stat-users').textContent = t.statUsers;
+  // nav 1 (home)
   document.getElementById('nav-markets').textContent = t.navMarkets;
+  document.getElementById('nav-bet').textContent = t.navBet;
   document.getElementById('nav-portfolio').textContent = t.navPortfolio;
   document.getElementById('nav-rating').textContent = t.navRating;
   // portfolio
@@ -1123,6 +1137,7 @@ function applyTranslations() {
   document.getElementById('pnl-label').textContent = t.pnlLabel;
   document.getElementById('positions-title').textContent = t.positionsTitle;
   document.getElementById('nav-markets2').textContent = t.navMarkets;
+  document.getElementById('nav-bet2').textContent = t.navBet;
   document.getElementById('nav-portfolio2').textContent = t.navPortfolio;
   document.getElementById('nav-rating2').textContent = t.navRating;
   // leaderboard
@@ -1132,8 +1147,14 @@ function applyTranslations() {
   document.getElementById('lb-your-stats').textContent = t.lbYourStats;
   document.getElementById('lb-top-title').textContent = t.lbTopTitle;
   document.getElementById('nav-markets3').textContent = t.navMarkets;
+  document.getElementById('nav-bet3').textContent = t.navBet;
   document.getElementById('nav-portfolio3').textContent = t.navPortfolio;
   document.getElementById('nav-rating3').textContent = t.navRating;
+  // bet screen nav
+  const navPBet = document.getElementById('nav-portfolio-bet');
+  const navRBet = document.getElementById('nav-rating-bet');
+  if (navPBet) navPBet.textContent = t.navPortfolio;
+  if (navRBet) navRBet.textContent = t.navRating;
   // detail labels
   document.getElementById('chart-title').textContent = t.chartTitle;
   document.getElementById('bet-title').textContent = t.betTitle;
