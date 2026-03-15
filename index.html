@@ -191,6 +191,12 @@
   .match-team-name { font-size: 14px; font-weight: 700; line-height: 1.2; }
   .match-team-flag { font-size: 22px; margin-bottom: 4px; }
   .match-vs { font-size: 12px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+  .match-score-live { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .match-score-nums { display: flex; align-items: center; gap: 6px; }
+  .match-score-num { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 700; color: #fff; min-width: 28px; text-align: center; }
+  .match-score-sep { font-size: 20px; font-weight: 700; color: var(--muted); }
+  .match-score-time { font-size: 11px; font-weight: 700; color: #ef4444; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; display: inline-block; }
   .match-odds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 0 12px 12px; }
   .match-odds-wide { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px 8px; }
   .odds-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all 0.15s; }
@@ -2438,10 +2444,22 @@ function renderMatchCard(m) {
     </div>` : '';
 
   const isF1Card = m.leagueCode === 'F1';
+
+  // Parse live score "1:2 45'" or "1:2"
+  let scoreHome = '', scoreAway = '', matchMinute = '';
+  if (m.isLive && m.liveScore) {
+    const sc = m.liveScore.replace('LIVE','').trim();
+    const parts = sc.split(':');
+    scoreHome = parts[0]?.trim() || '0';
+    const awayParts = (parts[1] || '0').split(' ');
+    scoreAway = awayParts[0]?.trim() || '0';
+    matchMinute = awayParts[1] || '';
+  }
+
   return `<div class="match-card" id="match-${m.id}">
     <div class="match-header">
       <div class="match-league">${m.league}</div>
-      <div class="match-time ${m.isLive ? 'live' : ''}">${m.isLive ? '🔴 LIVE ' + (m.liveScore || '') : m.time}</div>
+      <div class="match-time">${m.isLive ? '' : m.time}</div>
     </div>
     ${isF1Card ? `
     <div style="padding:12px 14px 8px;text-align:center;">
@@ -2454,7 +2472,15 @@ function renderMatchCard(m) {
         <div class="match-team-flag">${m.homeFlag}</div>
         <div class="match-team-name">${m.home}</div>
       </div>
-      <div class="match-vs">VS</div>
+      ${m.isLive ? `
+      <div class="match-score-live">
+        <div class="match-score-nums">
+          <div class="match-score-num">${scoreHome}</div>
+          <div class="match-score-sep">:</div>
+          <div class="match-score-num">${scoreAway}</div>
+        </div>
+        <div class="match-score-time"><span class="live-dot"></span>${matchMinute || 'LIVE'}</div>
+      </div>` : `<div class="match-vs">VS</div>`}
       <div class="match-team">
         <div class="match-team-flag">${m.awayFlag}</div>
         <div class="match-team-name">${m.away}</div>
