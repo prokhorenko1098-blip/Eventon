@@ -696,7 +696,7 @@
   <!-- ══ SCREEN: BET ══ -->
   <div class="screen hidden" id="screen-bet">
     <div class="header">
-      <div class="header-title">⚽ Bet</div>
+      <div class="header-title" id="bet-screen-title">⚽ Ставки</div>
     </div>
     <div style="display:flex;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);flex-shrink:0;">
       <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;">🔥 Все</button>
@@ -1162,6 +1162,8 @@ function applyTranslations() {
     const el = document.getElementById(id);
     if (el) el.textContent = [t.navMarkets, t.navBet, t.navPortfolio, t.navRating][i];
   });
+  const betTitle = document.getElementById('bet-screen-title');
+  if (betTitle) betTitle.textContent = '⚽ ' + t.navBet;
   // detail labels
   document.getElementById('chart-title').textContent = t.chartTitle;
   document.getElementById('bet-title').textContent = t.betTitle;
@@ -2261,6 +2263,14 @@ async function loadBetMatches() {
         away = m ? m[2].replace(/\s*\(.*\)\s*/,'').trim() : 'Команда 2';
         league = leagueM ? leagueM[1] : 'Футбол';
         leagueCode = 'PL';
+        // Translate league names
+        const leagueMap = {
+          'Premier League': 'АПЛ', 'Primeira Liga': 'Прімейра Ліга',
+          'Ligue 1': 'Ліга 1', 'Bundesliga': 'Бундесліга',
+          'Serie A': 'Серія А', 'La Liga': 'Ла Ліга',
+          'Champions League': 'Ліга чемпіонів', 'Eredivisie': 'Ередивізі',
+        };
+        league = leagueMap[league] || league;
         homeFlag = '⚽'; awayFlag = '⚽';
         time = 'Скоро';
       } else if (sport === 'nba') {
@@ -2296,11 +2306,12 @@ async function loadBetMatches() {
 
       const isLive = winM.is_live === true;
       const liveScore = winM.live_score || null;
+      const isFT = liveScore && liveScore.includes('ФТ');
       const match = {
         id: matchKey,
         league, leagueCode, home, away, homeFlag, awayFlag,
-        time: isLive ? '🔴 LIVE' : (liveScore && liveScore.includes('ФТ') ? liveScore : 'Скоро'),
-        isLive, liveScore,
+        time: isLive ? '🔴 LIVE' : (isFT ? 'Завершён' : 'Скоро'),
+        isLive, isFT, liveScore,
         odds: { h, d: 3.40, a },
         totals: [],
         btts: null,
@@ -2334,11 +2345,15 @@ async function loadBetMatches() {
       supaMatches.push(match);
     });
 
-    if (supaMatches.length > 0) {
-      betMatches = supaMatches;
-      renderBetMatches();
-      console.log('Loaded', supaMatches.length, 'real matches from Supabase');
+    // Filter out finished matches
+    const activeMatches = supaMatches.filter(m => !m.liveScore || !m.liveScore.includes('ФТ'));
+    if (activeMatches.length > 0) {
+      betMatches = activeMatches;
+    } else if (supaMatches.length > 0) {
+      betMatches = supaMatches; // show all if nothing upcoming
     }
+    renderBetMatches();
+    console.log('Loaded', betMatches.length, 'matches from Supabase');
   } catch(e) {
     console.log('Bet matches load error:', e);
   }
@@ -2397,6 +2412,34 @@ function filterBetSport(code, btn) {
   renderBetMatches();
 }
 
+// Top clubs for priority sorting
+const TOP_CLUBS = [
+  'Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool',
+  'Chelsea','Arsenal','Tottenham','Bayern Munich','Borussia Dortmund',
+  'PSG','Paris Saint-Germain','Juventus','Inter Milan','AC Milan',
+  'Atletico Madrid','Ajax','Porto','Benfica','Celtic',
+  'Napoli','Roma','Lazio','Sevilla','Valencia',
+  'LeBron','Lakers','Celtics','Warriors','Heat','Knicks',
+  'Verstappen','Hamilton','Leclerc','Norris'
+];
+
+function getMatchPriority(m) {
+  if (m.isLive) return 0; // Live first
+  if (m.isFT) return 99;  // Finished last
+  // Check if home or away is a top club
+  const isTop = TOP_CLUBS.some(club =>
+    m.home?.toLowerCase().includes(club.toLowerCase()) ||
+    m.away?.toLowerCase().includes(club.toLowerCase())
+  );
+  // Top leagues get priority
+  const topLeagues = ['PL','PD','CL','SA','BL1'];
+  const isTopLeague = topLeagues.includes(m.leagueCode);
+  if (isTop && isTopLeague) return 1;
+  if (isTop) return 2;
+  if (isTopLeague) return 3;
+  return 4;
+}
+
 function renderBetMatches() {
   const el = document.getElementById('bet-matches-list');
   let matches = betMatches;
@@ -2409,7 +2452,31 @@ function renderBetMatches() {
     return;
   }
 
-  el.innerHTML = matches.map(m => renderMatchCard(m)).join('');
+  // Sort: live → top clubs in top leagues → top clubs → top leagues → rest → finished
+  matches = [...matches].sort((a, b) => getMatchPriority(a) - getMatchPriority(b));
+
+  // Add LIVE section header if there are live matches
+  const liveMatches = matches.filter(m => m.isLive);
+  const otherMatches = matches.filter(m => !m.isLive);
+
+  let html = '';
+  if (liveMatches.length > 0) {
+    html += '<div style="padding:10px 14px 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:#ef4444;display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block;animation:pulse 1s infinite;"></span>LIVE СЕЙЧАС</div>';
+    html += liveMatches.map(m => renderMatchCard(m)).join('');
+    if (otherMatches.length > 0) {
+      html += '<div style="padding:10px 14px 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--muted);">ПРЕДСТОЯЩИЕ</div>';
+    }
+  }
+  html += otherMatches.filter(m => !m.isFT).map(m => renderMatchCard(m)).join('');
+
+  // Show finished at the bottom collapsed
+  const ftMatches = matches.filter(m => m.isFT);
+  if (ftMatches.length > 0) {
+    html += '<div style="padding:10px 14px 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--muted);">ЗАВЕРШЁННЫЕ</div>';
+    html += ftMatches.map(m => renderMatchCard(m)).join('');
+  }
+
+  el.innerHTML = html;
 }
 
 function renderMatchCard(m) {
@@ -2447,19 +2514,19 @@ function renderMatchCard(m) {
 
   // Parse live score "1:2 45'" or "1:2"
   let scoreHome = '', scoreAway = '', matchMinute = '';
-  if (m.isLive && m.liveScore) {
-    const sc = m.liveScore.replace('LIVE','').trim();
+  if ((m.isLive || m.isFT) && m.liveScore) {
+    const sc = m.liveScore.replace('LIVE','').replace('ФТ','').trim();
     const parts = sc.split(':');
     scoreHome = parts[0]?.trim() || '0';
-    const awayParts = (parts[1] || '0').split(' ');
+    const awayParts = (parts[1] || '0').split(/\s+/);
     scoreAway = awayParts[0]?.trim() || '0';
     matchMinute = awayParts[1] || '';
   }
 
   return `<div class="match-card" id="match-${m.id}">
     <div class="match-header">
-      <div class="match-league">${m.league}</div>
-      <div class="match-time">${m.isLive ? '' : m.time}</div>
+      <div class="match-league">${m.league.toUpperCase()}</div>
+      <div class="match-time">${m.isLive ? '<span style="color:#ef4444;font-weight:700;">● LIVE</span>' : (m.isFT ? '<span style="color:var(--muted);">Завершён</span>' : m.time)}</div>
     </div>
     ${isF1Card ? `
     <div style="padding:12px 14px 8px;text-align:center;">
@@ -2480,6 +2547,14 @@ function renderMatchCard(m) {
           <div class="match-score-num">${scoreAway}</div>
         </div>
         <div class="match-score-time"><span class="live-dot"></span>${matchMinute || 'LIVE'}</div>
+      </div>` : m.isFT ? `
+      <div class="match-score-live">
+        <div class="match-score-nums">
+          <div class="match-score-num" style="color:var(--muted);">${scoreHome}</div>
+          <div class="match-score-sep">:</div>
+          <div class="match-score-num" style="color:var(--muted);">${scoreAway}</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:2px;">ФТ</div>
       </div>` : `<div class="match-vs">VS</div>`}
       <div class="match-team">
         <div class="match-team-flag">${m.awayFlag}</div>
