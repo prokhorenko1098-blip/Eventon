@@ -565,8 +565,8 @@
     </div>
 
     <div class="bottom-nav">
-      <div class="nav-item active"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets">Event</div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet">Bet</div></div>
+      <div class="nav-item active"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets"></div></div>
+      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet"></div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating"></div></div>
     </div>
@@ -679,8 +679,8 @@
       <div style="height:24px;"></div>
     </div>
     <div class="bottom-nav">
-      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets2">Event</div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet2">Bet</div></div>
+      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets2"></div></div>
+      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet2"></div></div>
       <div class="nav-item active"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio2"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating2"></div></div>
     </div>
@@ -706,8 +706,8 @@
       <div style="height:20px;"></div>
     </div>
     <div class="bottom-nav">
-      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label">Event</div></div>
-      <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label">Bet</div></div>
+      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets-bet"></div></div>
+      <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet-active"></div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio-bet"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating-bet"></div></div>
     </div>
@@ -732,8 +732,8 @@
       <div style="height:24px;"></div>
     </div>
     <div class="bottom-nav">
-      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets3">Event</div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet3">Bet</div></div>
+      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets3"></div></div>
+      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet3"></div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio3"></div></div>
       <div class="nav-item active"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating3"></div></div>
     </div>
@@ -1126,10 +1126,10 @@ function applyTranslations() {
   document.getElementById('stat-markets').textContent = t.statMarkets;
   document.getElementById('stat-users').textContent = t.statUsers;
   // nav 1 (home)
-  document.getElementById('nav-markets').textContent = t.navMarkets;
-  document.getElementById('nav-bet').textContent = t.navBet;
-  document.getElementById('nav-portfolio').textContent = t.navPortfolio;
-  document.getElementById('nav-rating').textContent = t.navRating;
+  ['nav-markets','nav-bet','nav-portfolio','nav-rating'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = [t.navMarkets, t.navBet, t.navPortfolio, t.navRating][i];
+  });
   // portfolio
   document.getElementById('portfolio-title').textContent = t.portfolioTitle;
   document.getElementById('balance-label').textContent = t.balanceLabel;
@@ -1150,11 +1150,11 @@ function applyTranslations() {
   document.getElementById('nav-bet3').textContent = t.navBet;
   document.getElementById('nav-portfolio3').textContent = t.navPortfolio;
   document.getElementById('nav-rating3').textContent = t.navRating;
-  // bet screen nav
-  const navPBet = document.getElementById('nav-portfolio-bet');
-  const navRBet = document.getElementById('nav-rating-bet');
-  if (navPBet) navPBet.textContent = t.navPortfolio;
-  if (navRBet) navRBet.textContent = t.navRating;
+  // bet screen nav (all 4 labels)
+  ['nav-markets-bet','nav-bet-active','nav-portfolio-bet','nav-rating-bet'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = [t.navMarkets, t.navBet, t.navPortfolio, t.navRating][i];
+  });
   // detail labels
   document.getElementById('chart-title').textContent = t.chartTitle;
   document.getElementById('bet-title').textContent = t.betTitle;
