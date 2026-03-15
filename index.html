@@ -2306,11 +2306,13 @@ async function loadBetMatches() {
 
       const isLive = winM.is_live === true;
       const liveScore = winM.live_score || null;
-      const isFT = liveScore && liveScore.includes('ФТ');
+      const isFT = liveScore && (liveScore.includes('ФТ') || liveScore.includes('Завершён'));
+      // live_score stores start time for upcoming: "Сег. 22:00" or "Завтра 21:00"
+      const isTimeLabel = liveScore && !isLive && !isFT && (liveScore.includes('Сег') || liveScore.includes('Завтра') || liveScore.includes('.'));
       const match = {
         id: matchKey,
         league, leagueCode, home, away, homeFlag, awayFlag,
-        time: isLive ? '🔴 LIVE' : (isFT ? 'Завершён' : 'Скоро'),
+        time: isLive ? '🔴 LIVE' : (isFT ? 'Завершён' : (isTimeLabel ? liveScore : 'Скоро')),
         isLive, isFT, liveScore,
         odds: { h, d: 3.40, a },
         totals: [],
@@ -2541,7 +2543,7 @@ function renderMatchCard(m) {
   return `<div class="match-card" id="match-${m.id}">
     <div class="match-header">
       <div class="match-league">${m.league.toUpperCase()}</div>
-      <div class="match-time">${m.isLive ? '<span style="color:#ef4444;font-weight:700;">● LIVE</span>' : (m.isFT ? '<span style="color:var(--muted);">Завершён</span>' : m.time)}</div>
+      <div class="match-time">${m.isLive ? '<span style="color:#ef4444;font-weight:700;animation:pulse 1s infinite;">● LIVE</span>' : (m.isFT ? '<span style="color:var(--muted);font-size:10px;">ЗАВЕРШЁН</span>' : '<span style="color:var(--ton);font-weight:600;">' + m.time + '</span>')}</div>
     </div>
     ${isF1Card ? `
     <div style="padding:12px 14px 8px;text-align:center;">
