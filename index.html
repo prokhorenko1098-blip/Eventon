@@ -689,26 +689,27 @@
 
   <!-- ══ SCREEN: BET ══ -->
   <div class="screen hidden" id="screen-bet">
-    <div class="header">
+    <div class="header" style="flex-shrink:0;">
       <div class="header-title">⚽ Bet</div>
       <div id="bet-header-right" style="font-size:12px;color:var(--muted);"></div>
     </div>
-    <div class="scroll-body" id="bet-scroll">
-      <!-- Sport filter -->
-      <div style="display:flex;gap:8px;padding:10px 12px;overflow-x:auto;scrollbar-width:none;">
-        <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;" id="bet-filter-all">🔥 Все</button>
-        <button onclick="filterBetSport('PL',this)" class="filter-btn" style="white-space:nowrap;">🏴󠁧󠁢󠁥󠁮󠁧󠁿 АПЛ</button>
-        <button onclick="filterBetSport('PD',this)" class="filter-btn" style="white-space:nowrap;">🇪🇸 Ла Лига</button>
-        <button onclick="filterBetSport('CL',this)" class="filter-btn" style="white-space:nowrap;">⭐ ЛЧ</button>
-        <button onclick="filterBetSport('SA',this)" class="filter-btn" style="white-space:nowrap;">🇮🇹 Серия А</button>
-        <button onclick="filterBetSport('BL1',this)" class="filter-btn" style="white-space:nowrap;">🇩🇪 Бундеслига</button>
-        <button onclick="filterBetSport('NBA',this)" class="filter-btn" style="white-space:nowrap;">🏀 НБА</button>
-        <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
-      </div>
-      <div id="bet-matches-list"></div>
-      <div style="height:80px;"></div>
+    <!-- Sport filter - fixed, doesn't scroll -->
+    <div style="flex-shrink:0;display:flex;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);">
+      <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;" id="bet-filter-all">🔥 Все</button>
+      <button onclick="filterBetSport('PL',this)" class="filter-btn" style="white-space:nowrap;">🏴󠁧󠁢󠁥󠁮󠁧󠁿 АПЛ</button>
+      <button onclick="filterBetSport('PD',this)" class="filter-btn" style="white-space:nowrap;">🇪🇸 Ла Лига</button>
+      <button onclick="filterBetSport('CL',this)" class="filter-btn" style="white-space:nowrap;">⭐ ЛЧ</button>
+      <button onclick="filterBetSport('SA',this)" class="filter-btn" style="white-space:nowrap;">🇮🇹 Серия А</button>
+      <button onclick="filterBetSport('BL1',this)" class="filter-btn" style="white-space:nowrap;">🇩🇪 Бундеслига</button>
+      <button onclick="filterBetSport('NBA',this)" class="filter-btn" style="white-space:nowrap;">🏀 НБА</button>
+      <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
     </div>
-    <div class="bottom-nav">
+    <!-- Scrollable matches list -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="bet-scroll">
+      <div id="bet-matches-list" style="padding-top:8px;"></div>
+      <div style="height:20px;"></div>
+    </div>
+    <div class="bottom-nav" style="flex-shrink:0;">
       <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label">Event</div></div>
       <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label">Bet</div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio-bet"></div></div>
@@ -1233,19 +1234,23 @@ function renderLeaderboard() {
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function showScreen(name) {
-  if (name === 'bet') {
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById('screen-bet').classList.remove('hidden');
-    loadBetMatches();
-      return;
+  if (name === currentScreen) return;
+
+  // Hide current screen
+  const from = document.getElementById('screen-' + currentScreen);
+  if (from) {
+    from.classList.add('slide-left');
+    setTimeout(() => { from.classList.add('hidden'); from.classList.remove('slide-left'); }, 350);
   }
-  // Hide betslip bar when leaving bet screen
-  const from = document.getElementById('screen-'+currentScreen);
-  from.classList.add('slide-left');
-  setTimeout(() => { from.classList.add('hidden'); from.classList.remove('slide-left'); }, 350);
+
   prevScreen = currentScreen;
   currentScreen = name;
-  document.getElementById('screen-'+name).classList.remove('hidden','slide-left');
+
+  // Show new screen
+  const to = document.getElementById('screen-' + name);
+  if (to) to.classList.remove('hidden', 'slide-left');
+
+  if (name === 'bet') loadBetMatches();
 }
 
 function goBack() {
