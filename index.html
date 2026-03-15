@@ -27,9 +27,8 @@
   html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'Geist', sans-serif; color: var(--text); }
 
   #app { height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease; }
-  .screen.hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
-  .screen.slide-left { transform: translateX(-30%); opacity: 0; pointer-events: none; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .screen.hidden { display: none !important; }
 
   .scroll-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   .scroll-body::-webkit-scrollbar { display: none; }
@@ -689,13 +688,11 @@
 
   <!-- ══ SCREEN: BET ══ -->
   <div class="screen hidden" id="screen-bet">
-    <div class="header" style="flex-shrink:0;">
+    <div class="header">
       <div class="header-title">⚽ Bet</div>
-      <div id="bet-header-right" style="font-size:12px;color:var(--muted);"></div>
     </div>
-    <!-- Sport filter - fixed, doesn't scroll -->
-    <div style="flex-shrink:0;display:flex;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);">
-      <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;" id="bet-filter-all">🔥 Все</button>
+    <div style="display:flex;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;">🔥 Все</button>
       <button onclick="filterBetSport('PL',this)" class="filter-btn" style="white-space:nowrap;">🏴󠁧󠁢󠁥󠁮󠁧󠁿 АПЛ</button>
       <button onclick="filterBetSport('PD',this)" class="filter-btn" style="white-space:nowrap;">🇪🇸 Ла Лига</button>
       <button onclick="filterBetSport('CL',this)" class="filter-btn" style="white-space:nowrap;">⭐ ЛЧ</button>
@@ -704,12 +701,11 @@
       <button onclick="filterBetSport('NBA',this)" class="filter-btn" style="white-space:nowrap;">🏀 НБА</button>
       <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
     </div>
-    <!-- Scrollable matches list -->
-    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="bet-scroll">
+    <div class="scroll-body" id="bet-scroll">
       <div id="bet-matches-list" style="padding-top:8px;"></div>
       <div style="height:20px;"></div>
     </div>
-    <div class="bottom-nav" style="flex-shrink:0;">
+    <div class="bottom-nav">
       <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label">Event</div></div>
       <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label">Bet</div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio-bet"></div></div>
@@ -1235,33 +1231,21 @@ function renderLeaderboard() {
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function showScreen(name) {
   if (name === currentScreen) return;
-
-  // Hide current screen
-  const from = document.getElementById('screen-' + currentScreen);
-  if (from) {
-    from.classList.add('slide-left');
-    setTimeout(() => { from.classList.add('hidden'); from.classList.remove('slide-left'); }, 350);
-  }
-
+  // Hide ALL screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  // Show target
+  const to = document.getElementById('screen-' + name);
+  if (to) to.classList.remove('hidden');
   prevScreen = currentScreen;
   currentScreen = name;
-
-  // Show new screen
-  const to = document.getElementById('screen-' + name);
-  if (to) to.classList.remove('hidden', 'slide-left');
-
   if (name === 'bet') loadBetMatches();
 }
 
 function goBack() {
-  const from = currentScreen;
-  const el = document.getElementById('screen-'+from);
-  el.style.transform = 'translateX(100%)';
-  el.style.opacity = '0';
-  setTimeout(() => { el.classList.add('hidden'); el.style.transform=''; el.style.opacity=''; }, 350);
-  currentScreen = prevScreen === from ? 'home' : prevScreen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  currentScreen = prevScreen === currentScreen ? 'home' : prevScreen;
   prevScreen = 'home';
-  document.getElementById('screen-'+currentScreen).classList.remove('hidden','slide-left');
+  document.getElementById('screen-'+currentScreen).classList.remove('hidden');
 }
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
@@ -2100,7 +2084,7 @@ const SAMPLE_MATCHES = [
     id: 'pl_001', league: 'АПЛ', leagueCode: 'PL',
     home: 'Liverpool', away: 'Tottenham',
     homeFlag: '🔴', awayFlag: '⚪',
-    time: 'Сегодня 22:00',
+    time: 'Сег. 22:00',
     odds: { h: 1.75, d: 3.80, a: 4.50 },
     totals: [
       { label: 'Тотал больше 1.5', odds: 1.35 },
@@ -2189,19 +2173,25 @@ const SAMPLE_MATCHES = [
 ];
 
 async function loadBetMatches() {
-  // Try to load from Supabase (sport markets with external_id)
+  // Use sample matches with real names + try to add from Supabase
+  betMatches = [...SAMPLE_MATCHES];
+  renderBetMatches();
+
+  // Also try to load real matches from Supabase in background
   try {
     const data = await supaFetch('/rest/v1/markets?cat=eq.sport&active=eq.true&external_id=not.is.null&order=created_at.desc&limit=30&select=*');
     if (data && data.length > 0) {
-      // Convert Supabase sport markets to bet format
-      betMatches = convertSupabaseToMatches(data);
-    } else {
-      betMatches = SAMPLE_MATCHES;
+      const supaMatches = convertSupabaseToMatches(data);
+      if (supaMatches.length > 0) {
+        // Only use Supabase matches that have real team names (not "Команда 1")
+        const realMatches = supaMatches.filter(m => m.home !== 'Команда 1' && m.home !== 'Team 1');
+        if (realMatches.length > 0) {
+          betMatches = realMatches;
+          renderBetMatches();
+        }
+      }
     }
-  } catch(e) {
-    betMatches = SAMPLE_MATCHES;
-  }
-  renderBetMatches();
+  } catch(e) { /* keep sample matches */ }
 }
 
 function convertSupabaseToMatches(markets) {
