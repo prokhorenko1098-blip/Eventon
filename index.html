@@ -185,6 +185,7 @@
   .match-header { padding: 10px 14px 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
   .match-league { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
   .match-time { font-size: 11px; color: var(--ton); font-weight: 600; }
+  .match-time.live { color: #ef4444; animation: pulse 1.5s infinite; }
   .match-teams { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; gap: 8px; }
   .match-team { flex: 1; text-align: center; }
   .match-team-name { font-size: 14px; font-weight: 700; line-height: 1.2; }
@@ -2247,33 +2248,33 @@ async function loadBetMatches() {
       let home, away, league, leagueCode, homeFlag, awayFlag, time;
 
       if (sport === 'football') {
-        // "Liverpool победит Tottenham? (Premier League)" -> parse
-        const m = title.match(/^(.+?) победит (.+?) \((.+?)\)/);
-        home = m ? m[1] : 'Команда 1';
-        away = m ? m[2] : 'Команда 2';
-        league = m ? m[3] : 'Футбол';
+        // "Sporting CP победит Tondela? (Primeira Liga)" -> parse
+        const m = title.match(/^(.+?) победит (.+?)\?/);
+        const leagueM = title.match(/\((.+?)\)/);
+        home = m ? m[1].trim() : 'Команда 1';
+        away = m ? m[2].replace(/\s*\(.*\)\s*/,'').trim() : 'Команда 2';
+        league = leagueM ? leagueM[1] : 'Футбол';
         leagueCode = 'PL';
         homeFlag = '⚽'; awayFlag = '⚽';
         time = 'Скоро';
       } else if (sport === 'nba') {
         // "SAC победят SAS? (НБА)" -> parse
-        // Also handles "SAC победят SAS? (НБА)"
-        const m = title.match(/^(.+?) победят (.+?)\?/);
+        const m = title.match(/^(.+?) победят (.+?)\s*\(НБА\)\?/);
         home = m ? m[1].trim() : 'Home';
-        away = m ? m[2].replace(/\s*\(.*\)\s*/,'').trim() : 'Away';
+        away = m ? m[2].trim() : 'Away';
         league = 'НБА'; leagueCode = 'NBA';
         homeFlag = '🏀'; awayFlag = '🏀';
         time = 'Скоро';
       } else if (sport === 'f1') {
         // "Ферстаппен выиграет Japanese Grand Prix 2026?" — show as race event
-        const mWin = title.match(/^(.+?) выиграет (.+?)\??$/);
-        const mPod = title.match(/^(.+?) попадёт в топ-3 на (.+?)\??$/);
+        const mWin = title.match(/^(.+?) выиграет (.+?)\?/);
+        const mPod = title.match(/^(.+?) попадёт в топ-3 на (.+?)\?/);
         if (mPod) {
           home = mPod[1].trim();
-          away = 'Топ-3 ' + mPod[2].trim();
+          away = 'Топ-3: ' + mPod[2].replace('?','').trim();
         } else if (mWin) {
           home = mWin[1].trim();
-          away = mWin[2].trim();
+          away = mWin[2].replace('?','').trim();
         } else {
           home = 'Гонщик';
           away = 'Гонка';
@@ -2287,9 +2288,13 @@ async function loadBetMatches() {
       const h = parseFloat((1 / prob * 0.92).toFixed(2));
       const a = parseFloat((1 / (1 - prob) * 0.92).toFixed(2));
 
+      const isLive = winM.is_live === true;
+      const liveScore = winM.live_score || null;
       const match = {
         id: matchKey,
-        league, leagueCode, home, away, homeFlag, awayFlag, time,
+        league, leagueCode, home, away, homeFlag, awayFlag,
+        time: isLive ? '🔴 LIVE' : (liveScore && liveScore.includes('ФТ') ? liveScore : 'Скоро'),
+        isLive, liveScore,
         odds: { h, d: 3.40, a },
         totals: [],
         btts: null,
@@ -2436,7 +2441,7 @@ function renderMatchCard(m) {
   return `<div class="match-card" id="match-${m.id}">
     <div class="match-header">
       <div class="match-league">${m.league}</div>
-      <div class="match-time">${m.time}</div>
+      <div class="match-time ${m.isLive ? 'live' : ''}">${m.isLive ? '🔴 LIVE ' + (m.liveScore || '') : m.time}</div>
     </div>
     ${isF1Card ? `
     <div style="padding:12px 14px 8px;text-align:center;">
