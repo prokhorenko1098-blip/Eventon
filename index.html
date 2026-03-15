@@ -2247,31 +2247,37 @@ async function loadBetMatches() {
       let home, away, league, leagueCode, homeFlag, awayFlag, time;
 
       if (sport === 'football') {
-        // "Liverpool победит Tottenham? (АПЛ)" -> parse
-        const m = title.match(/^(.+?) победит (.+?)\s*\((.+?)\)\?/);
-        home = m?.[1] || 'Команда 1';
-        away = m?.[2] || 'Команда 2';
-        league = m?.[3] || 'Футбол';
-        leagueCode = winM.external_id?.includes('_PL_') ? 'PL' :
-                     winM.external_id?.includes('_PD_') ? 'PD' :
-                     winM.external_id?.includes('_CL_') ? 'CL' :
-                     winM.external_id?.includes('_SA_') ? 'SA' :
-                     winM.external_id?.includes('_BL1_') ? 'BL1' : 'PL';
+        // "Liverpool победит Tottenham? (Premier League)" -> parse
+        const m = title.match(/^(.+?) победит (.+?) \((.+?)\)/);
+        home = m ? m[1] : 'Команда 1';
+        away = m ? m[2] : 'Команда 2';
+        league = m ? m[3] : 'Футбол';
+        leagueCode = 'PL';
         homeFlag = '⚽'; awayFlag = '⚽';
         time = 'Скоро';
       } else if (sport === 'nba') {
         // "SAC победят SAS? (НБА)" -> parse
-        const m = title.match(/^(.+?) победят (.+?)\s*\(НБА\)\?/);
-        home = m?.[1] || 'Home';
-        away = m?.[2] || 'Away';
+        // Also handles "SAC победят SAS? (НБА)"
+        const m = title.match(/^(.+?) победят (.+?)\?/);
+        home = m ? m[1].trim() : 'Home';
+        away = m ? m[2].replace(/\s*\(.*\)\s*/,'').trim() : 'Away';
         league = 'НБА'; leagueCode = 'NBA';
         homeFlag = '🏀'; awayFlag = '🏀';
         time = 'Скоро';
       } else if (sport === 'f1') {
-        // "Ферстаппен выиграет Japanese Grand Prix 2026?"
-        const m = title.match(/^(.+?) выиграет (.+?)\?/);
-        home = m?.[1] || 'Verstappen';
-        away = m?.[2] || 'Race';
+        // "Ферстаппен выиграет Japanese Grand Prix 2026?" — show as race event
+        const mWin = title.match(/^(.+?) выиграет (.+?)\??$/);
+        const mPod = title.match(/^(.+?) попадёт в топ-3 на (.+?)\??$/);
+        if (mPod) {
+          home = mPod[1].trim();
+          away = 'Топ-3 ' + mPod[2].trim();
+        } else if (mWin) {
+          home = mWin[1].trim();
+          away = mWin[2].trim();
+        } else {
+          home = 'Гонщик';
+          away = 'Гонка';
+        }
         league = 'Формула 1'; leagueCode = 'F1';
         homeFlag = '🏎'; awayFlag = '🏁';
         time = 'Скоро';
@@ -2397,10 +2403,11 @@ function renderBetMatches() {
 
 function renderMatchCard(m) {
   const isNBA = m.leagueCode === 'NBA';
-  const mainOdds = isNBA
+  const isF1 = m.leagueCode === 'F1';
+  const mainOdds = (isNBA || isF1)
     ? `<div class="match-odds-wide">
-        ${oddsBtn(m.id, m.home, 'П1', m.odds.h)}
-        ${oddsBtn(m.id, m.away, 'П2', m.odds.a)}
+        ${oddsBtn(m.id, (isF1 ? 'Да' : m.home), 'П1', m.odds.h)}
+        ${oddsBtn(m.id, (isF1 ? 'Нет' : m.away), 'П2', m.odds.a)}
        </div>`
     : `<div class="match-odds">
         ${oddsBtn(m.id, m.home, 'П1', m.odds.h)}
@@ -2425,11 +2432,18 @@ function renderMatchCard(m) {
       ${m.handicap.map(h => oddsBtn(m.id, h.label, h.label, h.odds)).join('')}
     </div>` : '';
 
+  const isF1Card = m.leagueCode === 'F1';
   return `<div class="match-card" id="match-${m.id}">
     <div class="match-header">
       <div class="match-league">${m.league}</div>
       <div class="match-time">${m.time}</div>
     </div>
+    ${isF1Card ? `
+    <div style="padding:12px 14px 8px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:4px;">${m.homeFlag}</div>
+      <div style="font-size:15px;font-weight:700;">${m.home}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">${m.away}</div>
+    </div>` : `
     <div class="match-teams">
       <div class="match-team">
         <div class="match-team-flag">${m.homeFlag}</div>
@@ -2440,7 +2454,7 @@ function renderMatchCard(m) {
         <div class="match-team-flag">${m.awayFlag}</div>
         <div class="match-team-name">${m.away}</div>
       </div>
-    </div>
+    </div>`}
     <div class="odds-section-title">Победитель</div>
     ${mainOdds}
     <div class="odds-section-title">Тотал</div>
