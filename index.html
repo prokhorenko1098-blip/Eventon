@@ -30,7 +30,7 @@
   .screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%; box-sizing: border-box; }
   .screen.hidden { display: none !important; }
 
-  .scroll-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .scroll-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .scroll-body::-webkit-scrollbar { display: none; }
 
   .header { padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: linear-gradient(to bottom, var(--bg), transparent); position: relative; z-index: 2; }
@@ -39,7 +39,7 @@
   .header-title { font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 600; flex: 1; }
   .header-right { display: flex; align-items: center; gap: 8px; }
 
-  .bottom-nav { height: 68px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; flex-shrink: 0; padding: 0 8px; padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 68px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 8px; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; cursor: pointer; transition: all 0.15s; opacity: 0.45; }
   .nav-item.active { opacity: 1; }
   .nav-item:active { transform: scale(0.9); }
@@ -702,7 +702,7 @@
       <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
     </div>
     <div class="scroll-body" id="bet-scroll">
-      <div id="bet-matches-list" style="padding-top:8px;"></div>
+      <div id="bet-matches-list" style="padding-top:8px;padding-bottom:80px;"></div>
       <div style="height:20px;"></div>
     </div>
     <div class="bottom-nav">
@@ -2194,25 +2194,137 @@ const SAMPLE_MATCHES = [
 ];
 
 async function loadBetMatches() {
-  // Use sample matches with real names + try to add from Supabase
+  // Show sample matches immediately
   betMatches = [...SAMPLE_MATCHES];
   renderBetMatches();
 
-  // Also try to load real matches from Supabase in background
   try {
-    const data = await supaFetch('/rest/v1/markets?cat=eq.sport&active=eq.true&external_id=not.is.null&order=created_at.desc&limit=30&select=*');
-    if (data && data.length > 0) {
-      const supaMatches = convertSupabaseToMatches(data);
-      if (supaMatches.length > 0) {
-        // Only use Supabase matches that have real team names (not "Команда 1")
-        const realMatches = supaMatches.filter(m => m.home !== 'Команда 1' && m.home !== 'Team 1');
-        if (realMatches.length > 0) {
-          betMatches = realMatches;
-          renderBetMatches();
-        }
+    // Load all sport markets with external_id grouped by match
+    const data = await supaFetch('/rest/v1/markets?cat=eq.sport&active=eq.true&external_id=not.is.null&order=created_at.asc&limit=100&select=*');
+    if (!data || !data.length) return;
+
+    // Group by match prefix: football_win_123 / football_goals_123 / football_btts_123
+    // nba_win_123 / nba_total_123
+    // f1_win_3_2026 / f1_podium_3_2026
+    const matchGroups = {};
+
+    data.forEach(m => {
+      const ext = m.external_id || '';
+      let matchKey, type, sport;
+
+      if (ext.startsWith('football_')) {
+        const parts = ext.split('_');
+        // football_win_12345 -> matchKey = football_12345
+        matchKey = 'football_' + parts.slice(2).join('_');
+        type = parts[1]; // win, goals, btts
+        sport = 'football';
+      } else if (ext.startsWith('nba_')) {
+        const parts = ext.split('_');
+        matchKey = 'nba_' + parts.slice(2).join('_');
+        type = parts[1]; // win, total
+        sport = 'nba';
+      } else if (ext.startsWith('f1_')) {
+        const parts = ext.split('_');
+        matchKey = 'f1_' + parts.slice(2).join('_');
+        type = parts[1]; // win, podium
+        sport = 'f1';
+      } else {
+        return;
       }
+
+      if (!matchGroups[matchKey]) matchGroups[matchKey] = { sport, markets: {} };
+      matchGroups[matchKey].markets[type] = m;
+    });
+
+    const supaMatches = [];
+
+    Object.entries(matchGroups).forEach(([matchKey, group]) => {
+      const { sport, markets } = group;
+      const winM = markets.win || markets.podium || Object.values(markets)[0];
+      if (!winM) return;
+
+      const title = winM.title_ru || '';
+      let home, away, league, leagueCode, homeFlag, awayFlag, time;
+
+      if (sport === 'football') {
+        // "Liverpool победит Tottenham? (АПЛ)" -> parse
+        const m = title.match(/^(.+?) победит (.+?)\s*\((.+?)\)\?/);
+        home = m?.[1] || 'Команда 1';
+        away = m?.[2] || 'Команда 2';
+        league = m?.[3] || 'Футбол';
+        leagueCode = winM.external_id?.includes('_PL_') ? 'PL' :
+                     winM.external_id?.includes('_PD_') ? 'PD' :
+                     winM.external_id?.includes('_CL_') ? 'CL' :
+                     winM.external_id?.includes('_SA_') ? 'SA' :
+                     winM.external_id?.includes('_BL1_') ? 'BL1' : 'PL';
+        homeFlag = '⚽'; awayFlag = '⚽';
+        time = 'Скоро';
+      } else if (sport === 'nba') {
+        // "SAC победят SAS? (НБА)" -> parse
+        const m = title.match(/^(.+?) победят (.+?)\s*\(НБА\)\?/);
+        home = m?.[1] || 'Home';
+        away = m?.[2] || 'Away';
+        league = 'НБА'; leagueCode = 'NBA';
+        homeFlag = '🏀'; awayFlag = '🏀';
+        time = 'Скоро';
+      } else if (sport === 'f1') {
+        // "Ферстаппен выиграет Japanese Grand Prix 2026?"
+        const m = title.match(/^(.+?) выиграет (.+?)\?/);
+        home = m?.[1] || 'Verstappen';
+        away = m?.[2] || 'Race';
+        league = 'Формула 1'; leagueCode = 'F1';
+        homeFlag = '🏎'; awayFlag = '🏁';
+        time = 'Скоро';
+      }
+
+      const prob = (winM.yes_prob || 55) / 100;
+      const h = parseFloat((1 / prob * 0.92).toFixed(2));
+      const a = parseFloat((1 / (1 - prob) * 0.92).toFixed(2));
+
+      const match = {
+        id: matchKey,
+        league, leagueCode, home, away, homeFlag, awayFlag, time,
+        odds: { h, d: 3.40, a },
+        totals: [],
+        btts: null,
+        handicap: []
+      };
+
+      // Add totals from goals/total markets
+      if (markets.goals) {
+        match.totals = [
+          { label: 'Тотал больше 2.5', odds: 1.85 },
+          { label: 'Тотал меньше 2.5', odds: 2.05 },
+        ];
+      } else if (markets.total) {
+        match.totals = [
+          { label: 'Тотал больше 220', odds: 1.90 },
+          { label: 'Тотал меньше 220', odds: 1.90 },
+        ];
+      }
+
+      // Add btts
+      if (markets.btts) {
+        match.btts = { yes: 1.72, no: 2.10 };
+      }
+
+      // Add handicap
+      match.handicap = [
+        { label: 'Ф1 (-1)', odds: parseFloat((h * 1.45).toFixed(2)) },
+        { label: 'Ф2 (+1)', odds: parseFloat((a * 0.72).toFixed(2)) },
+      ];
+
+      supaMatches.push(match);
+    });
+
+    if (supaMatches.length > 0) {
+      betMatches = supaMatches;
+      renderBetMatches();
+      console.log('Loaded', supaMatches.length, 'real matches from Supabase');
     }
-  } catch(e) { /* keep sample matches */ }
+  } catch(e) {
+    console.log('Bet matches load error:', e);
+  }
 }
 
 function convertSupabaseToMatches(markets) {
