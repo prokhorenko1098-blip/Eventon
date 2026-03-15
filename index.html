@@ -200,12 +200,20 @@
   .odds-btn-val { font-size: 15px; font-weight: 700; color: var(--text); font-family: 'Geist Mono', monospace; }
   .odds-btn.selected .odds-btn-val { color: var(--ton); }
   .odds-section-title { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 6px 14px 4px; }
-  .betslip-bar { position: fixed; bottom: 68px; left: 0; right: 0; background: linear-gradient(135deg, #0098ea, #006ab5); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 50; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-  .betslip-bar.visible { transform: translateY(0); }
-  .betslip-info { flex: 1; }
-  .betslip-count { font-size: 12px; font-weight: 600; opacity: 0.85; }
-  .betslip-total-odds { font-size: 18px; font-weight: 700; font-family: 'Geist Mono', monospace; }
-  .betslip-open-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; font-family: 'Geist', sans-serif; }
+
+
+  .inline-bet-panel { background: linear-gradient(135deg,rgba(0,152,234,0.08),rgba(0,106,181,0.08)); border: 1px solid rgba(0,152,234,0.25); border-radius: 14px; padding: 14px; margin: 0 12px 10px; animation: fadeIn 0.2s ease; }
+  .inline-bet-amounts { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 10px; }
+  .inline-bet-amount { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 4px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Geist', sans-serif; color: var(--text); }
+  .inline-bet-amount:active { transform: scale(0.95); }
+  .inline-bet-amount.selected { background: var(--ton); border-color: var(--ton); color: #fff; }
+  .inline-bet-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .inline-bet-input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-weight: 700; color: var(--text); font-family: 'Geist Mono', monospace; outline: none; }
+  .inline-bet-input:focus { border-color: var(--ton); }
+  .inline-bet-confirm { background: linear-gradient(135deg,var(--ton),#006ab5); border: none; border-radius: 10px; padding: 11px; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; font-family: 'Geist', sans-serif; white-space: nowrap; }
+  .inline-bet-potential { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+  .inline-bet-potential span { color: var(--yes); font-weight: 700; font-family: 'Geist Mono', monospace; }
+
 
   /* Betslip modal */
   .betslip-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
@@ -705,38 +713,6 @@
       <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label">Bet</div></div>
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio-bet"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating-bet"></div></div>
-    </div>
-  </div>
-
-  <!-- ══ BETSLIP BAR ══ -->
-  <div class="betslip-bar" id="betslip-bar">
-    <div class="betslip-info">
-      <div class="betslip-count" id="betslip-count">1 ставка</div>
-      <div class="betslip-total-odds" id="betslip-total-odds">x1.85</div>
-    </div>
-    <button class="betslip-open-btn" onclick="openBetslip()">Купон →</button>
-  </div>
-
-  <!-- ══ BETSLIP MODAL ══ -->
-  <div class="modal-overlay hidden" id="betslip-modal" onclick="closeBetslipModal(event)">
-    <div class="modal-sheet" style="max-height:85vh;overflow-y:auto;">
-      <div class="modal-handle"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="modal-title" style="margin-bottom:0;" id="betslip-title">🎯 Купон</div>
-        <button onclick="clearBetslip()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:'Geist',sans-serif;">Очистить</button>
-      </div>
-      <div id="betslip-items"></div>
-      <div class="betslip-stake-row">
-        <input class="betslip-stake-input" id="betslip-stake" type="number" inputmode="decimal" placeholder="0.0" oninput="updateBetslipPotential()" />
-        <div style="font-size:14px;font-weight:700;color:var(--ton);">TON</div>
-      </div>
-      <div class="betslip-potential">
-        <div style="font-size:12px;color:var(--muted);" id="betslip-potential-label">Возможный выигрыш</div>
-        <div style="font-size:16px;font-weight:700;color:var(--yes);font-family:'Geist Mono',monospace;" id="betslip-potential-val">0.00 TON</div>
-      </div>
-      <button onclick="placeBet()" style="background:linear-gradient(135deg,var(--ton),#006ab5);border:none;border-radius:14px;padding:16px;font-family:'Geist',sans-serif;font-size:16px;font-weight:700;color:#fff;width:100%;cursor:pointer;margin-top:12px;" id="place-bet-btn">
-        Сделать ставку
-      </button>
     </div>
   </div>
 
@@ -1261,8 +1237,9 @@ function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById('screen-bet').classList.remove('hidden');
     loadBetMatches();
-    return;
+      return;
   }
+  // Hide betslip bar when leaving bet screen
   const from = document.getElementById('screen-'+currentScreen);
   from.classList.add('slide-left');
   setTimeout(() => { from.classList.add('hidden'); from.classList.remove('slide-left'); }, 350);
@@ -2357,125 +2334,109 @@ function oddsBtn(matchId, label, shortLabel, odds) {
 
 // ── BETSLIP ───────────────────────────────────────────────────────
 function toggleBetslipItem(matchId, matchTitle, pick, label, odds) {
-  const btnId = `odds_${matchId}_${pick.replace(/[^a-zA-Z0-9]/g,'_')}`;
-  const existing = betslip.findIndex(b => b.matchId === matchId && b.pick === pick);
+  const btnId = 'odds_' + matchId + '_' + pick.replace(/[^a-zA-Z0-9]/g,'_');
+  const panelId = 'inline-panel-' + matchId;
 
+  // Remove existing panel
+  document.getElementById(panelId)?.remove();
+
+  // If same pick clicked again — deselect
+  const existing = betslip.findIndex(b => b.matchId === matchId && b.pick === pick);
   if (existing !== -1) {
-    // Deselect
     betslip.splice(existing, 1);
     document.getElementById(btnId)?.classList.remove('selected');
-  } else {
-    // Remove other picks from same match
-    const sameMatch = betslip.findIndex(b => b.matchId === matchId);
-    if (sameMatch !== -1) {
-      const old = betslip[sameMatch];
-      const oldBtnId = `odds_${old.matchId}_${old.pick.replace(/[^a-zA-Z0-9]/g,'_')}`;
-      document.getElementById(oldBtnId)?.classList.remove('selected');
-      betslip.splice(sameMatch, 1);
-    }
-    betslip.push({ matchId, matchTitle, pick, label, odds });
-    document.getElementById(btnId)?.classList.add('selected');
-  }
-
-  updateBetslipBar();
-}
-
-function updateBetslipBar() {
-  const bar = document.getElementById('betslip-bar');
-  if (!betslip.length) {
-    bar.classList.remove('visible');
     return;
   }
-  bar.classList.add('visible');
-  const totalOdds = betslip.reduce((acc, b) => acc * b.odds, 1);
-  document.getElementById('betslip-count').textContent = betslip.length + (betslip.length === 1 ? ' ставка' : betslip.length < 5 ? ' ставки' : ' ставок');
-  document.getElementById('betslip-total-odds').textContent = 'x' + totalOdds.toFixed(2);
-}
 
-function openBetslip() {
-  const items = document.getElementById('betslip-items');
-  items.innerHTML = betslip.map((b, i) => `
-    <div class="betslip-item">
-      <div class="betslip-item-match">${b.matchTitle}</div>
-      <div class="betslip-item-pick">
-        <span>${b.label}</span>
-        <span class="betslip-item-odds">${b.odds.toFixed(2)}</span>
-      </div>
-    </div>`).join('');
-
-  document.getElementById('betslip-stake').value = '';
-  document.getElementById('betslip-potential-val').textContent = '0.00 TON';
-  document.getElementById('betslip-modal').classList.remove('hidden');
-}
-
-function closeBetslipModal(e) {
-  if (!e || e.target === document.getElementById('betslip-modal')) {
-    document.getElementById('betslip-modal').classList.add('hidden');
+  // Remove other picks from same match
+  const sameMatch = betslip.findIndex(b => b.matchId === matchId);
+  if (sameMatch !== -1) {
+    const old = betslip[sameMatch];
+    const oldBtnId = 'odds_' + old.matchId + '_' + old.pick.replace(/[^a-zA-Z0-9]/g,'_');
+    document.getElementById(oldBtnId)?.classList.remove('selected');
+    betslip.splice(sameMatch, 1);
   }
+
+  betslip.push({ matchId, matchTitle, pick, label, odds });
+  document.getElementById(btnId)?.classList.add('selected');
+
+  // Show inline bet panel below match card
+  const matchCard = document.getElementById('match-' + matchId);
+  if (!matchCard) return;
+
+  const panel = document.createElement('div');
+  panel.id = panelId;
+  panel.className = 'inline-bet-panel';
+  panel.innerHTML =
+    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;">' +
+      '<span>' + label + '</span>' +
+      '<span style="color:var(--ton);font-family:monospace;">' + odds.toFixed(2) + '</span>' +
+    '</div>' +
+    '<div class="inline-bet-amounts">' +
+      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',1,' + odds + ')">1</div>' +
+      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',5,' + odds + ')">5</div>' +
+      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',10,' + odds + ')">10</div>' +
+      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',25,' + odds + ')">25</div>' +
+    '</div>' +
+    '<div class="inline-bet-input-row">' +
+      '<input class="inline-bet-input" id="' + panelId + '-input" type="number" inputmode="decimal" placeholder="0.0 TON" oninput="updateInlinePotential(\'' + panelId + '\',' + odds + ')" />' +
+      '<button class="inline-bet-confirm" id="' + panelId + '-btn" onclick="placeInlineBet(\'' + matchId + '\',\'' + label.replace(/'/g,"\'") + '\',' + odds + ')">Ставить</button>' +
+    '</div>' +
+    '<div class="inline-bet-potential">' +
+      '<span>Выигрыш:</span>' +
+      '<span id="' + panelId + '-potential">0.00 TON</span>' +
+    '</div>';
+
+  matchCard.after(panel);
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
 }
 
-function updateBetslipPotential() {
-  const stake = parseFloat(document.getElementById('betslip-stake').value) || 0;
-  const totalOdds = betslip.reduce((acc, b) => acc * b.odds, 1);
-  const potential = stake * totalOdds;
-  document.getElementById('betslip-potential-val').textContent = potential.toFixed(2) + ' TON';
-}
-
-function clearBetslip() {
-  betslip.forEach(b => {
-    const btnId = 'odds_' + b.matchId + '_' + b.pick.replace(/[^a-zA-Z0-9]/g,'_');
-    document.getElementById(btnId)?.classList.remove('selected');
+function setInlineBetAmount(panelId, amount, odds) {
+  const input = document.getElementById(panelId + '-input');
+  if (!input) return;
+  input.value = amount;
+  document.querySelectorAll('#' + panelId + ' .inline-bet-amount').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.textContent) === amount);
   });
-  betslip = [];
-  updateBetslipBar();
-  document.getElementById('betslip-modal').classList.add('hidden');
+  updateInlinePotential(panelId, odds);
 }
 
-async function placeBet() {
-  const stake = parseFloat(document.getElementById('betslip-stake').value) || 0;
-  if (stake < 0.1) {
-    showBetToast('Введите сумму ставки', 'no');
-    return;
-  }
-  if (userBalance < stake) {
-    showBetToast('Недостаточно баланса', 'no');
-    return;
-  }
+function updateInlinePotential(panelId, odds) {
+  const input = document.getElementById(panelId + '-input');
+  const potEl = document.getElementById(panelId + '-potential');
+  if (!input || !potEl) return;
+  potEl.textContent = ((parseFloat(input.value) || 0) * odds).toFixed(2) + ' TON';
+}
 
-  const btn = document.getElementById('place-bet-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ ...';
+async function placeInlineBet(matchId, label, odds) {
+  const panelId = 'inline-panel-' + matchId;
+  const stake = parseFloat(document.getElementById(panelId + '-input')?.value) || 0;
+  if (stake < 0.1) { showBetToast('Введите сумму', 'no'); return; }
+  if (userBalance < stake) { showBetToast('Недостаточно баланса — пополните', 'no'); return; }
+
+  const btn = document.getElementById(panelId + '-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
 
   try {
-    const totalOdds = betslip.reduce((acc, b) => acc * b.odds, 1);
-    const potential = stake * totalOdds;
-
-    // Save to Supabase
     await supaFetch('/rest/v1/transactions', 'POST', {
-      telegram_id: userTelegramId,
-      amount: -stake,
-      type: 'bet',
-      comment: 'BET:' + betslip.map(b => b.pick).join(','),
-      status: 'pending'
+      telegram_id: userTelegramId, amount: -stake,
+      type: 'bet', comment: 'BET:' + label + ':' + odds, status: 'pending'
     });
-
-    // Deduct balance
-    await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId, 'PATCH', {
-      balance: userBalance - stake
-    });
+    await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId, 'PATCH', { balance: userBalance - stake });
     userBalance -= stake;
     updateBalanceDisplay();
-
-    clearBetslip();
-    document.getElementById('betslip-modal').classList.add('hidden');
-    showBetToast('✓ Ставка принята! Выигрыш: ' + potential.toFixed(2) + ' TON', 'yes');
+    document.getElementById(panelId)?.remove();
+    const selBtn = document.getElementById('odds_' + matchId + '_' + (betslip.find(b=>b.matchId===matchId)?.pick||'').replace(/[^a-zA-Z0-9]/g,'_'));
+    if (selBtn) selBtn.classList.remove('selected');
+    betslip = betslip.filter(b => b.matchId !== matchId);
+    showBetToast('✓ Ставка принята! Выигрыш: ' + (stake * odds).toFixed(2) + ' TON', 'yes');
   } catch(e) {
     showBetToast('Ошибка, попробуйте ещё раз', 'no');
+    if (btn) { btn.disabled = false; btn.textContent = 'Ставить'; }
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Сделать ставку';
 }
+
+function updateBetslipBar() {}
 
 </script>
 </body>
