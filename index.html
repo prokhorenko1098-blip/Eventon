@@ -606,6 +606,25 @@
           <button class="deposit-btn" onclick="openDepositModal()">
             💎 <span id="deposit-btn-label">Пополнить баланс</span>
           </button>
+          <button class="deposit-btn" onclick="openProposeModal()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);margin-top:8px;">
+            💡 <span id="propose-btn-label">Предложить рынок</span>
+          </button>
+        </div>
+      </div>
+      <!-- Creator earnings card -->
+      <div id="creator-card" style="display:none;margin:0 16px 12px;">
+        <div style="background:linear-gradient(135deg,#1a0a2e,#2d1458);border:1px solid rgba(124,58,237,0.3);border-radius:16px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a78bfa;margin-bottom:6px;" id="creator-label">МОИ РЫНКИ</div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div>
+              <div style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;" id="creator-earnings">0 TON</div>
+              <div style="font-size:11px;color:var(--muted);" id="creator-earnings-label">заработано как создатель</div>
+            </div>
+            <div style="margin-left:auto;text-align:right;">
+              <div style="font-size:20px;font-weight:700;color:#a78bfa;" id="creator-markets-count">0</div>
+              <div style="font-size:11px;color:var(--muted);">рынков создано</div>
+            </div>
+          </div>
         </div>
       </div>
       <div style="padding:0 16px 10px;"><div class="section-title" id="positions-title"></div></div>
@@ -665,6 +684,56 @@
       <button class="cta-btn" onclick="closeOverlay()" id="overlay-ok-btn"></button>
     </div>
   </div>
+
+  <!-- ══ PROPOSE MARKET MODAL ══ -->
+  <div class="modal-overlay hidden" id="propose-modal" onclick="closeProposeModal(event)">
+    <div class="modal-sheet" style="max-height:85vh;overflow-y:auto;">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="propose-title">💡 Предложить рынок</div>
+      <div class="modal-sub" id="propose-sub">Если рынок опубликуют — вы будете получать 0.5% с каждой ставки.</div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" id="propose-question-label">ВОПРОС</div>
+        <textarea id="propose-title-input" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);font-family:'Geist',sans-serif;resize:none;height:80px;outline:none;" placeholder="Например: Месси сыграет на ЧМ-2026?"></textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" id="propose-cat-label">КАТЕГОРИЯ</div>
+          <select id="propose-cat" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:'Geist',sans-serif;outline:none;">
+            <option value="politics">🗳 Политика</option>
+            <option value="crypto">₿ Крипто</option>
+            <option value="sport">⚽ Спорт</option>
+            <option value="culture">🎬 Культура</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" id="propose-prob-label">ВЕРОЯТНОСТЬ YES %</div>
+          <input id="propose-prob" type="number" min="5" max="95" value="50" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:'Geist Mono',monospace;outline:none;" />
+        </div>
+      </div>
+
+      <div style="background:var(--surface2);border:1px solid rgba(124,58,237,0.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <div style="font-size:20px;">💎</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5;" id="propose-reward-text">Вы получите <span style="color:#a78bfa;font-weight:700;">0.5%</span> с каждой ставки на ваш рынок автоматически.</div>
+      </div>
+
+      <button onclick="submitProposal()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border:none;border-radius:14px;padding:16px;font-family:'Geist',sans-serif;font-size:16px;font-weight:700;color:#fff;width:100%;cursor:pointer;" id="propose-submit-btn">
+        <span id="propose-submit-label">Отправить предложение</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ MY PROPOSALS LIST ══ -->
+  <div class="modal-overlay hidden" id="my-proposals-modal" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="my-proposals-title">Мои рынки</div>
+      <div id="my-proposals-list" style="margin-top:8px;"></div>
+      <button onclick="document.getElementById('my-proposals-modal').classList.add('hidden')" style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;width:100%;font-family:'Geist',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:12px;">Закрыть</button>
+    </div>
+  </div>
+
 
   <!-- ══ DEPOSIT MODAL ══ -->
   <div class="modal-overlay hidden" id="deposit-modal" onclick="closeDepositModal(event)">
@@ -1621,6 +1690,7 @@ function initTelegramUser() {
     localStorage.setItem('eventon_uid', userTelegramId);
   }
   loadUserBalance();
+  loadCreatorStats();
   // Now that we have a stable user ID, ping online counter
   pingOnline().then(fetchOnlineCount);
 }
@@ -1831,6 +1901,89 @@ async function loadMarketsFromSupabase() {
   } catch(e) {
     console.log('Markets load error, using hardcoded:', e);
   }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ── PROPOSE MARKET SYSTEM ─────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+const CREATOR_FEE_PCT = 0.005; // 0.5%
+
+function openProposeModal() {
+  const t = T[lang];
+  document.getElementById('propose-title').textContent = lang==='en'?'💡 Propose a Market':lang==='uk'?'💡 Запропонувати ринок':'💡 Предложить рынок';
+  document.getElementById('propose-sub').textContent = lang==='en'?'If published, you earn 0.5% of every bet placed.':lang==='uk'?'Якщо опублікують — отримуєте 0.5% з кожної ставки.':'Если опубликуют — вы получаете 0.5% с каждой ставки.';
+  document.getElementById('propose-title-input').value = '';
+  document.getElementById('propose-prob').value = 50;
+  document.getElementById('propose-modal').classList.remove('hidden');
+}
+
+function closeProposeModal(e) {
+  if (!e || e.target === document.getElementById('propose-modal')) {
+    document.getElementById('propose-modal').classList.add('hidden');
+  }
+}
+
+async function submitProposal() {
+  const title = document.getElementById('propose-title-input').value.trim();
+  if (!title || title.length < 10) {
+    showBetToast(lang==='en'?'Write a question (min 10 chars)':lang==='uk'?'Напишіть питання (мін 10 символів)':'Напишите вопрос (мин 10 символов)', 'no');
+    return;
+  }
+
+  const btn = document.getElementById('propose-submit-btn');
+  btn.disabled = true;
+  document.getElementById('propose-submit-label').textContent = '⏳ ...';
+
+  try {
+    await supaFetch('/rest/v1/market_proposals', 'POST', {
+      telegram_id: userTelegramId,
+      title_ru: title,
+      title_uk: title,
+      title_en: title,
+      cat: document.getElementById('propose-cat').value,
+      yes_prob: parseInt(document.getElementById('propose-prob').value) || 50,
+      deadline_days: 30,
+      status: 'pending'
+    });
+
+    document.getElementById('propose-modal').classList.add('hidden');
+    showBetToast(lang==='en'?'✓ Proposal sent!':lang==='uk'?'✓ Пропозицію надіслано!':'✓ Предложение отправлено!', 'yes');
+  } catch(e) {
+    showBetToast('Ошибка, попробуйте ещё раз', 'no');
+  }
+
+  btn.disabled = false;
+  document.getElementById('propose-submit-label').textContent = lang==='en'?'Send proposal':lang==='uk'?'Надіслати пропозицію':'Отправить предложение';
+}
+
+async function loadCreatorStats() {
+  if (!userTelegramId) return;
+  try {
+    // Get markets created by this user
+    const markets = await supaFetch('/rest/v1/markets?creator_id=eq.' + userTelegramId + '&select=id,title_ru,creator_fee');
+    if (!markets || !markets.length) return;
+
+    const totalEarned = markets.reduce((sum, m) => sum + (parseFloat(m.creator_fee) || 0), 0);
+
+    // Show creator card
+    const card = document.getElementById('creator-card');
+    if (card) {
+      card.style.display = 'block';
+      document.getElementById('creator-earnings').textContent = totalEarned.toFixed(2) + ' TON';
+      document.getElementById('creator-markets-count').textContent = markets.length;
+      card.onclick = () => showMyProposals(markets);
+    }
+  } catch(e) {}
+}
+
+async function showMyProposals(markets) {
+  const list = document.getElementById('my-proposals-list');
+  list.innerHTML = markets.map(m => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${m.title_ru}</div>
+      <div style="font-size:12px;color:#a78bfa;">◈ ${(parseFloat(m.creator_fee)||0).toFixed(2)} TON заработано</div>
+    </div>`).join('');
+  document.getElementById('my-proposals-modal').classList.remove('hidden');
 }
 
 // Init on load
