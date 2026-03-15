@@ -2513,14 +2513,29 @@ function renderMatchCard(m) {
   const isF1Card = m.leagueCode === 'F1';
 
   // Parse live score "1:2 45'" or "1:2"
-  let scoreHome = '', scoreAway = '', matchMinute = '';
+  let scoreHome = '', scoreAway = '', matchMinute = '', matchStatus = '';
   if ((m.isLive || m.isFT) && m.liveScore) {
-    const sc = m.liveScore.replace('LIVE','').replace('ФТ','').trim();
+    const sc = m.liveScore.trim();
     const parts = sc.split(':');
     scoreHome = parts[0]?.trim() || '0';
-    const awayParts = (parts[1] || '0').split(/\s+/);
-    scoreAway = awayParts[0]?.trim() || '0';
-    matchMinute = awayParts[1] || '';
+    const rest = (parts[1] || '0').trim();
+    const restParts = rest.split(/\s+/);
+    scoreAway = restParts[0]?.trim() || '0';
+    const timeStr = restParts.slice(1).join(' ').trim();
+
+    if (m.isFT) {
+      matchStatus = 'Завершён';
+    } else if (timeStr === 'ПТ') {
+      matchStatus = 'Перерыв';
+    } else if (timeStr.includes('ДВ')) {
+      matchStatus = timeStr; // "ДВ 95'"
+    } else if (timeStr.includes('Пен')) {
+      matchStatus = 'Пенальти';
+    } else if (timeStr) {
+      matchStatus = timeStr; // "45'"
+    } else {
+      matchStatus = 'LIVE';
+    }
   }
 
   return `<div class="match-card" id="match-${m.id}">
@@ -2546,15 +2561,19 @@ function renderMatchCard(m) {
           <div class="match-score-sep">:</div>
           <div class="match-score-num">${scoreAway}</div>
         </div>
-        <div class="match-score-time"><span class="live-dot"></span>${matchMinute || 'LIVE'}</div>
+        <div class="match-score-time">
+          ${matchStatus === 'Перерыв' ? '<span style="color:#f59e0b;font-weight:700;font-size:10px;">⏸ ПЕРЕРЫВ</span>' :
+            matchStatus.includes('Пен') ? '<span style="color:#f59e0b;font-weight:700;font-size:10px;">⚽ ПЕНАЛЬТИ</span>' :
+            '<span class="live-dot"></span><span>' + matchStatus + '</span>'}
+        </div>
       </div>` : m.isFT ? `
       <div class="match-score-live">
         <div class="match-score-nums">
           <div class="match-score-num" style="color:var(--muted);">${scoreHome}</div>
-          <div class="match-score-sep">:</div>
+          <div class="match-score-sep" style="color:var(--muted);">:</div>
           <div class="match-score-num" style="color:var(--muted);">${scoreAway}</div>
         </div>
-        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:2px;">ФТ</div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:2px;">ЗАВЕРШЁН</div>
       </div>` : `<div class="match-vs">VS</div>`}
       <div class="match-team">
         <div class="match-team-flag">${m.awayFlag}</div>
