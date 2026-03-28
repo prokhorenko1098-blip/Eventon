@@ -862,6 +862,12 @@ if (window.Telegram && window.Telegram.WebApp) {
   if (window.Telegram.WebApp.requestFullscreen) {
     window.Telegram.WebApp.requestFullscreen();
   }
+  setTimeout(() => {
+    window.Telegram.WebApp.expand();
+    if (window.Telegram.WebApp.requestFullscreen) {
+      window.Telegram.WebApp.requestFullscreen();
+    }
+  }, 300);
 }
 // ── MARKETS DATA (топ события по мотивам Polymarket, март 2026) ───
 const ALL_MARKETS = [
