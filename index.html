@@ -859,6 +859,9 @@
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.expand();
+  if (window.Telegram.WebApp.requestFullscreen) {
+    window.Telegram.WebApp.requestFullscreen();
+  }
 }
 // ── MARKETS DATA (топ события по мотивам Polymarket, март 2026) ───
 const ALL_MARKETS = [
