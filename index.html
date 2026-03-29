@@ -2345,16 +2345,21 @@ async function loadBetMatches() {
         const leagueM = title.match(/\((.+?)\)/);
         home = m ? m[1].trim() : 'Команда 1';
         away = m ? m[2].replace(/\s*\(.*\)\s*/,'').trim() : 'Команда 2';
-        league = leagueM ? leagueM[1] : 'Футбол';
-        leagueCode = 'PL';
-        // Translate league names
+        const leagueRaw = leagueM ? leagueM[1] : 'Футбол';
+        // Map league name → display name + leagueCode
         const leagueMap = {
-          'Premier League': 'АПЛ', 'Primeira Liga': 'Прімейра Ліга',
-          'Ligue 1': 'Ліга 1', 'Bundesliga': 'Бундесліга',
-          'Serie A': 'Серія А', 'La Liga': 'Ла Ліга',
-          'Champions League': 'Ліга чемпіонів', 'Eredivisie': 'Ередивізі',
+          'Premier League':   { name: 'АПЛ',              code: 'PL'  },
+          'La Liga':          { name: 'Ла Лига',           code: 'PD'  },
+          'Champions League': { name: 'Лига чемпионов',   code: 'CL'  },
+          'Serie A':          { name: 'Серия А',           code: 'SA'  },
+          'Bundesliga':       { name: 'Бундеслига',        code: 'BL1' },
+          'Ligue 1':          { name: 'Лига 1',            code: 'L1'  },
+          'Primeira Liga':    { name: 'Прімейра Ліга',     code: 'PL1' },
+          'Eredivisie':       { name: 'Ередивізі',         code: 'DED' },
         };
-        league = leagueMap[league] || league;
+        const mapped = leagueMap[leagueRaw];
+        league     = mapped ? mapped.name : leagueRaw;
+        leagueCode = mapped ? mapped.code : 'OTHER';
         homeFlag = '⚽'; awayFlag = '⚽';
         time = 'Скоро';
       } else if (sport === 'nba') {
@@ -2434,9 +2439,11 @@ async function loadBetMatches() {
     // Filter out finished matches
     const activeMatches = supaMatches.filter(m => !m.liveScore || !m.liveScore.includes('ФТ'));
     const finalMatches = activeMatches.length > 0 ? activeMatches : supaMatches.length > 0 ? supaMatches : [];
-    // Always merge with SAMPLE_MATCHES as fallback — show samples if no real matches
     if (finalMatches.length > 0) {
-      betMatches = finalMatches;
+      // Merge: supabase matches first, then SAMPLE_MATCHES for leagues not covered
+      const supaLeagueCodes = new Set(finalMatches.map(m => m.leagueCode));
+      const samplesNotInSupa = SAMPLE_MATCHES.filter(m => !supaLeagueCodes.has(m.leagueCode));
+      betMatches = [...finalMatches, ...samplesNotInSupa];
     }
     // else keep SAMPLE_MATCHES already set above
     renderBetMatches();
