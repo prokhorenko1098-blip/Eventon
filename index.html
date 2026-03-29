@@ -2126,48 +2126,86 @@ let currentBetSportFilter = 'all';
 
 // Hardcoded sample matches (will be replaced by Supabase data)
 const SAMPLE_MATCHES = [
+  // ── АПЛ ──
   {
     id: 'pl_001', league: 'АПЛ', leagueCode: 'PL',
-    home: 'Liverpool', away: 'Tottenham',
-    homeFlag: '🔴', awayFlag: '⚪',
-    time: 'Сег. 22:00',
-    odds: { h: 1.75, d: 3.80, a: 4.50 },
+    home: 'Liverpool', away: 'Chelsea',
+    homeFlag: '🔴', awayFlag: '🔵',
+    time: '5 апр 17:30',
+    odds: { h: 1.65, d: 3.90, a: 5.00 },
     totals: [
-      { label: 'Тотал больше 1.5', odds: 1.35 },
-      { label: 'Тотал больше 2.5', odds: 1.85 },
-      { label: 'Тотал больше 3.5', odds: 2.80 },
+      { label: 'Тотал больше 2.5', odds: 1.80 },
+      { label: 'Тотал больше 3.5', odds: 2.70 },
       { label: 'Тотал меньше 2.5', odds: 2.05 },
+      { label: 'Тотал меньше 3.5', odds: 1.50 },
     ],
-    btts: { yes: 1.72, no: 2.05 },
-    handicap: [
-      { label: 'Ф1 (-1.5)', odds: 2.90 },
-      { label: 'Ф2 (+1.5)', odds: 1.45 },
-    ]
+    btts: { yes: 1.75, no: 2.05 },
+    handicap: [{ label: 'Ф1 (-1.5)', odds: 3.10 }, { label: 'Ф2 (+1.5)', odds: 1.40 }]
   },
+  {
+    id: 'pl_002', league: 'АПЛ', leagueCode: 'PL',
+    home: 'Arsenal', away: 'Manchester City',
+    homeFlag: '🔴', awayFlag: '🔵',
+    time: '6 апр 16:30',
+    odds: { h: 2.40, d: 3.30, a: 2.90 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.75 },
+      { label: 'Тотал больше 3.5', odds: 2.55 },
+      { label: 'Тотал меньше 2.5', odds: 2.10 },
+      { label: 'Тотал меньше 3.5', odds: 1.55 },
+    ],
+    btts: { yes: 1.80, no: 1.95 },
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.80 }, { label: 'Ф2 (+0.5)', odds: 1.50 }]
+  },
+  {
+    id: 'pl_003', league: 'АПЛ', leagueCode: 'PL',
+    home: 'Manchester United', away: 'Tottenham',
+    homeFlag: '🔴', awayFlag: '⚪',
+    time: '13 апр 15:00',
+    odds: { h: 2.20, d: 3.40, a: 3.30 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.85 },
+      { label: 'Тотал меньше 2.5', odds: 2.00 },
+    ],
+    btts: { yes: 1.78, no: 2.02 },
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.60 }, { label: 'Ф2 (+0.5)', odds: 1.52 }]
+  },
+  // ── Ла Лига ──
   {
     id: 'pd_001', league: 'Ла Лига', leagueCode: 'PD',
     home: 'Real Madrid', away: 'Barcelona',
     homeFlag: '⚪', awayFlag: '🔵',
-    time: 'Завтра 21:00',
+    time: '12 апр 21:00',
     odds: { h: 2.10, d: 3.40, a: 3.20 },
     totals: [
-      { label: 'Тотал больше 1.5', odds: 1.28 },
       { label: 'Тотал больше 2.5', odds: 1.75 },
       { label: 'Тотал больше 3.5', odds: 2.60 },
       { label: 'Тотал меньше 2.5', odds: 2.15 },
+      { label: 'Тотал меньше 3.5', odds: 1.50 },
     ],
     btts: { yes: 1.65, no: 2.20 },
-    handicap: [
-      { label: 'Ф1 (-0.5)', odds: 2.50 },
-      { label: 'Ф2 (+0.5)', odds: 1.55 },
-    ]
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.50 }, { label: 'Ф2 (+0.5)', odds: 1.55 }]
   },
   {
+    id: 'pd_002', league: 'Ла Лига', leagueCode: 'PD',
+    home: 'Atletico Madrid', away: 'Sevilla',
+    homeFlag: '🔴', awayFlag: '⚪',
+    time: '6 апр 19:00',
+    odds: { h: 1.85, d: 3.50, a: 4.10 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.90 },
+      { label: 'Тотал меньше 2.5', odds: 1.90 },
+    ],
+    btts: { yes: 1.72, no: 2.08 },
+    handicap: [{ label: 'Ф1 (-1)', odds: 3.00 }, { label: 'Ф2 (+1)', odds: 1.42 }]
+  },
+  // ── Лига чемпионов ──
+  {
     id: 'cl_001', league: 'Лига чемпионов', leagueCode: 'CL',
-    home: 'Bayern Munich', away: 'PSG',
+    home: 'Bayern Munich', away: 'Inter Milan',
     homeFlag: '🔴', awayFlag: '🔵',
-    time: 'Завтра 22:00',
-    odds: { h: 1.95, d: 3.60, a: 3.80 },
+    time: '8 апр 22:00',
+    odds: { h: 1.90, d: 3.60, a: 3.90 },
     totals: [
       { label: 'Тотал больше 2.5', odds: 1.70 },
       { label: 'Тотал больше 3.5', odds: 2.50 },
@@ -2175,34 +2213,27 @@ const SAMPLE_MATCHES = [
       { label: 'Тотал меньше 3.5', odds: 1.55 },
     ],
     btts: { yes: 1.80, no: 1.95 },
-    handicap: [
-      { label: 'Ф1 (-1)', odds: 3.10 },
-      { label: 'Ф2 (+1)', odds: 1.40 },
-    ]
+    handicap: [{ label: 'Ф1 (-1)', odds: 3.10 }, { label: 'Ф2 (+1)', odds: 1.40 }]
   },
   {
-    id: 'nba_001', league: 'НБА', leagueCode: 'NBA',
-    home: 'Lakers', away: 'Celtics',
-    homeFlag: '💜', awayFlag: '💚',
-    time: 'Сегодня 03:30',
-    odds: { h: 2.20, d: null, a: 1.70 },
+    id: 'cl_002', league: 'Лига чемпионов', leagueCode: 'CL',
+    home: 'Arsenal', away: 'PSG',
+    homeFlag: '🔴', awayFlag: '🔵',
+    time: '9 апр 22:00',
+    odds: { h: 2.00, d: 3.50, a: 3.60 },
     totals: [
-      { label: 'Тотал больше 215.5', odds: 1.90 },
-      { label: 'Тотал больше 220.5', odds: 1.90 },
-      { label: 'Тотал меньше 215.5', odds: 1.90 },
-      { label: 'Тотал меньше 220.5', odds: 1.90 },
+      { label: 'Тотал больше 2.5', odds: 1.78 },
+      { label: 'Тотал меньше 2.5', odds: 2.02 },
     ],
-    btts: null,
-    handicap: [
-      { label: 'Ф1 (-4.5)', odds: 1.90 },
-      { label: 'Ф2 (+4.5)', odds: 1.90 },
-    ]
+    btts: { yes: 1.82, no: 1.98 },
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.45 }, { label: 'Ф2 (+0.5)', odds: 1.57 }]
   },
+  // ── Серия А ──
   {
     id: 'sa_001', league: 'Серия А', leagueCode: 'SA',
     home: 'Inter Milan', away: 'AC Milan',
     homeFlag: '🔵', awayFlag: '🔴',
-    time: 'Вс 20:45',
+    time: '6 апр 20:45',
     odds: { h: 2.05, d: 3.30, a: 3.60 },
     totals: [
       { label: 'Тотал больше 2.5', odds: 1.95 },
@@ -2211,16 +2242,27 @@ const SAMPLE_MATCHES = [
       { label: 'Тотал меньше 3.5', odds: 1.40 },
     ],
     btts: { yes: 1.85, no: 1.90 },
-    handicap: [
-      { label: 'Ф1 (-0.5)', odds: 2.40 },
-      { label: 'Ф2 (+0.5)', odds: 1.60 },
-    ]
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.40 }, { label: 'Ф2 (+0.5)', odds: 1.60 }]
   },
+  {
+    id: 'sa_002', league: 'Серия А', leagueCode: 'SA',
+    home: 'Napoli', away: 'Juventus',
+    homeFlag: '🔵', awayFlag: '⚫',
+    time: '13 апр 20:45',
+    odds: { h: 2.15, d: 3.25, a: 3.40 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.88 },
+      { label: 'Тотал меньше 2.5', odds: 1.92 },
+    ],
+    btts: { yes: 1.80, no: 2.00 },
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.55 }, { label: 'Ф2 (+0.5)', odds: 1.53 }]
+  },
+  // ── Бундеслига ──
   {
     id: 'bl1_001', league: 'Бундеслига', leagueCode: 'BL1',
     home: 'Bayern Munich', away: 'Borussia Dortmund',
     homeFlag: '🔴', awayFlag: '🟡',
-    time: 'Сб 18:30',
+    time: '5 апр 18:30',
     odds: { h: 1.80, d: 3.70, a: 4.20 },
     totals: [
       { label: 'Тотал больше 2.5', odds: 1.65 },
@@ -2229,57 +2271,94 @@ const SAMPLE_MATCHES = [
       { label: 'Тотал меньше 3.5', odds: 1.55 },
     ],
     btts: { yes: 1.75, no: 2.05 },
-    handicap: [
-      { label: 'Ф1 (-1)', odds: 2.80 },
-      { label: 'Ф2 (+1)', odds: 1.45 },
-    ]
+    handicap: [{ label: 'Ф1 (-1)', odds: 2.80 }, { label: 'Ф2 (+1)', odds: 1.45 }]
   },
   {
     id: 'bl1_002', league: 'Бундеслига', leagueCode: 'BL1',
     home: 'Bayer Leverkusen', away: 'RB Leipzig',
     homeFlag: '🔴', awayFlag: '🔴',
-    time: 'Вс 15:30',
+    time: '12 апр 15:30',
     odds: { h: 2.10, d: 3.40, a: 3.30 },
     totals: [
       { label: 'Тотал больше 2.5', odds: 1.80 },
-      { label: 'Тотал больше 3.5', odds: 2.60 },
       { label: 'Тотал меньше 2.5', odds: 2.00 },
-      { label: 'Тотал меньше 3.5', odds: 1.50 },
     ],
     btts: { yes: 1.80, no: 2.00 },
-    handicap: [
-      { label: 'Ф1 (-0.5)', odds: 2.50 },
-      { label: 'Ф2 (+0.5)', odds: 1.55 },
-    ]
+    handicap: [{ label: 'Ф1 (-0.5)', odds: 2.50 }, { label: 'Ф2 (+0.5)', odds: 1.55 }]
+  },
+  // ── НБА ──
+  {
+    id: 'nba_001', league: 'НБА', leagueCode: 'NBA',
+    home: 'Lakers', away: 'Celtics',
+    homeFlag: '💜', awayFlag: '💚',
+    time: '5 апр 03:30',
+    odds: { h: 2.20, d: null, a: 1.70 },
+    totals: [
+      { label: 'Тотал больше 220.5', odds: 1.90 },
+      { label: 'Тотал меньше 220.5', odds: 1.90 },
+    ],
+    btts: null,
+    handicap: [{ label: 'Ф1 (-4.5)', odds: 1.90 }, { label: 'Ф2 (+4.5)', odds: 1.90 }]
   },
   {
+    id: 'nba_002', league: 'НБА', leagueCode: 'NBA',
+    home: 'Warriors', away: 'Nuggets',
+    homeFlag: '💛', awayFlag: '🔵',
+    time: '6 апр 04:00',
+    odds: { h: 2.50, d: null, a: 1.55 },
+    totals: [
+      { label: 'Тотал больше 225.5', odds: 1.90 },
+      { label: 'Тотал меньше 225.5', odds: 1.90 },
+    ],
+    btts: null,
+    handicap: [{ label: 'Ф1 (-7.5)', odds: 1.90 }, { label: 'Ф2 (+7.5)', odds: 1.90 }]
+  },
+  {
+    id: 'nba_003', league: 'НБА', leagueCode: 'NBA',
+    home: 'Heat', away: 'Knicks',
+    homeFlag: '🔴', awayFlag: '🔵',
+    time: '8 апр 01:30',
+    odds: { h: 1.85, d: null, a: 1.95 },
+    totals: [
+      { label: 'Тотал больше 215.5', odds: 1.90 },
+      { label: 'Тотал меньше 215.5', odds: 1.90 },
+    ],
+    btts: null,
+    handicap: [{ label: 'Ф1 (-2.5)', odds: 1.90 }, { label: 'Ф2 (+2.5)', odds: 1.90 }]
+  },
+  // ── Формула 1 ──
+  {
     id: 'f1_001', league: 'Формула 1', leagueCode: 'F1',
-    home: 'Гран-при Японии 2026', away: 'Suzuka · 5 апреля',
+    home: 'Гран-при Японии 2026', away: 'Suzuka · 6 апреля',
     homeFlag: '🏎', awayFlag: '🏁',
-    time: 'Вс 07:00',
+    time: '6 апр 08:00',
     isF1: true,
-    odds: { h: 2.50, d: 4.00, a: 3.20 },
+    odds: { h: 2.50, d: null, a: 3.20 },
     totals: [
       { label: 'Verstappen победит', odds: 2.50 },
       { label: 'Norris победит', odds: 3.20 },
       { label: 'Leclerc победит', odds: 4.00 },
       { label: 'Hamilton победит', odds: 5.50 },
+      { label: 'Piastri победит', odds: 5.00 },
+      { label: 'Russell победит', odds: 7.00 },
     ],
     btts: null,
     handicap: []
   },
   {
     id: 'f1_002', league: 'Формула 1', leagueCode: 'F1',
-    home: 'Гран-при Бахрейна 2026', away: 'Сахир · 19 апреля',
+    home: 'Гран-при Бахрейна 2026', away: 'Сахир · 20 апреля',
     homeFlag: '🏎', awayFlag: '🏁',
-    time: '19 апр',
+    time: '20 апр',
     isF1: true,
-    odds: { h: 2.80, d: 3.80, a: 3.00 },
+    odds: { h: 2.80, d: null, a: 3.00 },
     totals: [
       { label: 'Verstappen победит', odds: 2.80 },
       { label: 'Norris победит', odds: 3.00 },
       { label: 'Piastri победит', odds: 4.50 },
       { label: 'Russell победит', odds: 6.00 },
+      { label: 'Leclerc победит', odds: 4.20 },
+      { label: 'Hamilton победит', odds: 6.50 },
     ],
     btts: null,
     handicap: []
@@ -2363,13 +2442,31 @@ async function loadBetMatches() {
         homeFlag = '⚽'; awayFlag = '⚽';
         time = 'Скоро';
       } else if (sport === 'nba') {
-        // "SAC победят SAS? (НБА)" -> parse
+        // "Los Angeles Lakers победят Boston Celtics? (НБА)" -> parse
         const m = title.match(/^(.+?) победят (.+?)\s*\(НБА\)\?/);
-        home = m ? m[1].trim() : 'Home';
-        away = m ? m[2].trim() : 'Away';
+        const NBA_NAMES = {
+          'LAL':'Lakers','BOS':'Celtics','GSW':'Warriors','MIA':'Heat',
+          'NYK':'Knicks','CHI':'Bulls','BKN':'Nets','MIL':'Bucks',
+          'PHX':'Suns','DEN':'Nuggets','LAC':'Clippers','DAL':'Mavericks',
+          'SAS':'Spurs','HOU':'Rockets','OKC':'Thunder','MIN':'Timberwolves',
+          'IND':'Pacers','PHI':'76ers','TOR':'Raptors','ATL':'Hawks',
+          'CLE':'Cavaliers','DET':'Pistons','ORL':'Magic','WAS':'Wizards',
+          'MEM':'Grizzlies','NOP':'Pelicans','POR':'Trail Blazers',
+          'SAC':'Kings','UTA':'Jazz','CHA':'Hornets',
+          'Los Angeles Lakers':'Lakers','Boston Celtics':'Celtics',
+          'Golden State Warriors':'Warriors','Miami Heat':'Heat',
+          'New York Knicks':'Knicks','Chicago Bulls':'Bulls',
+          'Brooklyn Nets':'Nets','Milwaukee Bucks':'Bucks',
+          'Phoenix Suns':'Suns','Denver Nuggets':'Nuggets',
+        };
+        const rawHome = m ? m[1].trim() : 'Home';
+        const rawAway = m ? m[2].trim() : 'Away';
+        home = NBA_NAMES[rawHome] || rawHome;
+        away = NBA_NAMES[rawAway] || rawAway;
         league = 'НБА'; leagueCode = 'NBA';
         homeFlag = '🏀'; awayFlag = '🏀';
-        time = 'Скоро';
+        const liveScore = winM.live_score || null;
+        time = liveScore || 'Скоро';
       } else if (sport === 'f1') {
         // "Ферстаппен выиграет Japanese Grand Prix 2026?" — show as race event
         const mWin = title.match(/^(.+?) выиграет (.+?)\?/);
