@@ -2213,6 +2213,74 @@ const SAMPLE_MATCHES = [
       { label: 'Ф2 (+0.5)', odds: 1.60 },
     ]
   },
+  {
+    id: 'bl1_001', league: 'Бундеслига', leagueCode: 'BL1',
+    home: 'Bayern Munich', away: 'Borussia Dortmund',
+    homeFlag: '🔴', awayFlag: '🟡',
+    time: 'Сб 18:30',
+    odds: { h: 1.80, d: 3.70, a: 4.20 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.65 },
+      { label: 'Тотал больше 3.5', odds: 2.40 },
+      { label: 'Тотал меньше 2.5', odds: 2.30 },
+      { label: 'Тотал меньше 3.5', odds: 1.55 },
+    ],
+    btts: { yes: 1.75, no: 2.05 },
+    handicap: [
+      { label: 'Ф1 (-1)', odds: 2.80 },
+      { label: 'Ф2 (+1)', odds: 1.45 },
+    ]
+  },
+  {
+    id: 'bl1_002', league: 'Бундеслига', leagueCode: 'BL1',
+    home: 'Bayer Leverkusen', away: 'RB Leipzig',
+    homeFlag: '🔴', awayFlag: '🔴',
+    time: 'Вс 15:30',
+    odds: { h: 2.10, d: 3.40, a: 3.30 },
+    totals: [
+      { label: 'Тотал больше 2.5', odds: 1.80 },
+      { label: 'Тотал больше 3.5', odds: 2.60 },
+      { label: 'Тотал меньше 2.5', odds: 2.00 },
+      { label: 'Тотал меньше 3.5', odds: 1.50 },
+    ],
+    btts: { yes: 1.80, no: 2.00 },
+    handicap: [
+      { label: 'Ф1 (-0.5)', odds: 2.50 },
+      { label: 'Ф2 (+0.5)', odds: 1.55 },
+    ]
+  },
+  {
+    id: 'f1_001', league: 'Формула 1', leagueCode: 'F1',
+    home: 'Гран-при Японии 2026', away: 'Suzuka · 5 апреля',
+    homeFlag: '🏎', awayFlag: '🏁',
+    time: 'Вс 07:00',
+    isF1: true,
+    odds: { h: 2.50, d: 4.00, a: 3.20 },
+    totals: [
+      { label: 'Verstappen победит', odds: 2.50 },
+      { label: 'Norris победит', odds: 3.20 },
+      { label: 'Leclerc победит', odds: 4.00 },
+      { label: 'Hamilton победит', odds: 5.50 },
+    ],
+    btts: null,
+    handicap: []
+  },
+  {
+    id: 'f1_002', league: 'Формула 1', leagueCode: 'F1',
+    home: 'Гран-при Бахрейна 2026', away: 'Сахир · 19 апреля',
+    homeFlag: '🏎', awayFlag: '🏁',
+    time: '19 апр',
+    isF1: true,
+    odds: { h: 2.80, d: 3.80, a: 3.00 },
+    totals: [
+      { label: 'Verstappen победит', odds: 2.80 },
+      { label: 'Norris победит', odds: 3.00 },
+      { label: 'Piastri победит', odds: 4.50 },
+      { label: 'Russell победит', odds: 6.00 },
+    ],
+    btts: null,
+    handicap: []
+  },
 ];
 
 async function loadBetMatches() {
@@ -2487,7 +2555,18 @@ const CLUB_LOGOS = {
   'Benfica':            'https://upload.wikimedia.org/wikipedia/en/a/a2/SL_Benfica_logo.svg',
   'Ajax':               'https://upload.wikimedia.org/wikipedia/en/7/79/Ajax_Amsterdam.svg',
   'Celtic':             'https://upload.wikimedia.org/wikipedia/en/f/f5/Celtic_FC.svg',
-  // НБА
+  // Формула 1
+  'Red Bull':           'https://upload.wikimedia.org/wikipedia/en/8/8b/Red_Bull_Racing_logo.svg',
+  'McLaren':            'https://upload.wikimedia.org/wikipedia/en/2/22/McLaren_Racing_logo.svg',
+  'Ferrari':            'https://upload.wikimedia.org/wikipedia/en/d/d1/Ferrari_Flag.svg',
+  'Mercedes':           'https://upload.wikimedia.org/wikipedia/commons/9/9c/Mercedes_AMG_Petronas_F1_Logo.svg',
+  'Aston Martin':       'https://upload.wikimedia.org/wikipedia/en/8/8a/Aston_Martin_F1_Team_logo.svg',
+  'Alpine':             'https://upload.wikimedia.org/wikipedia/commons/7/7e/Alpine_F1_Team_logo.svg',
+  'Williams':           'https://upload.wikimedia.org/wikipedia/en/a/ab/Williams_Racing_logo_%282020%29.svg',
+  'Haas':               'https://upload.wikimedia.org/wikipedia/en/9/9b/Haas_F1_Team_logo.svg',
+  'Sauber':             'https://upload.wikimedia.org/wikipedia/en/9/92/Sauber_Motorsport_AG_logo.svg',
+  'RB':                 'https://upload.wikimedia.org/wikipedia/en/8/8b/Red_Bull_Racing_logo.svg',
+
   'Lakers':             'https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg',
   'Celtics':            'https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg',
   'Warriors':           'https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg',
@@ -2508,6 +2587,37 @@ const CLUB_LOGOS = {
   '76ers':              'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
   'Raptors':            'https://upload.wikimedia.org/wikipedia/en/3/36/Toronto_Raptors_logo.svg',
 };
+
+const F1_DRIVER_TEAMS = {
+  'Verstappen': 'Red Bull',
+  'Norris':     'McLaren',
+  'Piastri':    'McLaren',
+  'Leclerc':    'Ferrari',
+  'Hamilton':   'Ferrari',
+  'Russell':    'Mercedes',
+  'Antonelli':  'Mercedes',
+  'Alonso':     'Aston Martin',
+  'Stroll':     'Aston Martin',
+  'Gasly':      'Alpine',
+  'Doohan':     'Alpine',
+  'Sainz':      'Williams',
+  'Albon':      'Williams',
+  'Bearman':    'Haas',
+  'Ocon':       'Haas',
+  'Hulkenberg': 'Sauber',
+  'Bortoleto':  'Sauber',
+  'Tsunoda':    'RB',
+  'Lawson':     'RB',
+};
+
+function getDriverTeamLogo(driverName) {
+  for (const [driver, team] of Object.entries(F1_DRIVER_TEAMS)) {
+    if (driverName.includes(driver)) {
+      return CLUB_LOGOS[team] || null;
+    }
+  }
+  return null;
+}
 
 function getClubLogo(teamName) {
   if (!teamName) return null;
@@ -2610,9 +2720,14 @@ function renderMatchCard(m) {
         ${oddsBtn(m.id, m.away, 'П2', m.odds.a)}
        </div>`;
 
-  const totalsHtml = m.totals.map(t =>
-    oddsBtn(m.id, t.label, t.label, t.odds)
-  ).join('');
+  const totalsHtml = m.totals.map(t => {
+    if (isF1) {
+      const logo = getDriverTeamLogo(t.label);
+      const logoHtml = logo ? `<img src="${logo}" alt="" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px;" onerror="this.style.display='none'">` : '';
+      return oddsBtn(m.id, `${logoHtml}${t.label}`, t.label, t.odds);
+    }
+    return oddsBtn(m.id, t.label, t.label, t.odds);
+  }).join('');
 
   const bttsHtml = m.btts ? `
     <div class="odds-section-title">Обе забьют</div>
@@ -2661,10 +2776,17 @@ function renderMatchCard(m) {
       <div class="match-time">${m.isLive ? '<span style="color:#ef4444;font-weight:700;animation:pulse 1s infinite;">● LIVE</span>' : (m.isFT ? '<span style="color:var(--muted);font-size:10px;">ЗАВЕРШЁН</span>' : '<span style="color:var(--ton);font-weight:600;">' + m.time + '</span>')}</div>
     </div>
     ${isF1Card ? `
-    <div style="padding:12px 14px 8px;text-align:center;">
-      <div style="font-size:22px;margin-bottom:4px;">${m.homeFlag}</div>
-      <div style="font-size:15px;font-weight:700;">${m.home}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;">${m.away}</div>
+    <div style="padding:12px 14px 8px;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:15px;font-weight:700;">${m.home}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${m.away}</div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;">
+        ${['Red Bull','McLaren','Ferrari','Mercedes','Aston Martin','Alpine'].map(team => {
+          const logo = CLUB_LOGOS[team];
+          return logo ? `<img src="${logo}" alt="${team}" title="${team}" style="width:28px;height:28px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">` : '';
+        }).join('')}
+      </div>
     </div>` : `
     <div class="match-teams">
       <div class="match-team">
