@@ -181,7 +181,7 @@
   /* ── BET SCREEN ── */
   .bet-screen { }
   .bet-date-header { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin: 0 12px 10px; overflow: hidden; }
+  .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin: 0 12px 8px; overflow: hidden; }
   .match-header { padding: 10px 14px 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
   .filter-btn { padding: 7px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 99px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.18s; white-space: nowrap; flex-shrink: 0; }
   .filter-btn:active { transform: scale(0.94); }
@@ -189,26 +189,50 @@
   .match-league { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
   .match-time { font-size: 11px; color: var(--ton); font-weight: 600; }
   .match-time.live { color: #ef4444; animation: pulse 1.5s infinite; }
-  .match-teams { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; gap: 8px; }
+  .match-teams { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; gap: 8px; }
   .match-team { flex: 1; text-align: center; }
-  .match-team-name { font-size: 14px; font-weight: 700; line-height: 1.2; }
-  .match-team-flag { font-size: 22px; margin-bottom: 4px; }
+  .match-team-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+  .match-team-flag { font-size: 20px; margin-bottom: 3px; }
   .match-vs { font-size: 12px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
   .match-score-live { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
   .match-score-nums { display: flex; align-items: center; gap: 6px; }
-  .match-score-num { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 700; color: #fff; min-width: 28px; text-align: center; }
+  .match-score-num { font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 700; color: #fff; min-width: 28px; text-align: center; }
   .match-score-sep { font-size: 20px; font-weight: 700; color: var(--muted); }
   .match-score-time { font-size: 11px; font-weight: 700; color: #ef4444; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
   .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; display: inline-block; }
-  .match-odds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 0 12px 12px; }
-  .match-odds-wide { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px 8px; }
-  .odds-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .match-odds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; padding: 0 12px 10px; }
+  .match-odds-wide { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 0 12px 8px; }
+  .odds-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 6px; text-align: center; cursor: pointer; transition: all 0.15s; }
   .odds-btn:active { transform: scale(0.95); }
-  .odds-btn.selected { background: rgba(0,152,234,0.15); border-color: var(--ton); }
-  .odds-btn-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
-  .odds-btn-val { font-size: 15px; font-weight: 700; color: var(--text); font-family: 'Geist Mono', monospace; }
+  .odds-btn.selected { background: rgba(0,152,234,0.18); border-color: var(--ton); }
+  .odds-btn.in-express { background: rgba(0,229,160,0.12); border-color: var(--yes); }
+  .odds-btn-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .odds-btn-val { font-size: 14px; font-weight: 700; color: var(--text); font-family: 'Geist Mono', monospace; }
   .odds-btn.selected .odds-btn-val { color: var(--ton); }
-  .odds-section-title { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 6px 14px 4px; }
+  .odds-btn.in-express .odds-btn-val { color: var(--yes); }
+  .odds-section-title { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 5px 14px 3px; }
+  /* Expand button */
+  .match-expand-btn { width: 100%; padding: 7px; background: none; border: none; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; }
+  .match-expand-btn:active { background: var(--surface2); }
+  .match-extra { display: none; }
+  .match-extra.open { display: block; }
+  /* Express betslip fixed bottom */
+  #express-panel { position: fixed; bottom: 68px; left: 0; right: 0; z-index: 90; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); }
+  #express-panel.visible { transform: translateY(0); }
+  .express-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .express-bar-info { flex: 1; }
+  .express-bar-title { font-size: 12px; font-weight: 700; color: var(--yes); }
+  .express-bar-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .express-bar-odds { font-family: 'Geist Mono', monospace; font-size: 18px; font-weight: 700; color: var(--yes); }
+  .express-bar-btn { background: var(--yes); border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; color: #000; cursor: pointer; white-space: nowrap; }
+  .express-sheet { background: var(--surface); border-top: 1px solid var(--border2); padding: 14px; display: none; max-height: 60vh; overflow-y: auto; }
+  .express-sheet.open { display: block; }
+  .express-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .express-item-info { flex: 1; }
+  .express-item-match { font-size: 11px; color: var(--muted); }
+  .express-item-pick { font-size: 13px; font-weight: 700; }
+  .express-item-odds { font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 700; color: var(--ton); }
+  .express-item-remove { width: 24px; height: 24px; background: var(--surface2); border: none; border-radius: 50%; color: var(--muted); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 
   .inline-bet-panel { background: linear-gradient(135deg,rgba(0,152,234,0.08),rgba(0,106,181,0.08)); border: 1px solid rgba(0,152,234,0.25); border-radius: 14px; padding: 14px; margin: 0 12px 10px; animation: fadeIn 0.2s ease; }
@@ -712,8 +736,38 @@
       <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
     </div>
     <div class="scroll-body" id="bet-scroll">
-      <div id="bet-matches-list" style="padding-top:8px;padding-bottom:80px;"></div>
+      <div id="bet-matches-list" style="padding-top:8px;padding-bottom:160px;"></div>
       <div style="height:20px;"></div>
+    </div>
+    <!-- Express betslip fixed panel -->
+    <div id="express-panel">
+      <div class="express-sheet" id="express-sheet">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;">⚡ Экспресс</div>
+          <button onclick="clearExpress()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;">Очистить</button>
+        </div>
+        <div id="express-items-list"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px;">
+          <div style="font-size:12px;color:var(--muted);">Итоговый коэф.</div>
+          <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:700;color:var(--yes);" id="express-total-odds">1.00</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input id="express-stake-input" type="number" placeholder="Сумма TON" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:15px;font-weight:700;color:var(--text);font-family:'Geist Mono',monospace;outline:none;" oninput="updateExpressPotential()">
+          <button onclick="placeBetExpress()" style="background:var(--yes);border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;color:#000;cursor:pointer;">Поставить</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;">
+          <span style="color:var(--muted);">Возможный выигрыш</span>
+          <span style="color:var(--yes);font-weight:700;font-family:'Geist Mono',monospace;" id="express-potential">0.00 TON</span>
+        </div>
+      </div>
+      <div class="express-bar" onclick="toggleExpressSheet()">
+        <div class="express-bar-info">
+          <div class="express-bar-title">⚡ Экспресс <span id="express-count-badge" style="background:var(--yes);color:#000;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></div>
+          <div class="express-bar-sub" id="express-bar-sub">Добавьте события для экспресса</div>
+        </div>
+        <div class="express-bar-odds" id="express-bar-odds">×1.00</div>
+        <button class="express-bar-btn" onclick="event.stopPropagation();toggleExpressSheet()">Ставка</button>
+      </div>
     </div>
     <div class="bottom-nav">
       <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets-bet"></div></div>
@@ -2884,55 +2938,58 @@ function renderMatchCard(m) {
       <div class="match-time">${m.isLive ? '<span style="color:#ef4444;font-weight:700;animation:pulse 1s infinite;">● LIVE</span>' : (m.isFT ? '<span style="color:var(--muted);font-size:10px;">ЗАВЕРШЁН</span>' : '<span style="color:var(--ton);font-weight:600;">' + m.time + '</span>')}</div>
     </div>
     ${isF1Card ? `
-    <div style="padding:12px 14px 8px;">
-      <div style="text-align:center;margin-bottom:10px;">
-        <div style="font-size:15px;font-weight:700;">${m.home}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${m.away}</div>
-      </div>
-      <div style="display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;">
-        ${['Red Bull','McLaren','Ferrari','Mercedes','Aston Martin','Alpine'].map(team => {
-          const logo = CLUB_LOGOS[team];
-          return logo ? `<img src="${logo}" alt="${team}" title="${team}" style="width:28px;height:28px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">` : '';
-        }).join('')}
+    <div style="padding:10px 14px 6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${m.home}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${m.away}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${['Red Bull','McLaren','Ferrari','Mercedes'].map(team => {
+            const logo = CLUB_LOGOS[team];
+            return logo ? `<img src="${logo}" alt="${team}" title="${team}" style="width:22px;height:22px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">` : '';
+          }).join('')}
+        </div>
       </div>
     </div>` : `
-    <div class="match-teams">
-      <div class="match-team">
-        <div class="match-team-flag">${teamLogoHtml(m.home, m.homeFlag)}</div>
-        <div class="match-team-name">${m.home}</div>
+    <div style="display:flex;align-items:center;padding:8px 12px;gap:6px;">
+      <div style="flex:1;display:flex;align-items:center;gap:7px;">
+        <div style="flex-shrink:0;">${teamLogoHtml(m.home, m.homeFlag)}</div>
+        <div style="font-size:13px;font-weight:700;line-height:1.2;">${m.home}</div>
       </div>
       ${m.isLive ? `
-      <div class="match-score-live">
-        <div class="match-score-nums">
-          <div class="match-score-num">${scoreHome}</div>
-          <div class="match-score-sep">:</div>
-          <div class="match-score-num">${scoreAway}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding:0 4px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;">${scoreHome}</span>
+          <span style="font-size:16px;color:var(--muted);">:</span>
+          <span style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;">${scoreAway}</span>
         </div>
-        <div class="match-score-time">
-          ${matchStatus === 'Перерыв' ? '<span style="color:#f59e0b;font-weight:700;font-size:10px;">⏸ ПЕРЕРЫВ</span>' :
-            matchStatus.includes('Пен') ? '<span style="color:#f59e0b;font-weight:700;font-size:10px;">⚽ ПЕНАЛЬТИ</span>' :
-            '<span class="live-dot"></span><span>' + matchStatus + '</span>'}
-        </div>
+        <div style="font-size:10px;font-weight:700;color:#ef4444;margin-top:1px;">${matchStatus}</div>
       </div>` : m.isFT ? `
-      <div class="match-score-live">
-        <div class="match-score-nums">
-          <div class="match-score-num" style="color:var(--muted);">${scoreHome}</div>
-          <div class="match-score-sep" style="color:var(--muted);">:</div>
-          <div class="match-score-num" style="color:var(--muted);">${scoreAway}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding:0 4px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--muted);">${scoreHome}</span>
+          <span style="font-size:16px;color:var(--muted);">:</span>
+          <span style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--muted);">${scoreAway}</span>
         </div>
-        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:2px;">ЗАВЕРШЁН</div>
-      </div>` : `<div class="match-vs">VS</div>`}
-      <div class="match-team">
-        <div class="match-team-flag">${teamLogoHtml(m.away, m.awayFlag)}</div>
-        <div class="match-team-name">${m.away}</div>
+        <div style="font-size:9px;color:var(--muted);font-weight:700;">FT</div>
+      </div>` : `<div style="font-size:11px;color:var(--muted);font-weight:600;padding:0 6px;flex-shrink:0;">VS</div>`}
+      <div style="flex:1;display:flex;align-items:center;gap:7px;justify-content:flex-end;">
+        <div style="font-size:13px;font-weight:700;line-height:1.2;text-align:right;">${m.away}</div>
+        <div style="flex-shrink:0;">${teamLogoHtml(m.away, m.awayFlag)}</div>
       </div>
     </div>`}
     <div class="odds-section-title">Победитель</div>
     ${mainOdds}
-    <div class="odds-section-title">Тотал</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 12px 8px;">${totalsHtml}</div>
-    ${bttsHtml}
-    ${handicapHtml}
+    <div class="match-extra" id="extra-${m.id}">
+      ${m.totals && m.totals.length ? `<div class="odds-section-title">Тотал</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 12px 8px;">${totalsHtml}</div>` : ''}
+      ${bttsHtml}
+      ${handicapHtml}
+    </div>
+    ${(m.totals?.length || m.btts || m.handicap?.length) ? `
+    <button class="match-expand-btn" id="expand-btn-${m.id}" onclick="toggleMatchExtra('${m.id}')">
+      <span id="expand-icon-${m.id}">▼</span> <span id="expand-text-${m.id}">Тотал · Фора · Обе забьют</span>
+    </button>` : ''}
   </div>`;
 }
 
@@ -2946,30 +3003,155 @@ function oddsBtn(matchId, label, shortLabel, odds) {
   </div>`;
 }
 
-// ── BETSLIP ───────────────────────────────────────────────────────
+// ── EXPAND MATCH CARD ─────────────────────────────────────────────
+function toggleMatchExtra(matchId) {
+  const extra = document.getElementById('extra-' + matchId);
+  const icon = document.getElementById('expand-icon-' + matchId);
+  const text = document.getElementById('expand-text-' + matchId);
+  if (!extra) return;
+  const isOpen = extra.classList.toggle('open');
+  if (icon) icon.textContent = isOpen ? '▲' : '▼';
+  if (text) text.textContent = isOpen ? 'Свернуть' : 'Тотал · Фора · Обе забьют';
+}
+
+// ── EXPRESS BETSLIP ───────────────────────────────────────────────
+let expressBets = []; // { matchId, matchTitle, pick, label, odds }
+
 function toggleBetslipItem(matchId, matchTitle, pick, label, odds) {
   const btnId = 'odds_' + matchId + '_' + pick.replace(/[^a-zA-Z0-9]/g,'_');
-  const panelId = 'inline-panel-' + matchId;
 
-  // Remove existing panel
-  document.getElementById(panelId)?.remove();
-
-  // If same pick clicked again — deselect
-  const existing = betslip.findIndex(b => b.matchId === matchId && b.pick === pick);
+  // If same pick clicked again — remove from express
+  const existing = expressBets.findIndex(b => b.matchId === matchId && b.pick === pick);
   if (existing !== -1) {
-    betslip.splice(existing, 1);
-    document.getElementById(btnId)?.classList.remove('selected');
+    expressBets.splice(existing, 1);
+    document.getElementById(btnId)?.classList.remove('selected', 'in-express');
+    updateExpressPanel();
     return;
   }
 
   // Remove other picks from same match
-  const sameMatch = betslip.findIndex(b => b.matchId === matchId);
+  const sameMatch = expressBets.findIndex(b => b.matchId === matchId);
   if (sameMatch !== -1) {
-    const old = betslip[sameMatch];
+    const old = expressBets[sameMatch];
     const oldBtnId = 'odds_' + old.matchId + '_' + old.pick.replace(/[^a-zA-Z0-9]/g,'_');
-    document.getElementById(oldBtnId)?.classList.remove('selected');
-    betslip.splice(sameMatch, 1);
+    document.getElementById(oldBtnId)?.classList.remove('selected', 'in-express');
+    expressBets.splice(sameMatch, 1);
   }
+
+  // Add to express
+  expressBets.push({ matchId, matchTitle, pick, label, odds });
+  document.getElementById(btnId)?.classList.add('selected', 'in-express');
+  updateExpressPanel();
+}
+
+function updateExpressPanel() {
+  const panel = document.getElementById('express-panel');
+  const countBadge = document.getElementById('express-count-badge');
+  const barOdds = document.getElementById('express-bar-odds');
+  const barSub = document.getElementById('express-bar-sub');
+
+  if (!panel) return;
+
+  if (expressBets.length === 0) {
+    panel.classList.remove('visible');
+    return;
+  }
+
+  panel.classList.add('visible');
+  const totalOdds = expressBets.reduce((acc, b) => acc * b.odds, 1);
+  if (countBadge) countBadge.textContent = expressBets.length;
+  if (barOdds) barOdds.textContent = '×' + totalOdds.toFixed(2);
+  if (barSub) barSub.textContent = expressBets.map(b => b.pick).join(' · ');
+
+  // Update sheet
+  const totalOddsEl = document.getElementById('express-total-odds');
+  if (totalOddsEl) totalOddsEl.textContent = totalOdds.toFixed(2);
+
+  const list = document.getElementById('express-items-list');
+  if (list) {
+    list.innerHTML = expressBets.map((b, i) => `
+      <div class="express-item">
+        <div class="express-item-info">
+          <div class="express-item-match">${b.matchTitle}</div>
+          <div class="express-item-pick">${b.label}</div>
+        </div>
+        <div class="express-item-odds">${b.odds.toFixed(2)}</div>
+        <button class="express-item-remove" onclick="removeExpressBet(${i})">×</button>
+      </div>`).join('');
+  }
+  updateExpressPotential();
+}
+
+function removeExpressBet(index) {
+  const bet = expressBets[index];
+  if (bet) {
+    const btnId = 'odds_' + bet.matchId + '_' + bet.pick.replace(/[^a-zA-Z0-9]/g,'_');
+    document.getElementById(btnId)?.classList.remove('selected', 'in-express');
+  }
+  expressBets.splice(index, 1);
+  updateExpressPanel();
+  if (expressBets.length === 0) {
+    const sheet = document.getElementById('express-sheet');
+    sheet?.classList.remove('open');
+  }
+}
+
+function clearExpress() {
+  expressBets.forEach(b => {
+    const btnId = 'odds_' + b.matchId + '_' + b.pick.replace(/[^a-zA-Z0-9]/g,'_');
+    document.getElementById(btnId)?.classList.remove('selected', 'in-express');
+  });
+  expressBets = [];
+  updateExpressPanel();
+  const sheet = document.getElementById('express-sheet');
+  sheet?.classList.remove('open');
+}
+
+function toggleExpressSheet() {
+  const sheet = document.getElementById('express-sheet');
+  if (!sheet) return;
+  sheet.classList.toggle('open');
+}
+
+function updateExpressPotential() {
+  const input = document.getElementById('express-stake-input');
+  const potEl = document.getElementById('express-potential');
+  if (!input || !potEl) return;
+  const stake = parseFloat(input.value) || 0;
+  const totalOdds = expressBets.reduce((acc, b) => acc * b.odds, 1);
+  potEl.textContent = (stake * totalOdds).toFixed(2) + ' TON';
+}
+
+async function placeBetExpress() {
+  if (expressBets.length === 0) return;
+  const input = document.getElementById('express-stake-input');
+  const stake = parseFloat(input?.value) || 0;
+  if (stake <= 0) { showToast('Введите сумму ставки'); return; }
+  if (stake > userBalance) { showToast('Недостаточно средств'); return; }
+
+  const totalOdds = expressBets.reduce((acc, b) => acc * b.odds, 1);
+  const potential = stake * totalOdds;
+  const picks = expressBets.map(b => b.pick).join(' + ');
+  const comment = `Экспресс: ${picks}`;
+
+  try {
+    await supaFetch('/rest/v1/transactions', 'POST', {
+      telegram_id: userTelegramId,
+      amount: -stake,
+      type: 'bet',
+      comment,
+      status: 'completed'
+    });
+    userBalance -= stake;
+    updateBalanceDisplay();
+    showToast(`✅ Экспресс принят! Возможный выигрыш: ${potential.toFixed(2)} TON`);
+    clearExpress();
+  } catch(e) {
+    showToast('Ошибка размещения ставки');
+  }
+}
+
+// ── BETSLIP (legacy single bet) ───────────────────────────────────
 
   betslip.push({ matchId, matchTitle, pick, label, odds });
   document.getElementById(btnId)?.classList.add('selected');
