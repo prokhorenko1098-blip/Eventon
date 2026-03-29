@@ -2428,6 +2428,108 @@ function filterBetSport(code, btn) {
 }
 
 // Top clubs for priority sorting
+// ── CLUB LOGOS (через CDN Wikipedia/Wikimedia) ──────────────────────────────
+const CLUB_LOGOS = {
+  // АПЛ
+  'Liverpool':          'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+  'Arsenal':            'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+  'Chelsea':            'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+  'Manchester City':    'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+  'Manchester United':  'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+  'Tottenham':          'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+  'Newcastle':          'https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg',
+  'Aston Villa':        'https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_FC_crest_%282016%29.svg',
+  'West Ham':           'https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg',
+  'Everton':            'https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg',
+  'Brighton':           'https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg',
+  'Brentford':          'https://upload.wikimedia.org/wikipedia/en/2/2a/Brentford_FC_crest.svg',
+  'Fulham':             'https://upload.wikimedia.org/wikipedia/en/e/eb/Fulham_FC_%28shield%29.svg',
+  'Wolves':             'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',
+  'Crystal Palace':     'https://upload.wikimedia.org/wikipedia/en/0/0c/Crystal_Palace_FC_logo_%282022%29.svg',
+  'Nottingham Forest':  'https://upload.wikimedia.org/wikipedia/en/e/e5/Nottingham_Forest_F.C._logo.svg',
+  'Leicester':          'https://upload.wikimedia.org/wikipedia/en/2/2d/Leicester_City_crest.svg',
+  'Southampton':        'https://upload.wikimedia.org/wikipedia/en/c/c9/FC_Southampton.svg',
+  'Ipswich':            'https://upload.wikimedia.org/wikipedia/en/4/43/Ipswich_Town.svg',
+  // Ла Лига
+  'Real Madrid':        'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
+  'Barcelona':          'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
+  'Atletico Madrid':    'https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg',
+  'Sevilla':            'https://upload.wikimedia.org/wikipedia/en/3/3b/Sevilla_FC_logo.svg',
+  'Valencia':           'https://upload.wikimedia.org/wikipedia/en/c/ce/Valenciacf.svg',
+  'Real Sociedad':      'https://upload.wikimedia.org/wikipedia/en/f/f1/Real_Sociedad_logo.svg',
+  'Villarreal':         'https://upload.wikimedia.org/wikipedia/en/b/b9/Villarreal_CF_logo.svg',
+  'Athletic Club':      'https://upload.wikimedia.org/wikipedia/en/9/98/Club_Athletic_de_Bilbao_logo.svg',
+  'Real Betis':         'https://upload.wikimedia.org/wikipedia/en/1/13/Real_betis_logo.svg',
+  // Бундеслига
+  'Bayern Munich':      'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282002%E2%80%932017%29.svg',
+  'Borussia Dortmund':  'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg',
+  'Bayer Leverkusen':   'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
+  'RB Leipzig':         'https://upload.wikimedia.org/wikipedia/en/0/04/RB_Leipzig_2014_logo.svg',
+  'Eintracht Frankfurt':'https://upload.wikimedia.org/wikipedia/commons/0/04/Eintracht_Frankfurt_Logo.svg',
+  // Серия А
+  'Juventus':           'https://upload.wikimedia.org/wikipedia/commons/1/15/Juventus_FC_2017_icon_%28black%29.svg',
+  'Inter Milan':        'https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg',
+  'AC Milan':           'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg',
+  'Napoli':             'https://upload.wikimedia.org/wikipedia/commons/2/2d/SSC_Napoli_2007.svg',
+  'Roma':               'https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282013%29.svg',
+  'Lazio':              'https://upload.wikimedia.org/wikipedia/en/7/71/SS_Lazio_Badge.svg',
+  'Fiorentina':         'https://upload.wikimedia.org/wikipedia/commons/f/f3/ACF_Fiorentina_Logo_2022.svg',
+  'Atalanta':           'https://upload.wikimedia.org/wikipedia/en/6/66/AtalantaBC.svg',
+  // Лига 1
+  'PSG':                'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+  'Paris Saint-Germain':'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+  'Monaco':             'https://upload.wikimedia.org/wikipedia/en/e/ea/AS_Monaco_FC.svg',
+  'Marseille':          'https://upload.wikimedia.org/wikipedia/commons/d/d8/Olympique_Marseille_logo.svg',
+  'Lyon':               'https://upload.wikimedia.org/wikipedia/en/e/e8/Olympique_Lyonnais_%28logo%29.svg',
+  'Lille':              'https://upload.wikimedia.org/wikipedia/en/7/79/LOSC_Lille_logo_2011.svg',
+  // Лига чемпионов
+  'Porto':              'https://upload.wikimedia.org/wikipedia/en/f/f1/FC_Porto.svg',
+  'Benfica':            'https://upload.wikimedia.org/wikipedia/en/a/a2/SL_Benfica_logo.svg',
+  'Ajax':               'https://upload.wikimedia.org/wikipedia/en/7/79/Ajax_Amsterdam.svg',
+  'Celtic':             'https://upload.wikimedia.org/wikipedia/en/f/f5/Celtic_FC.svg',
+  // НБА
+  'Lakers':             'https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg',
+  'Celtics':            'https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg',
+  'Warriors':           'https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg',
+  'Heat':               'https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg',
+  'Knicks':             'https://upload.wikimedia.org/wikipedia/en/2/25/New_york_knicks_logo.svg',
+  'Bulls':              'https://upload.wikimedia.org/wikipedia/en/d/d1/Chicago_Bulls_logo.svg',
+  'Nets':               'https://upload.wikimedia.org/wikipedia/commons/4/44/Brooklyn_Nets_newlogo.svg',
+  'Bucks':              'https://upload.wikimedia.org/wikipedia/en/4/4a/Milwaukee_Bucks_logo.svg',
+  'Suns':               'https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg',
+  'Nuggets':            'https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg',
+  'Clippers':           'https://upload.wikimedia.org/wikipedia/en/e/ed/Los_Angeles_Clippers_%282024%29.svg',
+  'Mavericks':          'https://upload.wikimedia.org/wikipedia/en/9/97/Dallas_Mavericks_logo.svg',
+  'Spurs':              'https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg',
+  'Rockets':            'https://upload.wikimedia.org/wikipedia/en/2/28/Houston_Rockets.svg',
+  'Thunder':            'https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg',
+  'Timberwolves':       'https://upload.wikimedia.org/wikipedia/en/c/c2/Minnesota_Timberwolves_logo.svg',
+  'Pacers':             'https://upload.wikimedia.org/wikipedia/en/1/1b/Indiana_Pacers.svg',
+  '76ers':              'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
+  'Raptors':            'https://upload.wikimedia.org/wikipedia/en/3/36/Toronto_Raptors_logo.svg',
+};
+
+function getClubLogo(teamName) {
+  if (!teamName) return null;
+  // Прямое совпадение
+  if (CLUB_LOGOS[teamName]) return CLUB_LOGOS[teamName];
+  // Частичное совпадение
+  for (const [key, url] of Object.entries(CLUB_LOGOS)) {
+    if (teamName.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(teamName.toLowerCase())) {
+      return url;
+    }
+  }
+  return null;
+}
+
+function teamLogoHtml(teamName, fallbackEmoji) {
+  const logo = getClubLogo(teamName);
+  if (logo) {
+    return `<img src="${logo}" alt="${teamName}" style="width:36px;height:36px;object-fit:contain;margin-bottom:4px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:22px;">${fallbackEmoji}</span>`;
+  }
+  return `<span style="font-size:22px;">${fallbackEmoji}</span>`;
+}
+
 const TOP_CLUBS = [
   'Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool',
   'Chelsea','Arsenal','Tottenham','Bayern Munich','Borussia Dortmund',
@@ -2566,7 +2668,7 @@ function renderMatchCard(m) {
     </div>` : `
     <div class="match-teams">
       <div class="match-team">
-        <div class="match-team-flag">${m.homeFlag}</div>
+        <div class="match-team-flag">${teamLogoHtml(m.home, m.homeFlag)}</div>
         <div class="match-team-name">${m.home}</div>
       </div>
       ${m.isLive ? `
@@ -2591,7 +2693,7 @@ function renderMatchCard(m) {
         <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:2px;">ЗАВЕРШЁН</div>
       </div>` : `<div class="match-vs">VS</div>`}
       <div class="match-team">
-        <div class="match-team-flag">${m.awayFlag}</div>
+        <div class="match-team-flag">${teamLogoHtml(m.away, m.awayFlag)}</div>
         <div class="match-team-name">${m.away}</div>
       </div>
     </div>`}
