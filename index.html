@@ -2748,6 +2748,52 @@ const CLUB_LOGOS = {
   'Pacers':             'https://upload.wikimedia.org/wikipedia/en/1/1b/Indiana_Pacers.svg',
   '76ers':              'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
   'Raptors':            'https://upload.wikimedia.org/wikipedia/en/3/36/Toronto_Raptors_logo.svg',
+  // Дополнительные клубы из API
+  'Sporting CP':        'https://upload.wikimedia.org/wikipedia/en/f/f1/Sporting_Clube_de_Portugal_%28logo%29.svg',
+  'Sporting':           'https://upload.wikimedia.org/wikipedia/en/f/f1/Sporting_Clube_de_Portugal_%28logo%29.svg',
+  'Benfica':            'https://upload.wikimedia.org/wikipedia/en/a/a2/SL_Benfica_logo.svg',
+  'Braga':              'https://upload.wikimedia.org/wikipedia/en/0/01/SC_Braga_logo_2012.svg',
+  'Como':               'https://upload.wikimedia.org/wikipedia/en/4/47/Como_1907_crest.svg',
+  'Como 1907':          'https://upload.wikimedia.org/wikipedia/en/4/47/Como_1907_crest.svg',
+  'Strasbourg':         'https://upload.wikimedia.org/wikipedia/en/9/91/RC_Strasbourg_Alsace_logo.svg',
+  'Paris FC':           'https://upload.wikimedia.org/wikipedia/en/2/2e/Paris_FC_logo.svg',
+  'Toulouse':           'https://upload.wikimedia.org/wikipedia/en/2/2c/Toulouse_FC_logo.svg',
+  'Toulouse FC':        'https://upload.wikimedia.org/wikipedia/en/2/2c/Toulouse_FC_logo.svg',
+  'Metz':               'https://upload.wikimedia.org/wikipedia/en/7/76/FC_Metz_logo.svg',
+  'FC Metz':            'https://upload.wikimedia.org/wikipedia/en/7/76/FC_Metz_logo.svg',
+  'Le Havre':           'https://upload.wikimedia.org/wikipedia/en/d/da/Le_Havre_AC_logo.svg',
+  'Le Havre AC':        'https://upload.wikimedia.org/wikipedia/en/d/da/Le_Havre_AC_logo.svg',
+  'Olympique Lyonnais': 'https://upload.wikimedia.org/wikipedia/en/e/e8/Olympique_Lyonnais_%28logo%29.svg',
+  'Olympique Lyon':     'https://upload.wikimedia.org/wikipedia/en/e/e8/Olympique_Lyonnais_%28logo%29.svg',
+  'NAC Breda':          'https://upload.wikimedia.org/wikipedia/en/8/88/NAC_Breda_Logo.svg',
+  'NAC':                'https://upload.wikimedia.org/wikipedia/en/8/88/NAC_Breda_Logo.svg',
+  'Go Ahead Eagles':    'https://upload.wikimedia.org/wikipedia/en/a/a2/Go_Ahead_Eagles.svg',
+  'AS Roma':            'https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282013%29.svg',
+  'Estoril':            'https://upload.wikimedia.org/wikipedia/en/5/5c/GD_Estoril_Praia.svg',
+  'Estoril Praia':      'https://upload.wikimedia.org/wikipedia/en/5/5c/GD_Estoril_Praia.svg',
+  'CD Nacional':        'https://upload.wikimedia.org/wikipedia/en/c/cb/CD_Nacional_logo.svg',
+  'Nacional':           'https://upload.wikimedia.org/wikipedia/en/c/cb/CD_Nacional_logo.svg',
+  'Santa Clara':        'https://upload.wikimedia.org/wikipedia/en/1/1a/CD_Santa_Clara.svg',
+  'CD Santa Clara':     'https://upload.wikimedia.org/wikipedia/en/1/1a/CD_Santa_Clara.svg',
+  'AVS':                'https://upload.wikimedia.org/wikipedia/en/2/22/AVS_Futebol_SAD_logo.svg',
+  'SAS':                'https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg',
+  'SAC':                'https://upload.wikimedia.org/wikipedia/en/c/c7/Sacramento_Kings.svg',
+  'DEN':                'https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg',
+  'PHI':                'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
+  'PHX':                'https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg',
+  'MIN':                'https://upload.wikimedia.org/wikipedia/en/c/c2/Minnesota_Timberwolves_logo.svg',
+  'BOS':                'https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg',
+  'LAL':                'https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg',
+  'MIL':                'https://upload.wikimedia.org/wikipedia/en/4/4a/Milwaukee_Bucks_logo.svg',
+  'GSW':                'https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg',
+  'MIA':                'https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg',
+  'NYK':                'https://upload.wikimedia.org/wikipedia/en/2/25/New_york_knicks_logo.svg',
+  'OKC':                'https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg',
+  'DAL':                'https://upload.wikimedia.org/wikipedia/en/9/97/Dallas_Mavericks_logo.svg',
+  'HOU':                'https://upload.wikimedia.org/wikipedia/en/2/28/Houston_Rockets.svg',
+  'IND':                'https://upload.wikimedia.org/wikipedia/en/1/1b/Indiana_Pacers.svg',
+  'CLE':                'https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg',
+  'Cavaliers':          'https://upload.wikimedia.org/wikipedia/en/4/4b/Cleveland_Cavaliers_logo.svg',
 };
 
 const F1_DRIVER_TEAMS = {
@@ -3062,6 +3108,17 @@ function updateExpressPanel() {
   if (countBadge) countBadge.textContent = expressBets.length;
   if (barOdds) barOdds.textContent = '×' + totalOdds.toFixed(2);
   if (barSub) barSub.textContent = expressBets.map(b => b.pick).join(' · ');
+  // Change title based on count
+  const barTitle = document.querySelector('.express-bar-title');
+  if (barTitle) {
+    const badge = document.getElementById('express-count-badge');
+    const label = expressBets.length === 1 ? '🎯 Ординар' : '⚡ Экспресс';
+    barTitle.innerHTML = label + ' ';
+    if (badge) barTitle.appendChild(badge);
+  }
+  // Also update sheet title
+  const sheetTitle = document.querySelector('.express-sheet [style*="font-size:14px"]');
+  if (sheetTitle) sheetTitle.textContent = expressBets.length === 1 ? '🎯 Ординар' : '⚡ Экспресс';
 
   // Update sheet
   const totalOddsEl = document.getElementById('express-total-odds');
