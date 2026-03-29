@@ -3151,41 +3151,7 @@ async function placeBetExpress() {
   }
 }
 
-// ── BETSLIP (legacy single bet) ───────────────────────────────────
 
-  betslip.push({ matchId, matchTitle, pick, label, odds });
-  document.getElementById(btnId)?.classList.add('selected');
-
-  // Show inline bet panel below match card
-  const matchCard = document.getElementById('match-' + matchId);
-  if (!matchCard) return;
-
-  const panel = document.createElement('div');
-  panel.id = panelId;
-  panel.className = 'inline-bet-panel';
-  panel.innerHTML =
-    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;">' +
-      '<span>' + label + '</span>' +
-      '<span style="color:var(--ton);font-family:monospace;">' + odds.toFixed(2) + '</span>' +
-    '</div>' +
-    '<div class="inline-bet-amounts">' +
-      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',1,' + odds + ')">1</div>' +
-      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',5,' + odds + ')">5</div>' +
-      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',10,' + odds + ')">10</div>' +
-      '<div class="inline-bet-amount" onclick="setInlineBetAmount(\'' + panelId + '\',25,' + odds + ')">25</div>' +
-    '</div>' +
-    '<div class="inline-bet-input-row">' +
-      '<input class="inline-bet-input" id="' + panelId + '-input" type="number" inputmode="decimal" placeholder="0.0 TON" oninput="updateInlinePotential(\'' + panelId + '\',' + odds + ')" />' +
-      '<button class="inline-bet-confirm" id="' + panelId + '-btn" onclick="placeInlineBet(\'' + matchId + '\',\'' + label.replace(/'/g,"\'") + '\',' + odds + ')">Ставить</button>' +
-    '</div>' +
-    '<div class="inline-bet-potential">' +
-      '<span>Выигрыш:</span>' +
-      '<span id="' + panelId + '-potential">0.00 TON</span>' +
-    '</div>';
-
-  matchCard.after(panel);
-  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-}
 
 function setInlineBetAmount(panelId, amount, odds) {
   const input = document.getElementById(panelId + '-input');
