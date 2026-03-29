@@ -183,6 +183,9 @@
   .bet-date-header { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin: 0 12px 10px; overflow: hidden; }
   .match-header { padding: 10px 14px 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .filter-btn { padding: 7px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 99px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.18s; white-space: nowrap; flex-shrink: 0; }
+  .filter-btn:active { transform: scale(0.94); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(91,138,240,0.45); }
   .match-league { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
   .match-time { font-size: 11px; color: var(--ton); font-weight: 600; }
   .match-time.live { color: #ef4444; animation: pulse 1.5s infinite; }
@@ -2430,11 +2433,12 @@ async function loadBetMatches() {
 
     // Filter out finished matches
     const activeMatches = supaMatches.filter(m => !m.liveScore || !m.liveScore.includes('ФТ'));
-    if (activeMatches.length > 0) {
-      betMatches = activeMatches;
-    } else if (supaMatches.length > 0) {
-      betMatches = supaMatches; // show all if nothing upcoming
+    const finalMatches = activeMatches.length > 0 ? activeMatches : supaMatches.length > 0 ? supaMatches : [];
+    // Always merge with SAMPLE_MATCHES as fallback — show samples if no real matches
+    if (finalMatches.length > 0) {
+      betMatches = finalMatches;
     }
+    // else keep SAMPLE_MATCHES already set above
     renderBetMatches();
     console.log('Loaded', betMatches.length, 'matches from Supabase');
   } catch(e) {
