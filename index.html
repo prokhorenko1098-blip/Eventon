@@ -600,7 +600,7 @@
 
     <div class="bottom-nav">
       <div class="nav-item active"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets"></div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet"></div></div>
+      
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating"></div></div>
     </div>
@@ -714,69 +714,13 @@
     </div>
     <div class="bottom-nav">
       <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets2"></div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet2"></div></div>
+      
       <div class="nav-item active"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio2"></div></div>
       <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating2"></div></div>
     </div>
   </div>
 
   <!-- ══ SCREEN: BET ══ -->
-  <div class="screen hidden" id="screen-bet">
-    <div class="header">
-      <div class="header-title" id="bet-screen-title">⚽ Ставки</div>
-    </div>
-    <div style="display:flex;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <button onclick="filterBetSport('all',this)" class="filter-btn active" style="white-space:nowrap;">🔥 Все</button>
-      <button onclick="filterBetSport('PL',this)" class="filter-btn" style="white-space:nowrap;">🏴󠁧󠁢󠁥󠁮󠁧󠁿 АПЛ</button>
-      <button onclick="filterBetSport('PD',this)" class="filter-btn" style="white-space:nowrap;">🇪🇸 Ла Лига</button>
-      <button onclick="filterBetSport('CL',this)" class="filter-btn" style="white-space:nowrap;">⭐ ЛЧ</button>
-      <button onclick="filterBetSport('SA',this)" class="filter-btn" style="white-space:nowrap;">🇮🇹 Серия А</button>
-      <button onclick="filterBetSport('BL1',this)" class="filter-btn" style="white-space:nowrap;">🇩🇪 Бундеслига</button>
-      <button onclick="filterBetSport('NBA',this)" class="filter-btn" style="white-space:nowrap;">🏀 НБА</button>
-      <button onclick="filterBetSport('F1',this)" class="filter-btn" style="white-space:nowrap;">🏎 F1</button>
-    </div>
-    <div class="scroll-body" id="bet-scroll">
-      <div id="bet-matches-list" style="padding-top:8px;padding-bottom:160px;"></div>
-      <div style="height:20px;"></div>
-    </div>
-    <!-- Express betslip fixed panel -->
-    <div id="express-panel">
-      <div class="express-sheet" id="express-sheet">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:14px;font-weight:700;">⚡ Экспресс</div>
-          <button onclick="clearExpress()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;">Очистить</button>
-        </div>
-        <div id="express-items-list"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px;">
-          <div style="font-size:12px;color:var(--muted);">Итоговый коэф.</div>
-          <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:700;color:var(--yes);" id="express-total-odds">1.00</div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input id="express-stake-input" type="number" placeholder="Сумма TON" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:15px;font-weight:700;color:var(--text);font-family:'Geist Mono',monospace;outline:none;" oninput="updateExpressPotential()">
-          <button onclick="placeBetExpress()" style="background:var(--yes);border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;color:#000;cursor:pointer;">Поставить</button>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;">
-          <span style="color:var(--muted);">Возможный выигрыш</span>
-          <span style="color:var(--yes);font-weight:700;font-family:'Geist Mono',monospace;" id="express-potential">0.00 TON</span>
-        </div>
-      </div>
-      <div class="express-bar" onclick="toggleExpressSheet()">
-        <div class="express-bar-info">
-          <div class="express-bar-title">⚡ Экспресс <span id="express-count-badge" style="background:var(--yes);color:#000;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></div>
-          <div class="express-bar-sub" id="express-bar-sub">Добавьте события для экспресса</div>
-        </div>
-        <div class="express-bar-odds" id="express-bar-odds">×1.00</div>
-        <button class="express-bar-btn" onclick="event.stopPropagation();toggleExpressSheet()">Ставка</button>
-      </div>
-    </div>
-    <div class="bottom-nav">
-      <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets-bet"></div></div>
-      <div class="nav-item active"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet-active"></div></div>
-      <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio-bet"></div></div>
-      <div class="nav-item" onclick="showScreen('leaderboard')"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating-bet"></div></div>
-    </div>
-  </div>
-
   <!-- ══ SCREEN: LEADERBOARD ══ -->
   <div class="screen hidden" id="screen-leaderboard">
     <div class="header">
@@ -797,7 +741,7 @@
     </div>
     <div class="bottom-nav">
       <div class="nav-item" onclick="showScreen('home')"><div class="nav-icon">🔮</div><div class="nav-label" id="nav-markets3"></div></div>
-      <div class="nav-item" onclick="showScreen('bet')"><div class="nav-icon">⚽</div><div class="nav-label" id="nav-bet3"></div></div>
+      
       <div class="nav-item" onclick="showScreen('portfolio')"><div class="nav-icon">💼</div><div class="nav-label" id="nav-portfolio3"></div></div>
       <div class="nav-item active"><div class="nav-icon">🏆</div><div class="nav-label" id="nav-rating3"></div></div>
     </div>
@@ -1203,9 +1147,9 @@ function applyTranslations() {
   document.getElementById('stat-markets').textContent = t.statMarkets;
   document.getElementById('stat-users').textContent = t.statUsers;
   // nav 1 (home)
-  ['nav-markets','nav-bet','nav-portfolio','nav-rating'].forEach((id,i) => {
+  ['nav-markets','nav-portfolio','nav-rating'].forEach((id,i) => {
     const el = document.getElementById(id);
-    if (el) el.textContent = [t.navMarkets, t.navBet, t.navPortfolio, t.navRating][i];
+    if (el) el.textContent = [t.navMarkets, t.navPortfolio, t.navRating][i];
   });
   // portfolio
   document.getElementById('portfolio-title').textContent = t.portfolioTitle;
@@ -1214,7 +1158,6 @@ function applyTranslations() {
   document.getElementById('pnl-label').textContent = t.pnlLabel;
   document.getElementById('positions-title').textContent = t.positionsTitle;
   document.getElementById('nav-markets2').textContent = t.navMarkets;
-  document.getElementById('nav-bet2').textContent = t.navBet;
   document.getElementById('nav-portfolio2').textContent = t.navPortfolio;
   document.getElementById('nav-rating2').textContent = t.navRating;
   // leaderboard
@@ -1224,16 +1167,8 @@ function applyTranslations() {
   document.getElementById('lb-your-stats').textContent = t.lbYourStats;
   document.getElementById('lb-top-title').textContent = t.lbTopTitle;
   document.getElementById('nav-markets3').textContent = t.navMarkets;
-  document.getElementById('nav-bet3').textContent = t.navBet;
   document.getElementById('nav-portfolio3').textContent = t.navPortfolio;
   document.getElementById('nav-rating3').textContent = t.navRating;
-  // bet screen nav (all 4 labels)
-  ['nav-markets-bet','nav-bet-active','nav-portfolio-bet','nav-rating-bet'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = [t.navMarkets, t.navBet, t.navPortfolio, t.navRating][i];
-  });
-  const betTitle = document.getElementById('bet-screen-title');
-  if (betTitle) betTitle.textContent = '⚽ ' + t.navBet;
   // detail labels
   document.getElementById('chart-title').textContent = t.chartTitle;
   document.getElementById('bet-title').textContent = t.betTitle;
@@ -1338,7 +1273,6 @@ function showScreen(name) {
   if (to) to.classList.remove('hidden');
   prevScreen = currentScreen;
   currentScreen = name;
-  if (name === 'bet') loadBetMatches();
 }
 
 function goBack() {
