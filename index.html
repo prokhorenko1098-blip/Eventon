@@ -572,15 +572,15 @@
       <div class="hero" style="padding-top:14px;">
         <div class="hero-inner">
           <div class="hero-label" id="hero-label"></div>
-          <div class="hero-value">48 290 <span style="font-size:20px;color:var(--ton)">TON</span></div>
+          <div class="hero-value" id="hero-tvl">— <span style="font-size:20px;color:var(--ton)">TON</span></div>
           <div class="hero-sub" id="hero-sub"></div>
           <div class="hero-stats">
             <div class="hero-stat">
-              <div class="hero-stat-val">142</div>
+              <div class="hero-stat-val" id="hero-markets-count">—</div>
               <div class="hero-stat-lbl" id="stat-markets"></div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-val" style="color:var(--accent)">8 420</div>
+              <div class="hero-stat-val" style="color:var(--accent)" id="hero-users-count">—</div>
               <div class="hero-stat-lbl" id="stat-users"></div>
             </div>
           </div>
@@ -674,10 +674,18 @@
       <div class="header-title" id="portfolio-title"></div>
     </div>
     <div class="scroll-body">
+      <!-- Демо баннер -->
+      <div style="margin:12px 16px 0;background:linear-gradient(135deg,rgba(245,200,66,0.12),rgba(245,200,66,0.06));border:1px solid rgba(245,200,66,0.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <div style="font-size:20px;">🧪</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);">БЕТА-ТЕСТ</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px;">Демо режим · Стартовый баланс 1 000 TON</div>
+        </div>
+      </div>
       <div class="portfolio-header">
         <div class="balance-card fade-in">
           <div class="balance-label" id="balance-label"></div>
-          <div class="balance-amount" id="portfolio-balance">245.8 <span style="font-size:20px;color:var(--ton)">◈</span></div>
+          <div class="balance-amount" id="portfolio-balance">— <span style="font-size:20px;color:var(--ton)">◈</span></div>
           <div id="balance-usd" style="font-size:17px;font-weight:700;color:var(--yes);margin-top:4px;">≈ <span id="balance-usd-val">загрузка...</span></div>
           <div class="balance-sub" id="balance-sub"></div>
           <div class="balance-pnl">
@@ -1249,18 +1257,71 @@ function renderPositions() {
   `).join('');
 }
 
-function renderLeaderboard() {
-  document.getElementById('lb-list').innerHTML = LEADERBOARD.map(p => `
-    <div class="lb-item">
-      <div class="lb-rank ${p.rankClass}">${p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank-1] : p.rank}</div>
-      <div class="lb-avatar">${p.emoji}</div>
-      <div class="lb-name">${p.name}</div>
-      <div>
-        <div class="lb-profit">${p.profit}</div>
-        <div class="lb-accuracy">${p.acc} ${lang==='en'?'accuracy':'точность'}</div>
-      </div>
-    </div>
-  `).join('');
+async function renderLeaderboard() {
+  const listEl = document.getElementById('lb-list');
+  const totalEl = document.getElementById('lb-of-total');
+  const yourPosEl = document.getElementById('lb-your-pos');
+  const yourStatsEl = document.getElementById('lb-your-stats');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Загрузка...</div>';
+
+  try {
+    // Загружаем топ пользователей по балансу
+    const data = await supaFetch('/rest/v1/users?order=balance.desc&limit=50&select=telegram_id,username,balance');
+    if (!data || !data.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Пока нет участников</div>';
+      return;
+    }
+
+    const emojis = ['😎','🦊','🐺','🦁','🐯','🦅','🔥','⚡','💎','🚀','🎯','🌙'];
+    if (totalEl) totalEl.textContent = data.length;
+
+    // Найти позицию текущего пользователя
+    const myPos = data.findIndex(u => String(u.telegram_id) === String(userTelegramId));
+    if (myPos !== -1 && yourPosEl) {
+      yourPosEl.textContent = lang==='en' ? 'YOUR POSITION' : lang==='uk' ? 'ВАША ПОЗИЦІЯ' : 'ВАША ПОЗИЦИЯ';
+      const posCard = document.querySelector('.balance-card');
+      if (posCard) {
+        posCard.querySelector('.font-size\\:28px, [style*="font-size:28px"]')?.remove();
+      }
+      const rankDisplay = document.querySelector('[style*="font-size:28px"][style*="font-weight:700"]');
+      if (rankDisplay) rankDisplay.textContent = '#' + (myPos + 1);
+    }
+    if (yourStatsEl) {
+      const myData = data.find(u => String(u.telegram_id) === String(userTelegramId));
+      const myBalance = myData ? parseFloat(myData.balance).toFixed(1) : userBalance.toFixed(1);
+      const pnl = (parseFloat(myBalance) - DEMO_START_BALANCE).toFixed(1);
+      const pnlStr = pnl >= 0 ? '+' + pnl : pnl;
+      yourStatsEl.textContent = (lang==='en' ? 'Balance: ' : lang==='uk' ? 'Баланс: ' : 'Баланс: ') + myBalance + ' TON · P&L: ' + pnlStr + ' TON';
+    }
+
+    listEl.innerHTML = data.slice(0, 20).map((u, i) => {
+      const rank = i + 1;
+      const rankIcon = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+      const emoji = emojis[i % emojis.length];
+      const name = u.username ? '@' + u.username : 'user_' + String(u.telegram_id).slice(-4);
+      const balance = parseFloat(u.balance).toFixed(1);
+      const pnl = (parseFloat(u.balance) - DEMO_START_BALANCE).toFixed(1);
+      const pnlColor = parseFloat(pnl) >= 0 ? 'var(--yes)' : 'var(--no)';
+      const pnlStr = parseFloat(pnl) >= 0 ? '+' + pnl : pnl;
+      const isMe = String(u.telegram_id) === String(userTelegramId);
+      return `
+        <div class="lb-item" style="${isMe ? 'background:rgba(91,138,240,0.08);border:1px solid rgba(91,138,240,0.2);border-radius:12px;' : ''}">
+          <div class="lb-rank">${rankIcon}</div>
+          <div class="lb-avatar">${emoji}</div>
+          <div class="lb-name">${name}${isMe ? ' <span style="font-size:10px;color:var(--accent);">◀ ты</span>' : ''}</div>
+          <div>
+            <div class="lb-profit" style="color:${pnlColor}">${pnlStr} TON</div>
+            <div class="lb-accuracy">${balance} TON</div>
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Ошибка загрузки</div>';
+    console.log('Leaderboard error:', e);
+  }
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
@@ -1273,6 +1334,7 @@ function showScreen(name) {
   if (to) to.classList.remove('hidden');
   prevScreen = currentScreen;
   currentScreen = name;
+  if (name === 'leaderboard') renderLeaderboard();
 }
 
 function goBack() {
@@ -1303,8 +1365,10 @@ function openMarket(id) {
   document.getElementById('detail-header-title').textContent = t.catLabels[m.cat];
   document.getElementById('btn-yes').className = 'bet-btn yes';
   document.getElementById('btn-no').className = 'bet-btn no';
-  document.getElementById('btn-yes').textContent = t.btnYes;
-  document.getElementById('btn-no').textContent = t.btnNo;
+  const oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
+  const oddsNo  = (1 / ((100 - d.yes) / 100) * 0.98).toFixed(2);
+  document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsYes}</span>`;
+  document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsNo}</span>`;
   document.getElementById('place-bet-btn').disabled = true;
   document.getElementById('place-bet-btn').className = 'cta-btn';
   document.getElementById('place-bet-btn').textContent = t.betPlaceholder;
@@ -1402,33 +1466,101 @@ function updatePreviewDisplay(side, amt) {
     return;
   }
   const d = MARKET_DATA[currentMarketId];
-  const prob = side==='yes' ? d.yes/100 : (100-d.yes)/100;
-  const fee = amt*0.02, net = amt-fee, tokens = net/prob;
-  document.getElementById('prev-amount').textContent = amt.toFixed(2)+' TON';
-  document.getElementById('prev-win').textContent = tokens.toFixed(2)+' TON';
-  document.getElementById('prev-profit').textContent = '+'+(tokens-amt).toFixed(2)+' TON';
-  document.getElementById('prev-fee').textContent = fee.toFixed(3)+' TON';
+  const prob = side === 'yes' ? d.yes / 100 : (100 - d.yes) / 100;
+  const coef = (1 / prob * 0.98);
+  const fee = amt * 0.02;
+  const payout = amt * coef;
+  const profit = payout - amt;
+  document.getElementById('prev-amount').textContent = amt.toFixed(2) + ' TON';
+  document.getElementById('prev-win').textContent = payout.toFixed(2) + ' TON (×' + coef.toFixed(2) + ')';
+  document.getElementById('prev-profit').textContent = '+' + profit.toFixed(2) + ' TON';
+  document.getElementById('prev-fee').textContent = fee.toFixed(3) + ' TON';
 }
 
-function placeBet() {
+async function placeBet() {
   const t = T[lang];
   const amt = parseFloat(document.getElementById('amount-input').value);
-  if (!selectedSide || !amt || amt<0.5) return;
-  const d = MARKET_DATA[currentMarketId];
-  const m = T[lang].markets.find(x=>x.id===currentMarketId);
-  const prob = selectedSide==='yes' ? d.yes/100 : (100-d.yes)/100;
-  const tokens = (amt*0.98)/prob;
-  const profit = tokens - amt;
-  const sideLabel = selectedSide==='yes' ? t.yesLabel : t.noLabel;
-  document.getElementById('overlay-sub').textContent = t.overlaySub;
-  document.getElementById('overlay-detail').innerHTML = `
-    <div class="overlay-row"><span class="overlay-lbl">${t.overlayEvent}</span><span class="overlay-val" style="max-width:55%;text-align:right;font-size:11px;font-family:'Geist',sans-serif">${m.emoji} ${m.title.slice(0,38)}…</span></div>
-    <div class="overlay-row"><span class="overlay-lbl">${t.overlayPos}</span><span class="overlay-val" style="color:${selectedSide==='yes'?'var(--yes)':'var(--no)'}">${sideLabel}</span></div>
-    <div class="overlay-row"><span class="overlay-lbl">${t.overlaySpent}</span><span class="overlay-val">${amt.toFixed(2)} TON</span></div>
-    <div class="overlay-row"><span class="overlay-lbl">${t.overlayTokens}</span><span class="overlay-val">${tokens.toFixed(2)}</span></div>
-    <div class="overlay-row"><span class="overlay-lbl">${t.overlayPotential}</span><span class="overlay-val" style="color:var(--yes)">+${profit.toFixed(2)} TON</span></div>
-  `;
-  document.getElementById('success-overlay').classList.add('active');
+  if (!selectedSide || !amt || amt < 0.1) return;
+  if (amt > userBalance) { showToast(lang==='en' ? 'Insufficient balance' : lang==='uk' ? 'Недостатньо коштів' : 'Недостаточно средств'); return; }
+
+  const btn = document.getElementById('place-bet-btn');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const d = MARKET_DATA[currentMarketId];
+    const mkt = T[lang].markets.find(x => x.id === currentMarketId);
+
+    // Текущая вероятность из базы
+    const currentProb = selectedSide === 'yes' ? d.yes / 100 : (100 - d.yes) / 100;
+    const FEE = 0.02; // 2% комиссия
+    const payout = (amt * (1 - FEE)) / currentProb; // сколько получит при победе
+    const profit = payout - amt;
+    const sideLabel = selectedSide === 'yes' ? t.yesLabel : t.noLabel;
+
+    // 1. Записываем транзакцию в Supabase
+    await supaFetch('/rest/v1/transactions', 'POST', {
+      telegram_id: userTelegramId,
+      amount: -amt,
+      type: 'bet',
+      comment: `BET:${currentMarketId}:${selectedSide}:${amt}:${payout.toFixed(4)}`,
+      status: 'pending'
+    });
+
+    // 2. Списываем баланс пользователя
+    const newBalance = userBalance - amt;
+    await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId, 'PATCH', {
+      balance: newBalance
+    });
+    userBalance = newBalance;
+    updateBalanceDisplay();
+
+    // 3. Обновляем yes_prob и volume в markets (плавающий рынок)
+    const newVol = (d.vol || 0) + amt;
+    const newTrades = (d.trades || 0) + 1;
+
+    // Пересчитываем вероятность на основе объёма
+    // Простая модель: yes_prob двигается пропорционально ставкам
+    let newYes = d.yes;
+    if (selectedSide === 'yes') {
+      newYes = Math.min(97, d.yes + (amt / (newVol + 100)) * 100 * 0.5);
+    } else {
+      newYes = Math.max(3, d.yes - (amt / (newVol + 100)) * 100 * 0.5);
+    }
+    newYes = Math.round(newYes * 10) / 10;
+
+    await supaFetch('/rest/v1/markets?id=eq.' + currentMarketId, 'PATCH', {
+      yes_prob: newYes,
+      volume: newVol,
+      trades: newTrades
+    });
+
+    // 4. Обновляем локальный MARKET_DATA
+    d.yes = newYes;
+    d.vol = newVol;
+    d.trades = newTrades;
+    d.history.push(Math.round(newYes));
+    if (d.history.length > 12) d.history.shift();
+
+    // 5. Показываем успех
+    document.getElementById('overlay-title').textContent = t.overlayTitle;
+    document.getElementById('overlay-sub').textContent = t.overlaySub;
+    document.getElementById('overlay-detail').innerHTML = `
+      <div class="overlay-row"><span class="overlay-lbl">${t.overlayEvent}</span><span class="overlay-val" style="max-width:55%;text-align:right;font-size:11px;font-family:'Geist',sans-serif">${mkt?.emoji || ''} ${(mkt?.title || '').slice(0,38)}…</span></div>
+      <div class="overlay-row"><span class="overlay-lbl">${t.overlayPos}</span><span class="overlay-val" style="color:${selectedSide==='yes'?'var(--yes)':'var(--no)'}">${sideLabel}</span></div>
+      <div class="overlay-row"><span class="overlay-lbl">${t.overlaySpent}</span><span class="overlay-val">${amt.toFixed(2)} TON</span></div>
+      <div class="overlay-row"><span class="overlay-lbl">${t.overlayPotential}</span><span class="overlay-val" style="color:var(--yes)">+${profit.toFixed(2)} TON</span></div>
+      <div class="overlay-row"><span class="overlay-lbl">${lang==='en'?'New probability':lang==='uk'?'Нова ймовірність':'Новая вероятность'}</span><span class="overlay-val">ДА ${newYes.toFixed(0)}%</span></div>
+    `;
+    document.getElementById('overlay-ok-btn').textContent = t.overlayOk;
+    document.getElementById('success-overlay').classList.add('active');
+
+  } catch(e) {
+    console.error('placeBet error:', e);
+    showToast(lang==='en' ? 'Error placing bet' : 'Ошибка размещения ставки');
+    btn.disabled = false;
+    btn.textContent = t.betPlaceholder;
+  }
 }
 
 function closeOverlay() {
@@ -1811,33 +1943,74 @@ function generateDepositComment() {
   return code;
 }
 
+const DEMO_START_BALANCE = 1000; // Демо баланс для бета-теста
+
 async function loadUserBalance() {
   try {
-    // Try to get user from Supabase
     const data = await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId + '&select=balance,username');
     if (data && data.length > 0) {
       userBalance = parseFloat(data[0].balance) || 0;
     } else {
-      // Create user if not exists
+      // Новый пользователь — даём 1000 TON демо
       await supaFetch('/rest/v1/users', 'POST', {
         telegram_id: userTelegramId,
         username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'user_' + userTelegramId.slice(-4),
-        balance: 0
+        balance: DEMO_START_BALANCE
       });
-      userBalance = 0;
+      userBalance = DEMO_START_BALANCE;
+      // Записываем начисление демо баланса
+      await supaFetch('/rest/v1/transactions', 'POST', {
+        telegram_id: userTelegramId,
+        amount: DEMO_START_BALANCE,
+        type: 'deposit',
+        comment: 'DEMO: Стартовый баланс бета-теста',
+        status: 'completed'
+      });
     }
     updateBalanceDisplay();
+    loadRealStats(); // загружаем реальные цифры
   } catch(e) {
     console.log('Balance load error:', e);
+  }
+}
+
+async function loadRealStats() {
+  try {
+    // Реальный TVL — сумма всех ставок
+    const txData = await supaFetch('/rest/v1/transactions?type=eq.bet&status=eq.pending&select=amount');
+    const tvl = txData ? txData.reduce((sum, t) => sum + Math.abs(parseFloat(t.amount) || 0), 0) : 0;
+    const tvlEl = document.getElementById('hero-tvl');
+    if (tvlEl) tvlEl.innerHTML = tvl.toFixed(0) + ' <span style="font-size:20px;color:var(--ton)">TON</span>';
+
+    // Реальное кол-во активных рынков
+    const mktData = await supaFetch('/rest/v1/markets?active=eq.true&select=id&limit=1000');
+    const mktCount = mktData ? mktData.length : 0;
+    const mktEl = document.getElementById('hero-markets-count');
+    if (mktEl) mktEl.textContent = mktCount;
+
+    // Реальное кол-во пользователей
+    const usersData = await supaFetch('/rest/v1/users?select=id&limit=1000');
+    const usersCount = usersData ? usersData.length : 0;
+    const usersEl = document.getElementById('hero-users-count');
+    if (usersEl) usersEl.textContent = usersCount.toLocaleString();
+
+  } catch(e) {
+    console.log('Stats load error:', e);
   }
 }
 
 function updateBalanceDisplay() {
   const el = document.getElementById('portfolio-balance');
   if (el) el.innerHTML = userBalance.toFixed(2) + ' <span style="font-size:20px;color:var(--ton)">◈</span>';
-  // Update header balance too
   const hdr = document.querySelector('.header-ton-val');
   if (hdr) hdr.textContent = userBalance.toFixed(1);
+  // P&L от стартового баланса
+  const pnl = userBalance - DEMO_START_BALANCE;
+  const pnlEl = document.getElementById('pnl-amount');
+  if (pnlEl) {
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' TON';
+    pnlEl.className = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+  }
 }
 
 function openDepositModal() {
