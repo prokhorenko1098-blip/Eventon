@@ -881,64 +881,64 @@ if (window.Telegram && window.Telegram.WebApp) {
 // ── MARKETS DATA (топ события по мотивам Polymarket, март 2026) ───
 const ALL_MARKETS = [
   // ── ПОЛИТИКА ──
-  { id:1,  emoji:'🇺🇸', cat:'politics', yes:72, vol:8420000, trades:94200, deadline:'296', title_ru:'Республиканцы выиграют промежуточные выборы в Конгресс 2026?', title_uk:'Республіканці виграють проміжні вибори до Конгресу 2026?', title_en:'Will Republicans win the 2026 midterm elections?' },
-  { id:2,  emoji:'🗳', cat:'politics', yes:61, vol:5100000, trades:67300, deadline:'180', title_ru:'Трамп останется президентом до конца срока в 2029?', title_uk:'Трамп залишиться президентом до кінця терміну у 2029?', title_en:'Will Trump serve his full term until 2029?' },
-  { id:3,  emoji:'🌍', cat:'politics', yes:44, vol:3800000, trades:52100, deadline:'90', title_ru:'Иран и США заключат ядерную сделку в 2026?', title_uk:'Іран і США укладуть ядерну угоду у 2026?', title_en:'Will Iran and the US reach a nuclear deal in 2026?' },
-  { id:4,  emoji:'🏛', cat:'politics', yes:38, vol:2900000, trades:41800, deadline:'120', title_ru:'Демократы выдвинут нового лидера партии до июня 2026?', title_uk:'Демократи висунуть нового лідера партії до червня 2026?', title_en:'Will Democrats pick a new party leader by June 2026?' },
-  { id:5,  emoji:'🇺🇦', cat:'politics', yes:55, vol:6200000, trades:88400, deadline:'60', title_ru:'Перемирие на Украине будет подписано до июня 2026?', title_uk:'Перемир\'я в Україні буде підписано до червня 2026?', title_en:'Will a Ukraine ceasefire be signed before June 2026?' },
-  { id:6,  emoji:'🇷🇺', cat:'politics', yes:29, vol:4100000, trades:58700, deadline:'295', title_ru:'Путин уйдёт с поста президента России в 2026?', title_uk:'Путін піде з посади президента Росії у 2026?', title_en:'Will Putin leave the Russian presidency in 2026?' },
-  { id:7,  emoji:'🇮🇱', cat:'politics', yes:48, vol:3300000, trades:49200, deadline:'45', title_ru:'Израиль и Иран заключат прямые переговоры в 2026?', title_uk:'Ізраїль та Іран розпочнуть прямі переговори у 2026?', title_en:'Will Israel and Iran hold direct talks in 2026?' },
-  { id:8,  emoji:'🗺', cat:'politics', yes:33, vol:1800000, trades:28600, deadline:'200', title_ru:'Северная Корея проведёт ядерное испытание в 2026?', title_uk:'Північна Корея проведе ядерне випробування у 2026?', title_en:'Will North Korea conduct a nuclear test in 2026?' },
-  { id:9,  emoji:'🇨🇳', cat:'politics', yes:22, vol:2700000, trades:39100, deadline:'296', title_ru:'Китай введёт войска на Тайвань до конца 2026?', title_uk:'Китай введе війська на Тайвань до кінця 2026?', title_en:'Will China invade Taiwan by end of 2026?' },
-  { id:10, emoji:'📜', cat:'politics', yes:67, vol:1500000, trades:22400, deadline:'85', title_ru:'США введут новые тарифы против ЕС в 2026?', title_uk:'США введуть нові тарифи проти ЄС у 2026?', title_en:'Will the US impose new tariffs on the EU in 2026?' },
-  { id:11, emoji:'🏛', cat:'politics', yes:71, vol:980000, trades:14700, deadline:'120', title_ru:'Колумбия изменит конституцию при Петро в 2026?', title_uk:'Колумбія змінить конституцію за Петро у 2026?', title_en:'Will Colombia hold a constitutional referendum in 2026?' },
-  { id:12, emoji:'🌍', cat:'politics', yes:58, vol:1200000, trades:18300, deadline:'55', title_ru:'ООН примет резолюцию о прекращении огня на Ближнем Востоке?', title_uk:'ООН ухвалить резолюцію про припинення вогню на Близькому Сході?', title_en:'Will the UN pass a Middle East ceasefire resolution?' },
+  { id:1,  emoji:'🇺🇸', cat:'politics', yes:72, vol:0, trades:0, deadline:'296', title_ru:'Республиканцы выиграют промежуточные выборы в Конгресс 2026?', title_uk:'Республіканці виграють проміжні вибори до Конгресу 2026?', title_en:'Will Republicans win the 2026 midterm elections?' },
+  { id:2,  emoji:'🗳', cat:'politics', yes:61, vol:0, trades:0, deadline:'180', title_ru:'Трамп останется президентом до конца срока в 2029?', title_uk:'Трамп залишиться президентом до кінця терміну у 2029?', title_en:'Will Trump serve his full term until 2029?' },
+  { id:3,  emoji:'🌍', cat:'politics', yes:44, vol:0, trades:0, deadline:'90', title_ru:'Иран и США заключат ядерную сделку в 2026?', title_uk:'Іран і США укладуть ядерну угоду у 2026?', title_en:'Will Iran and the US reach a nuclear deal in 2026?' },
+  { id:4,  emoji:'🏛', cat:'politics', yes:38, vol:0, trades:0, deadline:'120', title_ru:'Демократы выдвинут нового лидера партии до июня 2026?', title_uk:'Демократи висунуть нового лідера партії до червня 2026?', title_en:'Will Democrats pick a new party leader by June 2026?' },
+  { id:5,  emoji:'🇺🇦', cat:'politics', yes:55, vol:0, trades:0, deadline:'60', title_ru:'Перемирие на Украине будет подписано до июня 2026?', title_uk:'Перемир\'я в Україні буде підписано до червня 2026?', title_en:'Will a Ukraine ceasefire be signed before June 2026?' },
+  { id:6,  emoji:'🇷🇺', cat:'politics', yes:29, vol:0, trades:0, deadline:'295', title_ru:'Путин уйдёт с поста президента России в 2026?', title_uk:'Путін піде з посади президента Росії у 2026?', title_en:'Will Putin leave the Russian presidency in 2026?' },
+  { id:7,  emoji:'🇮🇱', cat:'politics', yes:48, vol:0, trades:0, deadline:'45', title_ru:'Израиль и Иран заключат прямые переговоры в 2026?', title_uk:'Ізраїль та Іран розпочнуть прямі переговори у 2026?', title_en:'Will Israel and Iran hold direct talks in 2026?' },
+  { id:8,  emoji:'🗺', cat:'politics', yes:33, vol:0, trades:0, deadline:'200', title_ru:'Северная Корея проведёт ядерное испытание в 2026?', title_uk:'Північна Корея проведе ядерне випробування у 2026?', title_en:'Will North Korea conduct a nuclear test in 2026?' },
+  { id:9,  emoji:'🇨🇳', cat:'politics', yes:22, vol:0, trades:0, deadline:'296', title_ru:'Китай введёт войска на Тайвань до конца 2026?', title_uk:'Китай введе війська на Тайвань до кінця 2026?', title_en:'Will China invade Taiwan by end of 2026?' },
+  { id:10, emoji:'📜', cat:'politics', yes:67, vol:0, trades:0, deadline:'85', title_ru:'США введут новые тарифы против ЕС в 2026?', title_uk:'США введуть нові тарифи проти ЄС у 2026?', title_en:'Will the US impose new tariffs on the EU in 2026?' },
+  { id:11, emoji:'🏛', cat:'politics', yes:71, vol:0, trades:0, deadline:'120', title_ru:'Колумбия изменит конституцию при Петро в 2026?', title_uk:'Колумбія змінить конституцію за Петро у 2026?', title_en:'Will Colombia hold a constitutional referendum in 2026?' },
+  { id:12, emoji:'🌍', cat:'politics', yes:58, vol:0, trades:0, deadline:'55', title_ru:'ООН примет резолюцию о прекращении огня на Ближнем Востоке?', title_uk:'ООН ухвалить резолюцію про припинення вогню на Близькому Сході?', title_en:'Will the UN pass a Middle East ceasefire resolution?' },
 
   // ── КРИПТО ──
-  { id:13, emoji:'₿', cat:'crypto', yes:64, vol:12400000, trades:182000, deadline:'296', title_ru:'Bitcoin достигнет $150 000 до конца 2026?', title_uk:'Bitcoin досягне $150 000 до кінця 2026?', title_en:'Will Bitcoin reach $150,000 by end of 2026?' },
-  { id:14, emoji:'📈', cat:'crypto', yes:49, vol:9800000, trades:143000, deadline:'120', title_ru:'Ethereum превысит $5 000 до июля 2026?', title_uk:'Ethereum перевищить $5 000 до липня 2026?', title_en:'Will Ethereum exceed $5,000 by July 2026?' },
-  { id:15, emoji:'🚀', cat:'crypto', yes:38, vol:7200000, trades:104000, deadline:'200', title_ru:'Solana войдёт в топ-2 криптовалют по капитализации?', title_uk:'Solana увійде в топ-2 криптовалют за капіталізацією?', title_en:'Will Solana enter the top 2 cryptos by market cap?' },
-  { id:16, emoji:'💎', cat:'crypto', yes:77, vol:5600000, trades:81000, deadline:'296', title_ru:'SEC одобрит спотовый ETF на Solana до конца 2026?', title_uk:'SEC схвалить спотовий ETF на Solana до кінця 2026?', title_en:'Will SEC approve a spot Solana ETF by end of 2026?' },
-  { id:17, emoji:'⚡', cat:'crypto', yes:55, vol:4300000, trades:62000, deadline:'60', title_ru:'TON войдёт в топ-5 по капитализации к июню 2026?', title_uk:'TON увійде в топ-5 за капіталізацією до червня 2026?', title_en:'Will TON enter the top 5 cryptos by June 2026?' },
-  { id:18, emoji:'🔮', cat:'crypto', yes:42, vol:3800000, trades:55000, deadline:'150', title_ru:'Binance получит полную лицензию в США в 2026?', title_uk:'Binance отримає повну ліцензію у США у 2026?', title_en:'Will Binance get a full US license in 2026?' },
-  { id:19, emoji:'📊', cat:'crypto', yes:68, vol:3100000, trades:44000, deadline:'296', title_ru:'Крипто-рынок достигнет общей капитализации $5 трлн в 2026?', title_uk:'Крипто-ринок досягне загальної капіталізації $5 трлн у 2026?', title_en:'Will total crypto market cap reach $5T in 2026?' },
-  { id:20, emoji:'₿', cat:'crypto', yes:31, vol:2700000, trades:39000, deadline:'296', title_ru:'MicroStrategy купит ещё 100 000 BTC в 2026?', title_uk:'MicroStrategy купить ще 100 000 BTC у 2026?', title_en:'Will MicroStrategy buy another 100K BTC in 2026?' },
-  { id:21, emoji:'💰', cat:'crypto', yes:59, vol:2200000, trades:32000, deadline:'90', title_ru:'Fed снизит ставку трижды до конца 2026?', title_uk:'ФРС знизить ставку тричі до кінця 2026?', title_en:'Will the Fed cut rates 3 times by end of 2026?' },
-  { id:22, emoji:'🚀', cat:'crypto', yes:44, vol:1900000, trades:27000, deadline:'45', title_ru:'XRP достигнет $5 до мая 2026?', title_uk:'XRP досягне $5 до травня 2026?', title_en:'Will XRP reach $5 by May 2026?' },
-  { id:23, emoji:'⚡', cat:'crypto', yes:72, vol:1600000, trades:23000, deadline:'120', title_ru:'Конгресс США примет закон о крипторегулировании в 2026?', title_uk:'Конгрес США прийме закон про криптовалюти у 2026?', title_en:'Will the US Congress pass crypto legislation in 2026?' },
-  { id:24, emoji:'📉', cat:'crypto', yes:27, vol:1400000, trades:20000, deadline:'60', title_ru:'Bitcoin упадёт ниже $70 000 в 2026?', title_uk:'Bitcoin впаде нижче $70 000 у 2026?', title_en:'Will Bitcoin drop below $70,000 in 2026?' },
+  { id:13, emoji:'₿', cat:'crypto', yes:64, vol:0, trades:0, deadline:'296', title_ru:'Bitcoin достигнет $150 000 до конца 2026?', title_uk:'Bitcoin досягне $150 000 до кінця 2026?', title_en:'Will Bitcoin reach $150,000 by end of 2026?' },
+  { id:14, emoji:'📈', cat:'crypto', yes:49, vol:0, trades:0, deadline:'120', title_ru:'Ethereum превысит $5 000 до июля 2026?', title_uk:'Ethereum перевищить $5 000 до липня 2026?', title_en:'Will Ethereum exceed $5,000 by July 2026?' },
+  { id:15, emoji:'🚀', cat:'crypto', yes:38, vol:0, trades:0, deadline:'200', title_ru:'Solana войдёт в топ-2 криптовалют по капитализации?', title_uk:'Solana увійде в топ-2 криптовалют за капіталізацією?', title_en:'Will Solana enter the top 2 cryptos by market cap?' },
+  { id:16, emoji:'💎', cat:'crypto', yes:77, vol:0, trades:0, deadline:'296', title_ru:'SEC одобрит спотовый ETF на Solana до конца 2026?', title_uk:'SEC схвалить спотовий ETF на Solana до кінця 2026?', title_en:'Will SEC approve a spot Solana ETF by end of 2026?' },
+  { id:17, emoji:'⚡', cat:'crypto', yes:55, vol:0, trades:0, deadline:'60', title_ru:'TON войдёт в топ-5 по капитализации к июню 2026?', title_uk:'TON увійде в топ-5 за капіталізацією до червня 2026?', title_en:'Will TON enter the top 5 cryptos by June 2026?' },
+  { id:18, emoji:'🔮', cat:'crypto', yes:42, vol:0, trades:0, deadline:'150', title_ru:'Binance получит полную лицензию в США в 2026?', title_uk:'Binance отримає повну ліцензію у США у 2026?', title_en:'Will Binance get a full US license in 2026?' },
+  { id:19, emoji:'📊', cat:'crypto', yes:68, vol:0, trades:0, deadline:'296', title_ru:'Крипто-рынок достигнет общей капитализации $5 трлн в 2026?', title_uk:'Крипто-ринок досягне загальної капіталізації $5 трлн у 2026?', title_en:'Will total crypto market cap reach $5T in 2026?' },
+  { id:20, emoji:'₿', cat:'crypto', yes:31, vol:0, trades:0, deadline:'296', title_ru:'MicroStrategy купит ещё 100 000 BTC в 2026?', title_uk:'MicroStrategy купить ще 100 000 BTC у 2026?', title_en:'Will MicroStrategy buy another 100K BTC in 2026?' },
+  { id:21, emoji:'💰', cat:'crypto', yes:59, vol:0, trades:0, deadline:'90', title_ru:'Fed снизит ставку трижды до конца 2026?', title_uk:'ФРС знизить ставку тричі до кінця 2026?', title_en:'Will the Fed cut rates 3 times by end of 2026?' },
+  { id:22, emoji:'🚀', cat:'crypto', yes:44, vol:0, trades:0, deadline:'45', title_ru:'XRP достигнет $5 до мая 2026?', title_uk:'XRP досягне $5 до травня 2026?', title_en:'Will XRP reach $5 by May 2026?' },
+  { id:23, emoji:'⚡', cat:'crypto', yes:72, vol:0, trades:0, deadline:'120', title_ru:'Конгресс США примет закон о крипторегулировании в 2026?', title_uk:'Конгрес США прийме закон про криптовалюти у 2026?', title_en:'Will the US Congress pass crypto legislation in 2026?' },
+  { id:24, emoji:'📉', cat:'crypto', yes:27, vol:0, trades:0, deadline:'60', title_ru:'Bitcoin упадёт ниже $70 000 в 2026?', title_uk:'Bitcoin впаде нижче $70 000 у 2026?', title_en:'Will Bitcoin drop below $70,000 in 2026?' },
 
   // ── СПОРТ ──
-  { id:25, emoji:'⚽', cat:'sport', yes:34, vol:4800000, trades:71000, deadline:'82', title_ru:'Реал Мадрид выиграет Лигу чемпионов 2025/26?', title_uk:'Реал Мадрид виграє Лігу чемпіонів 2025/26?', title_en:'Will Real Madrid win the Champions League 2025/26?' },
-  { id:26, emoji:'⚽', cat:'sport', yes:28, vol:3900000, trades:58000, deadline:'82', title_ru:'Манчестер Сити выиграет АПЛ сезона 2025/26?', title_uk:'Манчестер Сіті виграє АПЛ сезону 2025/26?', title_en:'Will Manchester City win the 2025/26 Premier League?' },
-  { id:27, emoji:'🏀', cat:'sport', yes:41, vol:3200000, trades:48000, deadline:'110', title_ru:'Бостон Селтикс выиграют НБА чемпионат 2026?', title_uk:'Бостон Селтікс виграють чемпіонат НБА 2026?', title_en:'Will the Boston Celtics win the 2026 NBA Championship?' },
-  { id:28, emoji:'🎾', cat:'sport', yes:55, vol:2100000, trades:31000, deadline:'60', title_ru:'Новак Джокович выиграет French Open 2026?', title_uk:'Новак Джокович виграє French Open 2026?', title_en:'Will Novak Djokovic win French Open 2026?' },
-  { id:29, emoji:'🏎', cat:'sport', yes:62, vol:2800000, trades:42000, deadline:'296', title_ru:'Макс Ферстаппен выиграет чемпионат F1 2026?', title_uk:'Макс Ферстаппен виграє чемпіонат F1 2026?', title_en:'Will Max Verstappen win the 2026 F1 Championship?' },
-  { id:30, emoji:'🥊', cat:'sport', yes:58, vol:1800000, trades:27000, deadline:'30', title_ru:'Усик победит в следующем бою за звание чемпиона?', title_uk:'Усик переможе у наступному бою за звання чемпіона?', title_en:'Will Usyk win his next heavyweight championship fight?' },
-  { id:31, emoji:'⚽', cat:'sport', yes:45, vol:2400000, trades:36000, deadline:'82', title_ru:'Барселона выиграет Ла Лигу в сезоне 2025/26?', title_uk:'Барселона виграє Ла Лігу у сезоні 2025/26?', title_en:'Will Barcelona win La Liga in 2025/26?' },
-  { id:32, emoji:'🏈', cat:'sport', yes:35, vol:3600000, trades:54000, deadline:'330', title_ru:'Канзас Сити Чифс выиграют Супербоул 2027?', title_uk:'Канзас-Сіті Чіфс виграють Супербоул 2027?', title_en:'Will the Kansas City Chiefs win Super Bowl 2027?' },
-  { id:33, emoji:'🏀', cat:'sport', yes:67, vol:1500000, trades:22000, deadline:'90', title_ru:'Леброн Джеймс объявит об уходе из НБА в 2026?', title_uk:'ЛеБрон Джеймс оголосить про завершення кар\'єри у 2026?', title_en:'Will LeBron James retire from the NBA in 2026?' },
-  { id:34, emoji:'⛳', cat:'sport', yes:22, vol:980000, trades:14000, deadline:'40', title_ru:'Тайгер Вудс сыграет на Masters 2026?', title_uk:'Тайгер Вудс зіграє на Masters 2026?', title_en:'Will Tiger Woods play in the 2026 Masters?' },
-  { id:35, emoji:'⚽', cat:'sport', yes:78, vol:1200000, trades:18000, deadline:'120', title_ru:'Лионель Месси сыграет на ЧМ-2026?', title_uk:'Ліонель Мессі зіграє на ЧС-2026?', title_en:'Will Lionel Messi play at the 2026 World Cup?' },
-  { id:36, emoji:'🏆', cat:'sport', yes:51, vol:890000, trades:13000, deadline:'105', title_ru:'Сборная Бразилии выиграет ЧМ по футболу 2026?', title_uk:'Збірна Бразилії виграє ЧС з футболу 2026?', title_en:'Will Brazil win the 2026 FIFA World Cup?' },
+  { id:25, emoji:'⚽', cat:'sport', yes:34, vol:0, trades:0, deadline:'82', title_ru:'Реал Мадрид выиграет Лигу чемпионов 2025/26?', title_uk:'Реал Мадрид виграє Лігу чемпіонів 2025/26?', title_en:'Will Real Madrid win the Champions League 2025/26?' },
+  { id:26, emoji:'⚽', cat:'sport', yes:28, vol:0, trades:0, deadline:'82', title_ru:'Манчестер Сити выиграет АПЛ сезона 2025/26?', title_uk:'Манчестер Сіті виграє АПЛ сезону 2025/26?', title_en:'Will Manchester City win the 2025/26 Premier League?' },
+  { id:27, emoji:'🏀', cat:'sport', yes:41, vol:0, trades:0, deadline:'110', title_ru:'Бостон Селтикс выиграют НБА чемпионат 2026?', title_uk:'Бостон Селтікс виграють чемпіонат НБА 2026?', title_en:'Will the Boston Celtics win the 2026 NBA Championship?' },
+  { id:28, emoji:'🎾', cat:'sport', yes:55, vol:0, trades:0, deadline:'60', title_ru:'Новак Джокович выиграет French Open 2026?', title_uk:'Новак Джокович виграє French Open 2026?', title_en:'Will Novak Djokovic win French Open 2026?' },
+  { id:29, emoji:'🏎', cat:'sport', yes:62, vol:0, trades:0, deadline:'296', title_ru:'Макс Ферстаппен выиграет чемпионат F1 2026?', title_uk:'Макс Ферстаппен виграє чемпіонат F1 2026?', title_en:'Will Max Verstappen win the 2026 F1 Championship?' },
+  { id:30, emoji:'🥊', cat:'sport', yes:58, vol:0, trades:0, deadline:'30', title_ru:'Усик победит в следующем бою за звание чемпиона?', title_uk:'Усик переможе у наступному бою за звання чемпіона?', title_en:'Will Usyk win his next heavyweight championship fight?' },
+  { id:31, emoji:'⚽', cat:'sport', yes:45, vol:0, trades:0, deadline:'82', title_ru:'Барселона выиграет Ла Лигу в сезоне 2025/26?', title_uk:'Барселона виграє Ла Лігу у сезоні 2025/26?', title_en:'Will Barcelona win La Liga in 2025/26?' },
+  { id:32, emoji:'🏈', cat:'sport', yes:35, vol:0, trades:0, deadline:'330', title_ru:'Канзас Сити Чифс выиграют Супербоул 2027?', title_uk:'Канзас-Сіті Чіфс виграють Супербоул 2027?', title_en:'Will the Kansas City Chiefs win Super Bowl 2027?' },
+  { id:33, emoji:'🏀', cat:'sport', yes:67, vol:0, trades:0, deadline:'90', title_ru:'Леброн Джеймс объявит об уходе из НБА в 2026?', title_uk:'ЛеБрон Джеймс оголосить про завершення кар\'єри у 2026?', title_en:'Will LeBron James retire from the NBA in 2026?' },
+  { id:34, emoji:'⛳', cat:'sport', yes:22, vol:0, trades:0, deadline:'40', title_ru:'Тайгер Вудс сыграет на Masters 2026?', title_uk:'Тайгер Вудс зіграє на Masters 2026?', title_en:'Will Tiger Woods play in the 2026 Masters?' },
+  { id:35, emoji:'⚽', cat:'sport', yes:78, vol:0, trades:0, deadline:'120', title_ru:'Лионель Месси сыграет на ЧМ-2026?', title_uk:'Ліонель Мессі зіграє на ЧС-2026?', title_en:'Will Lionel Messi play at the 2026 World Cup?' },
+  { id:36, emoji:'🏆', cat:'sport', yes:51, vol:0, trades:0, deadline:'105', title_ru:'Сборная Бразилии выиграет ЧМ по футболу 2026?', title_uk:'Збірна Бразилії виграє ЧС з футболу 2026?', title_en:'Will Brazil win the 2026 FIFA World Cup?' },
 
   // ── ПОП-КУЛЬТУРА ──
-  { id:37, emoji:'🎬', cat:'culture', yes:82, vol:3400000, trades:51000, deadline:'14', title_ru:'Оппенгеймер 2 выйдет в прокат в 2026?', title_uk:'Оппенгеймер 2 вийде в прокат у 2026?', title_en:'Will Oppenheimer 2 be released in 2026?' },
-  { id:38, emoji:'🎵', cat:'culture', yes:44, vol:2100000, trades:31000, deadline:'296', title_ru:'Taylor Swift и Travis Kelce поженятся в 2026?', title_uk:'Taylor Swift і Travis Kelce одружаться у 2026?', title_en:'Will Taylor Swift and Travis Kelce get married in 2026?' },
-  { id:39, emoji:'🎮', cat:'culture', yes:71, vol:4200000, trades:63000, deadline:'180', title_ru:'GTA VI выйдет без переноса в 2026?', title_uk:'GTA VI вийде без перенесення у 2026?', title_en:'Will GTA VI launch in 2026 without delays?' },
-  { id:40, emoji:'🎬', cat:'culture', yes:88, vol:1800000, trades:27000, deadline:'296', title_ru:'Avatar 3 соберёт более $1 млрд в прокате?', title_uk:'Avatar 3 зберe більше $1 млрд у прокаті?', title_en:'Will Avatar 3 gross over $1B at the box office?' },
-  { id:41, emoji:'🌟', cat:'culture', yes:39, vol:1500000, trades:22000, deadline:'14', title_ru:'Оскар 2026: Лучший фильм получит независимая студия?', title_uk:'Оскар 2026: Найкращий фільм отримає незалежна студія?', title_en:'Will an independent studio win Best Picture at Oscars 2026?' },
-  { id:42, emoji:'🎵', cat:'culture', yes:56, vol:1200000, trades:18000, deadline:'296', title_ru:'Kanye West выпустит новый альбом в 2026?', title_uk:'Kanye West випустить новий альбом у 2026?', title_en:'Will Kanye West release a new album in 2026?' },
-  { id:43, emoji:'📺', cat:'culture', yes:74, vol:980000, trades:14000, deadline:'120', title_ru:'Stranger Things Season 5 выйдет в 2026?', title_uk:'Stranger Things Season 5 вийде у 2026?', title_en:'Will Stranger Things Season 5 release in 2026?' },
-  { id:44, emoji:'🎬', cat:'culture', yes:63, vol:870000, trades:13000, deadline:'60', title_ru:'Marvel выпустит более 3 фильмов в 2026?', title_uk:'Marvel випустить більше 3 фільмів у 2026?', title_en:'Will Marvel release more than 3 films in 2026?' },
-  { id:45, emoji:'🌟', cat:'culture', yes:29, vol:760000, trades:11000, deadline:'296', title_ru:'Илон Маск появится на Оскаре 2027 как продюсер?', title_uk:'Ілон Маск з\'явиться на Оскарі 2027 як продюсер?', title_en:'Will Elon Musk appear at the 2027 Oscars as a producer?' },
+  { id:37, emoji:'🎬', cat:'culture', yes:82, vol:0, trades:0, deadline:'14', title_ru:'Оппенгеймер 2 выйдет в прокат в 2026?', title_uk:'Оппенгеймер 2 вийде в прокат у 2026?', title_en:'Will Oppenheimer 2 be released in 2026?' },
+  { id:38, emoji:'🎵', cat:'culture', yes:44, vol:0, trades:0, deadline:'296', title_ru:'Taylor Swift и Travis Kelce поженятся в 2026?', title_uk:'Taylor Swift і Travis Kelce одружаться у 2026?', title_en:'Will Taylor Swift and Travis Kelce get married in 2026?' },
+  { id:39, emoji:'🎮', cat:'culture', yes:71, vol:0, trades:0, deadline:'180', title_ru:'GTA VI выйдет без переноса в 2026?', title_uk:'GTA VI вийде без перенесення у 2026?', title_en:'Will GTA VI launch in 2026 without delays?' },
+  { id:40, emoji:'🎬', cat:'culture', yes:88, vol:0, trades:0, deadline:'296', title_ru:'Avatar 3 соберёт более $1 млрд в прокате?', title_uk:'Avatar 3 зберe більше $1 млрд у прокаті?', title_en:'Will Avatar 3 gross over $1B at the box office?' },
+  { id:41, emoji:'🌟', cat:'culture', yes:39, vol:0, trades:0, deadline:'14', title_ru:'Оскар 2026: Лучший фильм получит независимая студия?', title_uk:'Оскар 2026: Найкращий фільм отримає незалежна студія?', title_en:'Will an independent studio win Best Picture at Oscars 2026?' },
+  { id:42, emoji:'🎵', cat:'culture', yes:56, vol:0, trades:0, deadline:'296', title_ru:'Kanye West выпустит новый альбом в 2026?', title_uk:'Kanye West випустить новий альбом у 2026?', title_en:'Will Kanye West release a new album in 2026?' },
+  { id:43, emoji:'📺', cat:'culture', yes:74, vol:0, trades:0, deadline:'120', title_ru:'Stranger Things Season 5 выйдет в 2026?', title_uk:'Stranger Things Season 5 вийде у 2026?', title_en:'Will Stranger Things Season 5 release in 2026?' },
+  { id:44, emoji:'🎬', cat:'culture', yes:63, vol:0, trades:0, deadline:'60', title_ru:'Marvel выпустит более 3 фильмов в 2026?', title_uk:'Marvel випустить більше 3 фільмів у 2026?', title_en:'Will Marvel release more than 3 films in 2026?' },
+  { id:45, emoji:'🌟', cat:'culture', yes:29, vol:0, trades:0, deadline:'296', title_ru:'Илон Маск появится на Оскаре 2027 как продюсер?', title_uk:'Ілон Маск з\'явиться на Оскарі 2027 як продюсер?', title_en:'Will Elon Musk appear at the 2027 Oscars as a producer?' },
 
   // ── АИ / ТЕХНОЛОГИИ ──
-  { id:46, emoji:'🤖', cat:'crypto', yes:68, vol:5800000, trades:87000, deadline:'296', title_ru:'OpenAI выпустит GPT-5 в 2026?', title_uk:'OpenAI випустить GPT-5 у 2026?', title_en:'Will OpenAI release GPT-5 in 2026?' },
-  { id:47, emoji:'🚀', cat:'crypto', yes:77, vol:4100000, trades:62000, deadline:'120', title_ru:'SpaceX долетит до Марса до 2030?', title_uk:'SpaceX долетить до Марсу до 2030?', title_en:'Will SpaceX reach Mars before 2030?' },
-  { id:48, emoji:'💡', cat:'crypto', yes:45, vol:3200000, trades:48000, deadline:'296', title_ru:'Apple выпустит AR-очки в 2026?', title_uk:'Apple випустить AR-окуляри у 2026?', title_en:'Will Apple release AR glasses in 2026?' },
-  { id:49, emoji:'🤖', cat:'crypto', yes:52, vol:2700000, trades:40000, deadline:'180', title_ru:'AI заменит более 10% рабочих мест к 2027?', title_uk:'AI замінить більше 10% робочих місць до 2027?', title_en:'Will AI replace more than 10% of jobs by 2027?' },
-  { id:50, emoji:'🔮', cat:'crypto', yes:61, vol:2100000, trades:31000, deadline:'296', title_ru:'Tesla выпустит Robotaxi до конца 2026?', title_uk:'Tesla випустить Robotaxi до кінця 2026?', title_en:'Will Tesla launch Robotaxi by end of 2026?' },
+  { id:46, emoji:'🤖', cat:'crypto', yes:68, vol:0, trades:0, deadline:'296', title_ru:'OpenAI выпустит GPT-5 в 2026?', title_uk:'OpenAI випустить GPT-5 у 2026?', title_en:'Will OpenAI release GPT-5 in 2026?' },
+  { id:47, emoji:'🚀', cat:'crypto', yes:77, vol:0, trades:0, deadline:'120', title_ru:'SpaceX долетит до Марса до 2030?', title_uk:'SpaceX долетить до Марсу до 2030?', title_en:'Will SpaceX reach Mars before 2030?' },
+  { id:48, emoji:'💡', cat:'crypto', yes:45, vol:0, trades:0, deadline:'296', title_ru:'Apple выпустит AR-очки в 2026?', title_uk:'Apple випустить AR-окуляри у 2026?', title_en:'Will Apple release AR glasses in 2026?' },
+  { id:49, emoji:'🤖', cat:'crypto', yes:52, vol:0, trades:0, deadline:'180', title_ru:'AI заменит более 10% рабочих мест к 2027?', title_uk:'AI замінить більше 10% робочих місць до 2027?', title_en:'Will AI replace more than 10% of jobs by 2027?' },
+  { id:50, emoji:'🔮', cat:'crypto', yes:61, vol:0, trades:0, deadline:'296', title_ru:'Tesla выпустит Robotaxi до конца 2026?', title_uk:'Tesla випустить Robotaxi до кінця 2026?', title_en:'Will Tesla launch Robotaxi by end of 2026?' },
 ];
 
 // Строим MARKET_DATA из ALL_MARKETS
@@ -2140,46 +2140,53 @@ async function adminConfirmDeposit(comment, telegramId, amount) {
 async function loadMarketsFromSupabase() {
   try {
     const data = await supaFetch('/rest/v1/markets?active=eq.true&order=id.asc&select=*');
-    if (!data || !data.length) return; // fallback to hardcoded
+    if (!data || !data.length) return;
 
-    // Rebuild ALL_MARKETS and MARKET_DATA from Supabase
-    const newMarkets = data.map(m => ({
+    // Фільтруємо тільки Event ринки (не sport з external_id)
+    const eventMarkets = data.filter(m => !m.external_id || m.cat !== 'sport');
+
+    const newMarkets = eventMarkets.map(m => ({
       id: m.id,
-      emoji: m.emoji,
+      emoji: m.emoji || '🔮',
       cat: m.cat,
       title_ru: m.title_ru,
-      title_uk: m.title_uk,
-      title_en: m.title_en,
-      yes: m.yes_prob,
-      vol: m.volume,
-      trades: m.trades,
-      deadline: String(m.deadline_days),
+      title_uk: m.title_uk || m.title_ru,
+      title_en: m.title_en || m.title_ru,
+      yes: m.yes_prob || 50,
+      vol: m.volume || 0,
+      trades: m.trades || 0,
+      deadline: String(m.deadline_days || 30),
     }));
 
-    // Update MARKET_DATA
+    if (!newMarkets.length) return;
+
+    // Повністю замінюємо MARKET_DATA реальними даними
     newMarkets.forEach(m => {
-      const history = [];
-      let val = m.yes + (Math.random()-0.5)*15;
-      for (let i=0;i<8;i++) {
-        val = Math.max(3,Math.min(97,val+(Math.random()-0.5)*5));
-        history.push(Math.round(val));
+      const existing = MARKET_DATA[m.id];
+      const history = existing?.history || [];
+      if (history.length < 2) {
+        let val = m.yes + (Math.random()-0.5)*10;
+        for (let i=0;i<8;i++) {
+          val = Math.max(3,Math.min(97,val+(Math.random()-0.5)*4));
+          history.push(Math.round(val));
+        }
       }
       history[history.length-1] = m.yes;
       MARKET_DATA[m.id] = { yes:m.yes, vol:m.vol, trades:m.trades, deadline:m.deadline, history };
     });
 
-    // Update translations
+    // Замінюємо переклади тільки реальними ринками
     ['ru','uk','en'].forEach(l => {
       T[l].markets = newMarkets.map(m => ({
         id: m.id,
         emoji: m.emoji,
         cat: m.cat,
-        title: m['title_'+l],
+        title: l === 'ru' ? m.title_ru : l === 'uk' ? m.title_uk : m.title_en,
       }));
     });
 
     renderFeed(currentFilter);
-    console.log('Loaded', newMarkets.length, 'markets from Supabase');
+    console.log('Loaded', newMarkets.length, 'real markets from Supabase');
   } catch(e) {
     console.log('Markets load error, using hardcoded:', e);
   }
