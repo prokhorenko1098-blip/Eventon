@@ -1231,7 +1231,7 @@ function renderFeed(filter='all') {
           <span class="prob-no" id="card-no-${m.id}">${t.noLabel} ${(100-d.yes).toFixed(0)}%</span>
         </div>
         <div>
-          <div class="market-vol">◈ ${d.vol.toLocaleString()}</div>
+          <div class="market-vol" id="card-vol-${m.id}">◈ ${d.vol.toLocaleString()}</div>
           <div class="market-deadline">⏱ ${d.deadline}${lang==='en'?' days':' дн'}</div>
         </div>
       </div>
@@ -1356,9 +1356,9 @@ function openMarket(id) {
   document.getElementById('d-emoji').textContent = m.emoji;
   document.getElementById('d-cat').textContent = t.catLabels[m.cat].toUpperCase();
   document.getElementById('d-title').textContent = m.title;
-  document.getElementById('d-yes-prob').textContent = d.yes + '%';
-  document.getElementById('d-no-prob').textContent = (100-d.yes) + '%';
-  document.getElementById('d-bar').style.width = d.yes + '%';
+  document.getElementById('d-yes-prob').textContent = Math.round(d.yes) + '%';
+  document.getElementById('d-no-prob').textContent = Math.round(100 - d.yes) + '%';
+  document.getElementById('d-bar').style.width = Math.round(d.yes) + '%';
   document.getElementById('d-vol').textContent = d.vol.toLocaleString();
   document.getElementById('d-trades').textContent = d.trades.toLocaleString();
   document.getElementById('d-deadline').textContent = d.deadline + (lang==='en'?' days':' дн');
@@ -1382,6 +1382,33 @@ function openMarket(id) {
   setTimeout(() => { home.classList.add('hidden'); home.classList.remove('slide-left'); }, 350);
 
   drawChart(d.history);
+
+  // Підвантажуємо свіжі дані з Supabase
+  supaFetch('/rest/v1/markets?id=eq.' + id + '&select=yes_prob,volume,trades').then(data => {
+    if (!data || !data.length) return;
+    const fresh = data[0];
+    const freshYes = Math.round(parseFloat(fresh.yes_prob) || d.yes);
+    const freshVol = parseFloat(fresh.volume) || 0;
+    const freshTrades = parseInt(fresh.trades) || 0;
+
+    // Оновлюємо MARKET_DATA
+    d.yes = freshYes;
+    d.vol = freshVol;
+    d.trades = freshTrades;
+
+    // Оновлюємо відображення
+    document.getElementById('d-yes-prob').textContent = freshYes + '%';
+    document.getElementById('d-no-prob').textContent = (100 - freshYes) + '%';
+    document.getElementById('d-bar').style.width = freshYes + '%';
+    document.getElementById('d-vol').textContent = freshVol.toLocaleString(undefined, {maximumFractionDigits: 2});
+    document.getElementById('d-trades').textContent = freshTrades.toLocaleString();
+
+    // Оновлюємо коефіцієнти
+    const newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
+    const newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
+    document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsYes}</span>`;
+    document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsNo}</span>`;
+  }).catch(() => {});
 }
 
 // ── CHART ──────────────────────────────────────────────────────────
@@ -1527,7 +1554,7 @@ async function placeBet() {
     } else {
       newYes = Math.max(3, d.yes - (amt / (newVol + 100)) * 100 * 0.5);
     }
-    newYes = Math.round(newYes * 10) / 10;
+    newYes = Math.round(newYes); // округляємо до цілого
 
     await supaFetch('/rest/v1/markets?id=eq.' + currentMarketId, 'PATCH', {
       yes_prob: newYes,
@@ -1541,6 +1568,16 @@ async function placeBet() {
     d.trades = newTrades;
     d.history.push(Math.round(newYes));
     if (d.history.length > 12) d.history.shift();
+
+    // Обновляем карточку в ленте сразу
+    const cardYes = document.getElementById('card-yes-' + currentMarketId);
+    const cardNo  = document.getElementById('card-no-' + currentMarketId);
+    const cardBar = document.getElementById('card-bar-' + currentMarketId);
+    const cardVol = document.getElementById('card-vol-' + currentMarketId);
+    if (cardYes) cardYes.textContent = t.yesLabel + ' ' + newYes.toFixed(0) + '%';
+    if (cardNo)  cardNo.textContent  = t.noLabel + ' ' + (100 - newYes).toFixed(0) + '%';
+    if (cardBar) cardBar.style.width = newYes + '%';
+    if (cardVol) cardVol.textContent = '◈ ' + newVol.toLocaleString(undefined, {maximumFractionDigits: 2});
 
     // 5. Показываем успех
     document.getElementById('overlay-title').textContent = t.overlayTitle;
