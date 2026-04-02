@@ -2102,17 +2102,48 @@ let userBalance = 0;
 
 // Generate Telegram user ID from WebApp or random for demo
 function initTelegramUser() {
-  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
-    const u = Telegram.WebApp.initDataUnsafe.user;
+  const tg = window.Telegram?.WebApp;
+
+  // Спроба 1: initDataUnsafe.user (стандартний спосіб)
+  if (tg?.initDataUnsafe?.user?.id) {
+    const u = tg.initDataUnsafe.user;
     userTelegramId = String(u.id);
-  } else {
-    // Demo mode - use stored ID or generate new
-    userTelegramId = localStorage.getItem('eventon_uid') || 'demo_' + Math.random().toString(36).substring(2,10);
-    localStorage.setItem('eventon_uid', userTelegramId);
+    const username = u.username || u.first_name || ('user_' + userTelegramId.slice(-4));
+    console.log('TG user from initDataUnsafe:', userTelegramId, username);
+    loadUserBalance(username);
+    loadCreatorStats();
+    pingOnline().then(fetchOnlineCount);
+    return;
   }
+
+  // Спроба 2: парсимо initData вручну
+  if (tg?.initData && tg.initData.length > 0) {
+    try {
+      const params = new URLSearchParams(tg.initData);
+      const userStr = params.get('user');
+      if (userStr) {
+        const u = JSON.parse(decodeURIComponent(userStr));
+        if (u.id) {
+          userTelegramId = String(u.id);
+          const username = u.username || u.first_name || ('user_' + userTelegramId.slice(-4));
+          console.log('TG user from initData parse:', userTelegramId, username);
+          loadUserBalance(username);
+          loadCreatorStats();
+          pingOnline().then(fetchOnlineCount);
+          return;
+        }
+      }
+    } catch(e) {
+      console.log('initData parse error:', e);
+    }
+  }
+
+  // Fallback: демо режим
+  console.log('TG user not found, using demo mode. initData:', tg?.initData?.slice(0,50));
+  userTelegramId = localStorage.getItem('eventon_uid') || 'demo_' + Math.random().toString(36).substring(2,10);
+  localStorage.setItem('eventon_uid', userTelegramId);
   loadUserBalance();
   loadCreatorStats();
-  // Now that we have a stable user ID, ping online counter
   pingOnline().then(fetchOnlineCount);
 }
 
@@ -2125,20 +2156,26 @@ function generateDepositComment() {
 
 const DEMO_START_BALANCE = 1000; // Демо баланс для бета-теста
 
-async function loadUserBalance() {
+async function loadUserBalance(tgUsername) {
   try {
     const data = await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId + '&select=balance,username');
     if (data && data.length > 0) {
       userBalance = parseFloat(data[0].balance) || 0;
+      // Оновлюємо username якщо тепер є реальний
+      if (tgUsername && tgUsername !== data[0].username) {
+        await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId, 'PATCH', {
+          username: tgUsername
+        });
+      }
     } else {
       // Новый пользователь — даём 1000 TON демо
+      const username = tgUsername || ('user_' + userTelegramId.slice(-4));
       await supaFetch('/rest/v1/users', 'POST', {
         telegram_id: userTelegramId,
-        username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'user_' + userTelegramId.slice(-4),
+        username,
         balance: DEMO_START_BALANCE
       });
       userBalance = DEMO_START_BALANCE;
-      // Записываем начисление демо баланса
       await supaFetch('/rest/v1/transactions', 'POST', {
         telegram_id: userTelegramId,
         amount: DEMO_START_BALANCE,
@@ -2148,7 +2185,7 @@ async function loadUserBalance() {
       });
     }
     updateBalanceDisplay();
-    loadRealStats(); // загружаем реальные цифры
+    loadRealStats();
   } catch(e) {
     console.log('Balance load error:', e);
   }
