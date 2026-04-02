@@ -1446,6 +1446,34 @@ function goBack() {
   document.getElementById('screen-'+currentScreen).classList.remove('hidden');
 }
 
+// ── SWIPE BACK GESTURE ─────────────────────────────────────────────
+(function initSwipeBack() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    // Только если касание начинается в левой части экрана (первые 30px)
+    isSwiping = touchStartX < 30;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!isSwiping) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    // Свайп вправо минимум 80px и горизонтальный (не вертикальный)
+    if (dx > 80 && dy < 60) {
+      const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
+      if (screensWithBack.includes(currentScreen)) {
+        goBack();
+      }
+    }
+    isSwiping = false;
+  }, { passive: true });
+})();
+
 // ── MARKET DETAIL ──────────────────────────────────────────────────
 function openMarket(id) {
   const t = T[lang];
