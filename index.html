@@ -1746,6 +1746,8 @@ async function placeBet() {
     `;
     document.getElementById('overlay-ok-btn').textContent = t.overlayOk;
     document.getElementById('success-overlay').classList.add('active');
+    // Обновляем реальную ленту ставок
+    setTimeout(() => loadRealLiveFeed(), 500);
 
   } catch(e) {
     console.error('placeBet error:', e);
@@ -1968,31 +1970,65 @@ function updateTCButton() {
 // ══════════════════════════════════════════════════════════════════
 // ── LIVE ACTIVITY FEED ────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
-const FAKE_USERS = [
-  {name:'@whale_ton',emoji:'🐳'},{name:'@cryptohunter',emoji:'🦅'},
-  {name:'@sport_fan',emoji:'⚽'},{name:'@moon_bet',emoji:'🌙'},
-  {name:'@fast_money',emoji:'⚡'},{name:'@lion_king',emoji:'🦁'},
-  {name:'@fire_trade',emoji:'🔥'},{name:'@diamond_h',emoji:'💎'},
-  {name:'@wolf_ton',emoji:'🐺'},{name:'@pro_gamer',emoji:'🎮'},
-  {name:'@politico',emoji:'🗳'},{name:'@btc_maxi',emoji:'₿'},
-  {name:'@analytics',emoji:'📊'},{name:'@top_gun',emoji:'🎯'},
-  {name:'@night_owl',emoji:'🦉'},{name:'@rocket_m',emoji:'🚀'},
-];
+// ── LIVE FEED ──────────────────────────────────────────────────────
 const BET_AMOUNTS = [0.5,1,1.5,2,3,5,7,10,15,20,25,50];
 let liveFeedItems = [];
-let onlineCount = 847 + Math.floor(Math.random()*200);
+let onlineCount = 1;
+
+const EMOJIS = ['🐳','🦅','⚽','🌙','⚡','🦁','🔥','💎','🐺','🎮','🗳','₿','📊','🎯','🦉','🚀','😎','🦊','🐯','🌟'];
+
+async function loadRealLiveFeed() {
+  try {
+    // Загружаем последние реальные ставки
+    const txData = await supaFetch(
+      '/rest/v1/transactions?type=eq.bet&order=created_at.desc&limit=10&select=telegram_id,amount,comment,created_at'
+    );
+    if (!txData || !txData.length) return;
+
+    // Загружаем юзернеймы
+    const ids = txData.map(t => t.telegram_id).join(',');
+    const usersData = await supaFetch(
+      '/rest/v1/users?telegram_id=in.(' + ids + ')&select=telegram_id,username'
+    );
+    const usersMap = {};
+    (usersData || []).forEach(u => { usersMap[u.telegram_id] = u.username; });
+
+    liveFeedItems = txData.map(tx => {
+      const parts = (tx.comment || '').split(':');
+      if (parts[0] !== 'BET') return null;
+      const marketId = parseInt(parts[1]);
+      const side = parts[2];
+      const amount = Math.abs(parseFloat(tx.amount) || 0);
+
+      const market = T[lang]?.markets?.find(m => m.id === marketId);
+      if (!market) return null;
+
+      const username = usersMap[tx.telegram_id] || ('user_' + String(tx.telegram_id).slice(-4));
+      const emoji = EMOJIS[Math.abs(tx.telegram_id?.charCodeAt?.(0) || 0) % EMOJIS.length] || '🎯';
+      const sideLabel = side === 'yes'
+        ? (lang==='en'?'YES':lang==='uk'?'ТАК':'ДА')
+        : (lang==='en'?'NO':lang==='uk'?'НІ':'НЕТ');
+
+      return { user: { name: '@' + username, emoji }, market, side, sideLabel, amount };
+    }).filter(Boolean);
+
+    renderLiveFeed();
+  } catch(e) {
+    console.log('Live feed error:', e);
+  }
+}
 
 function generateLiveItem() {
-  const user = FAKE_USERS[Math.floor(Math.random()*FAKE_USERS.length)];
+  // Fallback — только если нет реальных данных
   const markets = T[lang]?.markets || [];
   if (!markets.length) return null;
-  const market = markets[Math.floor(Math.random()*Math.min(markets.length,20))];
+  const market = markets[Math.floor(Math.random()*Math.min(markets.length,10))];
   const side = Math.random()>0.45?'yes':'no';
   const amount = BET_AMOUNTS[Math.floor(Math.random()*BET_AMOUNTS.length)];
   const sideLabel = side==='yes'
     ? (lang==='en'?'YES':lang==='uk'?'ТАК':'ДА')
     : (lang==='en'?'NO':lang==='uk'?'НІ':'НЕТ');
-  return {user, market, side, sideLabel, amount};
+  return {user:{name:'@trader',emoji:'🎯'}, market, side, sideLabel, amount};
 }
 
 function renderLiveFeed() {
@@ -2019,15 +2055,8 @@ function updateOnlineCount() {
 }
 
 function addLiveBet() {
-  const item = generateLiveItem();
-  if (!item) return;
-  liveFeedItems.unshift(item);
-  if (liveFeedItems.length>10) liveFeedItems.pop();
-  if (currentScreen==='home') renderLiveFeed();
-  if (MARKET_DATA[item.market.id]) {
-    const shift = item.side==='yes'?0.3:-0.3;
-    MARKET_DATA[item.market.id].yes = Math.min(97,Math.max(3,MARKET_DATA[item.market.id].yes+shift));
-  }
+  // После реальной ставки — перезагружаем реальную ленту
+  loadRealLiveFeed();
 }
 
 function showBetToast(msg, side) {
@@ -2089,16 +2118,9 @@ async function cleanupOldSessions() {
 setInterval(async () => { await pingOnline(); await fetchOnlineCount(); }, 30000);
 setInterval(cleanupOldSessions, 5 * 60 * 1000);
 
-// Seed + start live feed
-setTimeout(()=>{
-  for(let i=0;i<3;i++){const item=generateLiveItem();if(item)liveFeedItems.push(item);}
-  renderLiveFeed();
-}, 600);
-
-setInterval(()=>{
-  addLiveBet();
-  setTimeout(addLiveBet, 1200+Math.random()*800);
-}, 3500+Math.random()*2000);
+// Загружаем реальную ленту ставок при старте и каждые 30 секунд
+setTimeout(() => loadRealLiveFeed(), 1500);
+setInterval(() => loadRealLiveFeed(), 30000);
 
 
 // ══════════════════════════════════════════════════════════════════
