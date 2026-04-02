@@ -1239,22 +1239,91 @@ function renderFeed(filter='all') {
   }).join('');
 }
 
-function renderPositions() {
+async function renderPositions() {
   const t = T[lang];
-  document.getElementById('positions-list').innerHTML = t.positions.map(p => `
-    <div class="position-card">
-      <div class="position-top">
-        <span class="position-emoji">${p.emoji}</span>
-        <span class="position-title">${p.title}</span>
-        <span class="position-side ${p.side}">${p.sideLabel}</span>
+  const listEl = document.getElementById('positions-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Завантаження...</div>';
+
+  try {
+    // Завантажуємо всі ставки користувача
+    const txData = await supaFetch(
+      '/rest/v1/transactions?telegram_id=eq.' + userTelegramId +
+      '&type=eq.bet&order=created_at.desc&select=*'
+    );
+
+    if (!txData || !txData.length) {
+      listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
+        ${lang==='en' ? 'No positions yet' : lang==='uk' ? 'Поки немає позицій' : 'Пока нет позиций'}
+      </div>`;
+      return;
+    }
+
+    // Парсимо ставки з коментарів: "BET:marketId:side:amount:payout"
+    const positions = txData.map(tx => {
+      const parts = (tx.comment || '').split(':');
+      if (parts[0] !== 'BET') return null;
+      const marketId = parseInt(parts[1]);
+      const side = parts[2]; // 'yes' or 'no'
+      const amount = parseFloat(parts[3]) || 0;
+      const payout = parseFloat(parts[4]) || 0;
+
+      // Знаходимо назву ринку
+      const mkt = T[lang].markets?.find(m => m.id === marketId);
+      const d = MARKET_DATA[marketId];
+      const title = mkt?.title || ('Ринок #' + marketId);
+      const emoji = mkt?.emoji || '🔮';
+
+      // Поточна вартість позиції
+      const currentProb = d ? (side === 'yes' ? d.yes / 100 : (100 - d.yes) / 100) : 0.5;
+      const currentValue = payout * currentProb;
+      const pnl = currentValue - amount;
+
+      return {
+        marketId, side, amount, payout, title, emoji,
+        currentValue, pnl,
+        sideLabel: side === 'yes' ? t.yesLabel : t.noLabel,
+        date: new Date(tx.created_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })
+      };
+    }).filter(Boolean);
+
+    if (!positions.length) {
+      listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
+        ${lang==='en' ? 'No positions yet' : lang==='uk' ? 'Поки немає позицій' : 'Пока нет позиций'}
+      </div>`;
+      return;
+    }
+
+    listEl.innerHTML = positions.map(p => `
+      <div class="position-card">
+        <div class="position-top">
+          <span class="position-emoji">${p.emoji}</span>
+          <span class="position-title">${p.title.slice(0, 45)}${p.title.length > 45 ? '…' : ''}</span>
+          <span class="position-side ${p.side}">${p.sideLabel}</span>
+        </div>
+        <div class="position-bottom">
+          <div class="pos-stat">
+            <div class="pos-stat-val">${p.amount.toFixed(2)}</div>
+            <div class="pos-stat-lbl">${lang==='en'?'Staked':lang==='uk'?'Поставлено':'Поставлено'}</div>
+          </div>
+          <div class="pos-stat">
+            <div class="pos-stat-val">${p.payout.toFixed(2)}</div>
+            <div class="pos-stat-lbl">${lang==='en'?'Payout if win':lang==='uk'?'Виплата':'Выплата'}</div>
+          </div>
+          <div class="pos-stat">
+            <div class="pos-stat-val ${p.pnl >= 0 ? 'green' : 'red'}">${p.pnl >= 0 ? '+' : ''}${p.pnl.toFixed(2)} TON</div>
+            <div class="pos-stat-lbl">P&L</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);padding:4px 0 0;">${p.date}</div>
       </div>
-      <div class="position-bottom">
-        <div class="pos-stat"><div class="pos-stat-val">${p.tokens}</div><div class="pos-stat-lbl">${t.posStatLabels[0]}</div></div>
-        <div class="pos-stat"><div class="pos-stat-val">${p.price}</div><div class="pos-stat-lbl">${t.posStatLabels[1]}</div></div>
-        <div class="pos-stat"><div class="pos-stat-val ${parseFloat(p.pnl)>=0?'green':'red'}">${p.pnl} TON</div><div class="pos-stat-lbl">${t.posStatLabels[2]}</div></div>
-      </div>
-    </div>
-  `).join('');
+    `).join('');
+
+  } catch(e) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Помилка завантаження</div>';
+    console.log('Positions error:', e);
+  }
 }
 
 async function renderLeaderboard() {
@@ -1335,6 +1404,7 @@ function showScreen(name) {
   prevScreen = currentScreen;
   currentScreen = name;
   if (name === 'leaderboard') renderLeaderboard();
+  if (name === 'portfolio') renderPositions();
 }
 
 function goBack() {
