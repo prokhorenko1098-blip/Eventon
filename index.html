@@ -646,7 +646,8 @@
           <div class="bet-btn no" id="btn-no" onclick="selectSide('no')"></div>
         </div>
         <div class="amount-input">
-          <input type="number" id="amount-input" placeholder="0.0" min="0.5" inputmode="decimal" pattern="[0-9]*" oninput="updatePreview()" />
+          <input type="number" id="amount-input" placeholder="0.0" min="0.5" inputmode="decimal" pattern="[0-9]*" oninput="updatePreview()"
+            onfocus="scrollToBetSection()" />
           <div class="amount-currency">◈ TON</div>
         </div>
         <div class="quick-amounts">
@@ -877,6 +878,18 @@ if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.requestFullscreen();
     }
   }, 300);
+}
+
+// ── Keyboard handler: підіймаємо контент при відкритті клавіатури ──
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+      setTimeout(() => {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  });
 }
 // ── MARKETS DATA (топ события по мотивам Polymarket, март 2026) ───
 const ALL_MARKETS = [
@@ -1540,6 +1553,16 @@ function selectSide(side) {
   const amt = parseFloat(document.getElementById('amount-input').value);
   btn.disabled = !amt || amt < 0.5;
   updatePreview();
+}
+
+function scrollToBetSection() {
+  // Скролимо до секції ставки коли відкривається клавіатура
+  setTimeout(() => {
+    const betSection = document.querySelector('.bet-section');
+    if (betSection) {
+      betSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 300);
 }
 
 function setAmount(v) {
