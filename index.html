@@ -2424,18 +2424,38 @@ async function loadMarketsFromSupabase() {
     // Фільтруємо тільки Event ринки (не sport з external_id)
     const eventMarkets = data.filter(m => !m.external_id || m.cat !== 'sport');
 
-    const newMarkets = eventMarkets.map(m => ({
-      id: m.id,
-      emoji: m.emoji || '🔮',
-      cat: m.cat,
-      title_ru: m.title_ru,
-      title_uk: m.title_uk || m.title_ru,
-      title_en: m.title_en || m.title_ru,
-      yes: m.yes_prob || 50,
-      vol: m.volume || 0,
-      trades: m.trades || 0,
-      deadline: String(m.deadline_days || 30),
-    }));
+    const newMarkets = eventMarkets.map(m => {
+      // Считаем сколько дней осталось до дедлайна
+      let deadlineText = String(m.deadline_days || 30);
+      let deadlineAt = m.deadline_at || null;
+
+      if (deadlineAt) {
+        const now = new Date();
+        const expires = new Date(deadlineAt);
+        const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
+        if (daysLeft <= 0) {
+          deadlineText = lang === 'en' ? 'Expired' : lang === 'uk' ? 'Завершено' : 'Завершён';
+        } else if (daysLeft === 1) {
+          deadlineText = lang === 'en' ? '1 day' : '1 дн';
+        } else {
+          deadlineText = daysLeft + (lang === 'en' ? ' days' : ' дн');
+        }
+      }
+
+      return {
+        id: m.id,
+        emoji: m.emoji || '🔮',
+        cat: m.cat,
+        title_ru: m.title_ru,
+        title_uk: m.title_uk || m.title_ru,
+        title_en: m.title_en || m.title_ru,
+        yes: m.yes_prob || 50,
+        vol: m.volume || 0,
+        trades: m.trades || 0,
+        deadline: deadlineText,
+        deadline_at: deadlineAt,
+      };
+    });
 
     if (!newMarkets.length) return;
 
