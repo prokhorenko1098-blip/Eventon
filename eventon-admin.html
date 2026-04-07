@@ -714,42 +714,42 @@ async function deleteMarket(id) {
 }
 
 async function resolveMarket(id, winningSide) {
-  const market = markets.find(m => m.id === id);
-  if (!market) { alert('Рынок не найден'); return; }
+  // Загружаем рынок напрямую из Supabase
+  const marketData = await sb('/rest/v1/markets?id=eq.' + id + '&select=*');
+  const market = marketData && marketData[0];
+  if (!market) { alert('Рынок не найден: id=' + id); return; }
 
   const sideLabel = winningSide === 'yes' ? 'ДА' : 'НЕТ';
   showConfirm(
     `🏆 Резолюция: ${sideLabel} победило?`,
-    `Рынок: "${market.title.slice(0, 80)}"`,
+    `Рынок: "${(market.title_ru || '').slice(0, 80)}"`,
     async () => {
       showToast('⏳ Выполняем резолюцию...');
+      console.log('Resolving market', id, winningSide);
 
       try {
-        // Шаг 1: Закрываем рынок
-        const closeResult = await sb('/rest/v1/markets?id=eq.' + id, 'PATCH', {
+        // 1. Закрываем рынок
+        await sb('/rest/v1/markets?id=eq.' + id, 'PATCH', {
           active: false,
           yes_prob: winningSide === 'yes' ? 95 : 5
         });
-        console.log('Market closed:', closeResult);
+        console.log('Market closed');
 
-        // Шаг 2: Загружаем ставки
+        // 2. Загружаем ставки
         const txData = await sb('/rest/v1/transactions?type=eq.bet&limit=1000&select=telegram_id,amount,comment');
-        console.log('Transactions loaded:', txData?.length);
-
         const marketBets = (txData || []).filter(tx => {
           const parts = (tx.comment || '').split(':');
           return parts[0] === 'BET' && parseInt(parts[1]) === id;
         });
-        console.log('Bets for market', id, ':', marketBets.length);
+        console.log('Bets found:', marketBets.length);
 
         if (!marketBets.length) {
-          showToast('Рынок закрыт. Ставок не было.');
-          if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
-          else loadAndRenderDashboard();
+          showToast('✅ Рынок закрыт. Ставок не было.');
+          loadAndRenderMarkets();
           return;
         }
 
-        // Шаг 3: Считаем пул
+        // 3. Считаем пул
         let yesPool = 0, noPool = 0;
         const yesBets = [], noBets = [];
         marketBets.forEach(tx => {
@@ -765,40 +765,42 @@ async function resolveMarket(id, winningSide) {
         const winnerBets = winningSide === 'yes' ? yesBets : noBets;
         const winnerPool = winningSide === 'yes' ? yesPool : noPool;
 
-        console.log('Total pool:', totalPool, 'Winners:', winnerBets.length);
-
         if (!winnerBets.length) {
-          showToast(`Рынок закрыт. Победителей (${sideLabel}) не было.`);
-          if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
-          else loadAndRenderDashboard();
+          showToast(`✅ Рынок закрыт. Победителей (${sideLabel}) нет.`);
+          loadAndRenderMarkets();
           return;
         }
 
-        // Шаг 4: Выплаты через SQL (показываем команду)
-        const sqlLines = winnerBets.map(tx => {
-          const share = tx.amount / winnerPool;
+        // 4. Выплачиваем каждому победителю
+        let payoutCount = 0;
+        for (const tx of winnerBets) {
+          const share = winnerPool > 0 ? tx.amount / winnerPool : 0;
           const payout = Math.round(payoutPool * share * 100) / 100;
-          return `UPDATE users SET balance = balance + ${payout} WHERE telegram_id = '${tx.telegram_id}';`;
-        });
+          if (payout <= 0) continue;
 
-        const sql = `-- Резолюция рынка #${id}: ${sideLabel} победило
--- Пул: ${totalPool.toFixed(2)} TON, Победителей: ${winnerBets.length}
-${sqlLines.join('\n')}
-UPDATE markets SET active = false, yes_prob = ${winningSide === 'yes' ? 95 : 5} WHERE id = ${id};`;
+          // Получаем баланс
+          const userData = await sb('/rest/v1/users?telegram_id=eq.' + tx.telegram_id + '&select=balance');
+          const currentBalance = parseFloat(userData?.[0]?.balance || 0);
+          const newBalance = Math.round((currentBalance + payout) * 100) / 100;
 
-        console.log('SQL для выплат:\n', sql);
+          // Обновляем баланс
+          await sb('/rest/v1/users?telegram_id=eq.' + tx.telegram_id, 'PATCH', { balance: newBalance });
 
-        // Копируем SQL в буфер
-        try {
-          await navigator.clipboard.writeText(sql);
-          showToast(`✅ SQL скопирован! Вставь в Supabase SQL Editor (${winnerBets.length} победителей, пул ${totalPool.toFixed(2)} TON)`);
-        } catch(e) {
-          // Показываем в alert если clipboard недоступен
-          alert('Скопируй этот SQL в Supabase SQL Editor:\n\n' + sql);
+          // Записываем транзакцию
+          await sb('/rest/v1/transactions', 'POST', {
+            telegram_id: tx.telegram_id,
+            amount: payout,
+            type: 'payout',
+            comment: `PAYOUT:${id}:${winningSide}:${payout}`,
+            status: 'completed'
+          });
+
+          payoutCount++;
+          console.log('Paid', payout, 'TON to', tx.telegram_id, '→ new balance:', newBalance);
         }
 
-        if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
-        else loadAndRenderDashboard();
+        showToast(`✅ Готово! ${payoutCount} победителей получили выплаты. Пул: ${totalPool.toFixed(2)} TON`);
+        loadAndRenderMarkets();
 
       } catch(e) {
         console.error('Resolve error:', e);
