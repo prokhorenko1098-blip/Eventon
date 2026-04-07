@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eventon — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07080c;
+  --surface: #0f1117;
+  --surface2: #161920;
+  --surface3: #1d2130;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --text: #e8eaf2;
+  --muted: #5a6278;
+  --muted2: #8892a4;
+  --accent: #4f7ef8;
+  --accent2: #7b5ff5;
+  --yes: #00d98b;
+  --no: #ff3f5e;
+  --gold: #f0b429;
+  --orange: #f97316;
+  --sidebar-w: 220px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Geist', sans-serif; min-height: 100vh; display: flex; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0; background: var(--surface);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; height: 100vh; z-index: 10;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-text { font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700; }
+.logo-text span { color: var(--accent); }
+.logo-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 2px 6px; margin-top: 4px; display: inline-block; }
+.sidebar-nav { padding: 12px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500;
+  color: var(--muted2); transition: all 0.15s; border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(79,126,248,0.12); color: var(--accent); border-color: rgba(79,126,248,0.2); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--no); color: #fff; font-size: 10px; font-weight: 700; border-radius: 99px; padding: 1px 6px; }
+.sidebar-bottom { padding: 12px 10px; border-top: 1px solid var(--border); }
+.admin-card { background: var(--surface2); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+.admin-avatar { width: 30px; height: 30px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.admin-name { font-size: 12px; font-weight: 600; }
+.admin-role { font-size: 10px; color: var(--muted); }
+
+/* ── MAIN ── */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar {
+  height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 5;
+}
+.topbar-title { font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 600; flex: 1; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; display: flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #6b91ff; }
+.btn-primary:active { transform: scale(0.97); }
+.btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-danger { background: rgba(255,63,94,0.12); color: var(--no); border: 1px solid rgba(255,63,94,0.2); }
+.btn-danger:hover { background: rgba(255,63,94,0.2); }
+.btn-success { background: rgba(0,217,139,0.12); color: var(--yes); border: 1px solid rgba(0,217,139,0.2); }
+.btn-success:hover { background: rgba(0,217,139,0.2); }
+.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+
+.content { padding: 28px; flex: 1; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── STATS ROW ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 20px; position: relative; overflow: hidden;
+}
+.stat-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.06; }
+.stat-card.blue::before { background: var(--accent); }
+.stat-card.green::before { background: var(--yes); }
+.stat-card.purple::before { background: var(--accent2); }
+.stat-card.orange::before { background: var(--orange); }
+.stat-icon { font-size: 20px; margin-bottom: 10px; }
+.stat-val { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--muted2); font-weight: 500; }
+.stat-delta { font-size: 11px; font-weight: 600; margin-top: 6px; }
+.stat-delta.up { color: var(--yes); }
+.stat-delta.down { color: var(--no); }
+
+/* ── TABLE ── */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.table-title { font-size: 14px; font-weight: 600; }
+.table-tools { display: flex; align-items: center; gap: 8px; }
+.search-input {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 7px 12px; font-size: 12px; color: var(--text); outline: none;
+  font-family: 'Geist', sans-serif; width: 200px; transition: border-color 0.15s;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus { border-color: var(--accent); }
+.select-input {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 7px 10px; font-size: 12px; color: var(--text); outline: none;
+  font-family: 'Geist', sans-serif; cursor: pointer;
+}
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface2); }
+td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.018); }
+.market-title-cell { display: flex; align-items: center; gap: 10px; }
+.market-emoji-sm { width: 34px; height: 34px; background: var(--surface2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.market-name { font-weight: 500; font-size: 13px; max-width: 260px; }
+.market-name-sub { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+.badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+.badge-sport { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.badge-politics { background: rgba(168,85,247,0.15); color: #c084fc; }
+.badge-crypto { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.badge-culture { background: rgba(236,72,153,0.15); color: #f472b6; }
+.badge-active { background: rgba(0,217,139,0.12); color: var(--yes); }
+.badge-pending { background: rgba(245,158,11,0.12); color: var(--gold); }
+.badge-closed { background: rgba(255,255,255,0.06); color: var(--muted2); }
+.badge-resolved { background: rgba(79,126,248,0.12); color: var(--accent); }
+.prob-bar-wrap { display: flex; align-items: center; gap: 6px; }
+.prob-bar { width: 80px; height: 5px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.prob-bar-fill { height: 100%; background: linear-gradient(90deg, var(--yes), #00c4d4); border-radius: 99px; }
+.prob-text { font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 600; color: var(--yes); }
+.vol-text { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--muted2); }
+.actions { display: flex; gap: 6px; }
+
+/* ── MODAL ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.modal-backdrop.active { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 18px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1); }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { padding: 22px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 700; }
+.modal-close { width: 32px; height: 32px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--muted2); transition: all 0.15s; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 12px; font-weight: 600; color: var(--muted2); letter-spacing: 0.04em; }
+.field-input {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; color: var(--text); outline: none;
+  font-family: 'Geist', sans-serif; transition: border-color 0.15s; width: 100%;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--muted); }
+textarea.field-input { resize: vertical; min-height: 80px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.emoji-opt { width: 38px; height: 38px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.15s; }
+.emoji-opt:hover, .emoji-opt.selected { background: rgba(79,126,248,0.15); border-color: var(--accent); }
+.modal-footer { padding: 0 24px 24px; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── SUBMISSIONS ── */
+.sub-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 10px; transition: border-color 0.15s; }
+.sub-card:hover { border-color: var(--border2); }
+.sub-avatar { width: 36px; height: 36px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sub-content { flex: 1; }
+.sub-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.sub-meta { font-size: 11px; color: var(--muted2); margin-bottom: 10px; }
+.sub-actions { display: flex; gap: 8px; }
+
+/* ── ANALYTICS ── */
+.analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--muted2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+.bar { flex: 1; background: rgba(79,126,248,0.3); border-radius: 3px 3px 0 0; transition: height 0.3s; position: relative; }
+.bar:hover { background: var(--accent); }
+.bar-label { font-size: 9px; color: var(--muted); text-align: center; margin-top: 4px; }
+.pie-wrap { display: flex; align-items: center; gap: 16px; }
+.pie-legend { display: flex; flex-direction: column; gap: 6px; }
+.pie-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.pie-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.top-markets-list { display: flex; flex-direction: column; gap: 8px; }
+.top-market-row { display: flex; align-items: center; gap: 10px; }
+.top-market-num { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--muted); width: 18px; }
+.top-market-title { flex: 1; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-market-vol { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--yes); }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(0,217,139,0.3); }
+.toast.error { border-color: rgba(255,63,94,0.3); }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 48px 24px; color: var(--muted2); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 99px; }
+
+/* ── CONFIRM ── */
+.confirm-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 150; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.confirm-backdrop.open { opacity: 1; pointer-events: all; }
+.confirm-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 24px; max-width: 360px; width: 100%; text-align: center; }
+.confirm-icon { font-size: 32px; margin-bottom: 12px; }
+.confirm-title { font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.confirm-sub { font-size: 13px; color: var(--muted2); margin-bottom: 20px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .analytics-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">Event<span>on</span></div>
+    <div class="logo-badge">ADMIN PANEL</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" onclick="switchPage('dashboard', this)"><span class="nav-icon">📊</span> Дашборд</div>
+    <div class="nav-item" onclick="switchPage('markets', this)"><span class="nav-icon">🏛</span> Рынки</div>
+    <div class="nav-item" onclick="switchPage('submissions', this)"><span class="nav-icon">📥</span> Заявки </div>
+    <div class="nav-item" onclick="switchPage('analytics', this)"><span class="nav-icon">📈</span> Аналитика</div>
+    <div class="nav-item" onclick="switchPage('settings', this)"><span class="nav-icon">⚙️</span> Настройки</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="admin-card">
+      <div class="admin-avatar">👑</div>
+      <div>
+        <div class="admin-name">Admin</div>
+        <div class="admin-role">Eventon Owner</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Дашборд</div>
+    <div class="topbar-actions">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--yes);">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--yes);box-shadow:0 0 6px var(--yes);animation:pulse 1.5s infinite;"></div>
+        <span>142 активных рынка</span>
+      </div>
+      <button class="btn btn-primary" onclick="newMarket()">＋ Новый рынок</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ PAGE: DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon">🏛</div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-label">Активных рынков</div>
+          <div class="stat-delta up" id="s-total-delta"></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">◈</div>
+          <div class="stat-val" id="s-tvl">—</div>
+          <div class="stat-label">TVL (TON)</div>
+          <div class="stat-delta up" id="s-tvl-delta"></div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">👥</div>
+          <div class="stat-val" id="s-users">—</div>
+          <div class="stat-label">Всего пользователей</div>
+          <div class="stat-delta up" id="s-users-delta"></div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" id="s-commission">—</div>
+          <div class="stat-label">Комиссии (TON)</div>
+          <div class="stat-delta up" id="s-commission-delta"></div>
+        </div>
+      </div>
+
+      <!-- Recent markets -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Последние рынки</div>
+          <button class="btn btn-ghost btn-sm" onclick="switchPage('markets', document.querySelector('[onclick*=markets]'))">Все рынки →</button>
+        </div>
+        <table id="dashboard-table"></table>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: MARKETS ══ -->
+    <div class="page" id="page-markets">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Все рынки</div>
+          <div class="table-tools">
+            <input class="search-input" placeholder="🔍  Поиск..." oninput="filterMarkets(this.value)" />
+            <select class="select-input" onchange="filterByStatus(this.value)">
+              <option value="">Все статусы</option>
+              <option value="active">Активные</option>
+              <option value="pending">На модерации</option>
+              <option value="closed">Закрытые</option>
+              <option value="resolved">Завершённые</option>
+            </select>
+            <select class="select-input" onchange="filterByCat(this.value)">
+              <option value="">Все категории</option>
+              <option value="sport">⚽ Спорт</option>
+              <option value="politics">🗳 Политика</option>
+              <option value="crypto">₿ Крипто</option>
+              <option value="culture">🎬 Культура</option>
+            </select>
+          </div>
+        </div>
+        <table id="markets-table"></table>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: SUBMISSIONS ══ -->
+    <div class="page" id="page-submissions">
+      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Заявки от пользователей</div>
+          <div style="font-size:13px;color:var(--muted2);">Пользователи предлагают темы для новых рынков</div>
+        </div>
+      </div>
+      <div id="submissions-list"></div>
+    </div>
+
+    <!-- ══ PAGE: ANALYTICS ══ -->
+    <div class="page" id="page-analytics">
+      <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-val">68%</div><div class="stat-label">Средняя точность</div></div>
+        <div class="stat-card green"><div class="stat-icon">🔄</div><div class="stat-val">3 240</div><div class="stat-label">Сделок сегодня</div></div>
+        <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-val">8.4 дн</div><div class="stat-label">Средний срок рынка</div></div>
+        <div class="stat-card orange"><div class="stat-icon">🏆</div><div class="stat-val">₿ Крипто</div><div class="stat-label">Топ категория</div></div>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <div class="chart-title">Объём по дням (TON)</div>
+          <div class="mini-chart" id="vol-chart"></div>
+          <div style="display:flex;gap:4px;margin-top:4px;" id="vol-labels"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Категории по объёму</div>
+          <div class="pie-wrap">
+            <canvas id="pie-chart" width="100" height="100"></canvas>
+            <div class="pie-legend">
+              <div class="pie-item"><div class="pie-dot" style="background:#fbbf24"></div><span>Крипто 38%</span></div>
+              <div class="pie-item"><div class="pie-dot" style="background:#60a5fa"></div><span>Спорт 28%</span></div>
+              <div class="pie-item"><div class="pie-dot" style="background:#c084fc"></div><span>Политика 22%</span></div>
+              <div class="pie-item"><div class="pie-dot" style="background:#f472b6"></div><span>Культура 12%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card" style="grid-column:1/-1;">
+          <div class="chart-title">Топ рынков по объёму</div>
+          <div class="top-markets-list" id="top-markets"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: SETTINGS ══ -->
+    <div class="page" id="page-settings">
+      <div style="max-width:560px;display:flex;flex-direction:column;gap:16px;">
+        <div class="table-wrap" style="padding:0;">
+          <div class="table-header"><div class="table-title">⚙️ Основные настройки</div></div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div class="field"><div class="field-label">КОМИССИЯ ПЛАТФОРМЫ (%)</div><input class="field-input" type="number" value="2" min="0" max="10" step="0.1" /></div>
+            <div class="field"><div class="field-label">МИНИМАЛЬНАЯ СТАВКА (TON)</div><input class="field-input" type="number" value="0.5" min="0.1" step="0.1" /></div>
+            <div class="field"><div class="field-label">ПАРАМЕТР ЛИКВИДНОСТИ B</div><input class="field-input" type="number" value="100" /></div>
+            <div class="field"><div class="field-label">МАКСИМАЛЬНЫЙ TVL НА РЫНОК (TON)</div><input class="field-input" type="number" value="10000" /></div>
+            <div class="field">
+              <div class="field-label">РАЗРЕШИТЬ ПОЛЬЗОВАТЕЛЯМ СОЗДАВАТЬ РЫНКИ</div>
+              <select class="field-input"><option>Да — с модерацией</option><option>Нет</option><option>Да — без модерации</option></select>
+            </div>
+            <button class="btn btn-primary" style="width:fit-content;" onclick="showToast('Настройки сохранены ✓', 'success')">Сохранить</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="padding:0;">
+          <div class="table-header"><div class="table-title">🤖 Авто-оракулы</div></div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div class="field"><div class="field-label">КРИПТО ЦЕНЫ (CoinGecko API)</div><input class="field-input" placeholder="Введите API ключ..." /></div>
+            <div class="field"><div class="field-label">СПОРТ ДАННЫЕ (SportData API)</div><input class="field-input" placeholder="Введите API ключ..." /></div>
+            <div class="field"><div class="field-label">НОВОСТНАЯ ЛЕНТА (RSS)</div><input class="field-input" placeholder="https://feeds.bbci.co.uk/..." value="https://feeds.bbci.co.uk/news/rss.xml" /></div>
+            <button class="btn btn-success" style="width:fit-content;" onclick="showToast('Оракулы подключены ✓', 'success')">Проверить подключение</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ CREATE/EDIT MODAL ══ -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Новый рынок</div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <div class="field-label">🇷🇺 НАЗВАНИЕ (РУССКИЙ)</div>
+        <input class="field-input" id="f-title-ru" placeholder="Например: Bitcoin достигнет $150k до конца 2026?" />
+      </div>
+      <div class="field">
+        <div class="field-label">🇺🇦 НАЗВА (УКРАЇНСЬКА)</div>
+        <input class="field-input" id="f-title-uk" placeholder="Наприклад: Bitcoin досягне $150k до кінця 2026?" />
+      </div>
+      <div class="field">
+        <div class="field-label">🇬🇧 TITLE (ENGLISH)</div>
+        <input class="field-input" id="f-title-en" placeholder="E.g.: Will Bitcoin reach $150k by end of 2026?" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">КАТЕГОРИЯ</div>
+          <select class="field-input" id="f-cat">
+            <option value="sport">⚽ Спорт</option>
+            <option value="politics">🗳 Политика</option>
+            <option value="crypto" selected>₿ Крипто</option>
+            <option value="culture">🎬 Культура</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">СТАТУС</div>
+          <select class="field-input" id="f-status">
+            <option value="active">✅ Активный</option>
+            <option value="pending">⏳ На модерации</option>
+            <option value="closed">🔒 Закрыт</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">ЭМОДЗИ</div>
+        <div class="emoji-picker" id="emoji-picker" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;">
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="⚽">⚽</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🏀">🏀</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🎾">🎾</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🏆">🏆</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🥊">🥊</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🗳">🗳</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🏛">🏛</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🌍">🌍</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="₿">₿</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="📉">📉</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="📈">📈</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🚀">🚀</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🎬">🎬</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🎵">🎵</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🎮">🎮</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🌟">🌟</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="💎">💎</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🔮">🔮</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="💰">💰</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="⚡">⚡</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🤖">🤖</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="💡">💡</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="📊">📊</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🏎">🏎</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🥇">🥇</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🇺🇸">🇺🇸</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🇺🇦">🇺🇦</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🇷🇺">🇷🇺</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🇨🇳">🇨🇳</span>
+          <span onclick="selectEmoji(this)" style="cursor:pointer;padding:4px 6px;border-radius:6px;font-size:20px;" title="🌐">🌐</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">ДНЕЙ ДО ЗАКРЫТИЯ</div>
+          <input class="field-input" type="number" id="f-deadline" value="30" min="1" placeholder="30" />
+        </div>
+        <div class="field">
+          <div class="field-label">ИСТОЧНИК РЕЗОЛЮЦИИ</div>
+          <input class="field-input" id="f-source" placeholder="Reuters, CoinGecko..." />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">НАЧ. ВЕРОЯТНОСТЬ YES (%)</div>
+          <input class="field-input" type="number" id="f-prob" value="50" min="1" max="99" />
+        </div>
+        <div class="field">
+          <div class="field-label">ЛИКВИДНОСТЬ b (TON)</div>
+          <input class="field-input" type="number" id="f-liq" value="100" min="10" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveMarket()">Сохранить рынок</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM DIALOG ══ -->
+<div class="confirm-backdrop" id="confirm-backdrop">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title">Вы уверены?</div>
+    <div class="confirm-sub" id="confirm-sub">Это действие нельзя отменить.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Отмена</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="confirmAction()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<style>
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6} }
+</style>
+
+<script>
+// ── SUPABASE ───────────────────────────────────────────────────────
+const SB_URL = 'https://puwyrjejaaqfhcjwgrog.supabase.co';
+const SB_KEY = 'sb_publishable_k19dhvmixv_YnZDkCTSygg_s9cNqCfW';
+
+async function sb(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : method==='PATCH' ? 'return=representation' : '',
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SB_URL + path, opts);
+  if (!res.ok) { const e = await res.text(); console.error('SB error:', e); return null; }
+  return res.json().catch(() => null);
+}
+
+// ── STATE ──────────────────────────────────────────────────────────
+let markets = [];
+let submissions = [];
+let editingId = null;
+let selectedEmoji = '💎';
+let confirmCallback = null;
+let filterText = '', filterStatus = '', filterCat = '';
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+function switchPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  const titles = { dashboard:'Дашборд', markets:'Рынки', submissions:'Заявки', analytics:'Аналитика', settings:'Настройки' };
+  document.getElementById('topbar-title').textContent = titles[name];
+  if (name === 'markets') loadAndRenderMarkets();
+  if (name === 'submissions') renderSubmissions();
+  if (name === 'analytics') renderAnalytics();
+  if (name === 'dashboard') loadAndRenderDashboard();
+}
+
+// ── SUPABASE LOADERS ──────────────────────────────────────────────
+async function loadAndRenderMarkets() {
+  document.getElementById('markets-table').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6b7280;">⏳ Загрузка...</td></tr>';
+  const data = await sb('/rest/v1/markets?order=id.asc&select=*');
+  if (data) {
+    markets = data.map(m => ({
+      id: m.id, emoji: m.emoji, cat: m.cat,
+      title: m.title_ru, title_ru: m.title_ru, title_uk: m.title_uk, title_en: m.title_en,
+      status: m.active ? 'active' : 'closed',
+      yes: m.yes_prob, vol: m.volume, trades: m.trades,
+      deadline: m.deadline_days + ' дн', deadline_days: m.deadline_days,
+      source: 'Supabase'
+    }));
+    renderMarketsTable();
+  }
+}
+
+async function loadAndRenderDashboard() {
+  // Загружаем последние рынки
+  const data = await sb('/rest/v1/markets?order=id.desc&limit=5&select=*');
+  if (data) {
+    markets = data.map(m => ({
+      id: m.id, emoji: m.emoji, cat: m.cat,
+      title: m.title_ru, status: m.active ? 'active' : 'closed',
+      yes: m.yes_prob, vol: m.volume, trades: m.trades,
+      deadline: m.deadline_days + ' дн', source: 'Supabase'
+    }));
+    renderTable('dashboard-table', markets, true);
+  }
+
+  // Реальная статистика
+  try {
+    // Активные рынки
+    const mktData = await sb('/rest/v1/markets?active=eq.true&select=id');
+    const mktCount = mktData ? mktData.length : 0;
+    const sTotal = document.getElementById('s-total');
+    if (sTotal) sTotal.textContent = mktCount;
+
+    // TVL — сумма всех ставок
+    const txData = await sb('/rest/v1/transactions?type=eq.bet&select=amount');
+    const tvl = txData ? txData.reduce((sum, t) => sum + Math.abs(parseFloat(t.amount)||0), 0) : 0;
+    const sTvl = document.getElementById('s-tvl');
+    if (sTvl) sTvl.textContent = tvl.toFixed(1);
+
+    // Комиссии (2% от TVL)
+    const commission = tvl * 0.02;
+    const sComm = document.getElementById('s-commission');
+    if (sComm) sComm.textContent = commission.toFixed(2);
+
+    // Пользователи
+    const usersData = await sb('/rest/v1/users?select=telegram_id');
+    const usersCount = usersData ? usersData.length : 0;
+    const sUsers = document.getElementById('s-users');
+    if (sUsers) sUsers.textContent = usersCount;
+
+    const sDelta = document.getElementById('s-total-delta');
+    if (sDelta) sDelta.textContent = '↑ активных рынков';
+    const sDeltaU = document.getElementById('s-users-delta');
+    if (sDeltaU) sDeltaU.textContent = '↑ зарегистрировано';
+  } catch(e) {
+    console.log('Stats error:', e);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function catBadge(cat) {
+  const map = { sport:'badge-sport', politics:'badge-politics', crypto:'badge-crypto', culture:'badge-culture' };
+  const labels = { sport:'⚽ Спорт', politics:'🗳 Политика', crypto:'₿ Крипто', culture:'🎬 Культура' };
+  return `<span class="badge ${map[cat]||''}">${labels[cat]||cat}</span>`;
+}
+function statusBadge(s) {
+  const map = { active:'badge-active', pending:'badge-pending', closed:'badge-closed', resolved:'badge-resolved' };
+  const labels = { active:'● Активный', pending:'⏳ Модерация', closed:'🔒 Закрыт', resolved:'✓ Завершён' };
+  return `<span class="badge ${map[s]||''}">${labels[s]||s}</span>`;
+}
+
+function renderTable(tableId, data, showActions=true) {
+  const el = document.getElementById(tableId);
+  if (!el) return;
+  if (!data.length) {
+    el.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Ничего не найдено</div></div></td></tr>`;
+    return;
+  }
+  el.innerHTML = `
+    <thead><tr>
+      <th>Рынок</th><th>Категория</th><th>Статус</th>
+      <th>YES%</th><th>Объём</th><th>Дедлайн</th>
+      ${showActions ? '<th>Действия</th>' : ''}
+    </tr></thead>
+    <tbody>${data.map(m => `
+      <tr>
+        <td><div class="market-title-cell">
+          <div class="market-emoji-sm">${m.emoji}</div>
+          <div><div class="market-name">${m.title}</div><div class="market-name-sub">${m.deadline}</div></div>
+        </div></td>
+        <td>${catBadge(m.cat)}</td>
+        <td>${statusBadge(m.status)}</td>
+        <td><div class="prob-bar-wrap"><div class="prob-bar"><div class="prob-bar-fill" style="width:${m.yes}%"></div></div><span class="prob-text">${m.yes}%</span></div></td>
+        <td><span class="vol-text">◈ ${Number(m.vol).toLocaleString()}</span></td>
+        <td style="font-size:12px;color:var(--muted2);">${m.deadline}</td>
+        ${showActions ? `<td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="editMarket(${m.id})">✏️</button>
+          <button class="btn btn-success btn-sm" onclick="toggleActive(${m.id}, ${m.status==='active'})" title="${m.status==='active'?'Деактивировать':'Активировать'}">${m.status==='active'?'⏸':'▶'}</button>
+          <button class="btn btn-success btn-sm" onclick="resolveMarket(${m.id}, 'yes')" title="ДА победило" style="background:rgba(0,217,139,0.2);color:#00d98b;">✅ ДА</button>
+          <button class="btn btn-danger btn-sm" onclick="resolveMarket(${m.id}, 'no')" title="НЕТ победило">❌ НЕТ</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteMarket(${m.id})">🗑</button>
+        </div></td>` : ''}
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function renderMarketsTable() {
+  let data = [...markets];
+  if (filterText) data = data.filter(m => m.title.toLowerCase().includes(filterText.toLowerCase()));
+  if (filterStatus) data = data.filter(m => m.status === filterStatus);
+  if (filterCat) data = data.filter(m => m.cat === filterCat);
+  renderTable('markets-table', data, true);
+}
+function filterMarkets(v) { filterText = v; renderMarketsTable(); }
+function filterByStatus(v) { filterStatus = v; renderMarketsTable(); }
+function filterByCat(v) { filterCat = v; renderMarketsTable(); }
+
+// ── MARKET ACTIONS ────────────────────────────────────────────────
+async function toggleActive(id, isActive) {
+  await sb('/rest/v1/markets?id=eq.'+id, 'PATCH', { active: !isActive });
+  showToast(isActive ? '⏸ Рынок деактивирован' : '▶ Рынок активирован');
+  loadAndRenderMarkets();
+}
+
+async function deleteMarket(id) {
+  showConfirm('🗑 Удалить рынок?', 'Рынок будет удалён из базы. Это нельзя отменить.', async () => {
+    await sb('/rest/v1/markets?id=eq.'+id, 'DELETE');
+    showToast('✓ Рынок удалён');
+    loadAndRenderMarkets();
+  });
+}
+
+async function resolveMarket(id, winningSide) {
+  const market = markets.find(m => m.id === id);
+  if (!market) { alert('Рынок не найден'); return; }
+
+  const sideLabel = winningSide === 'yes' ? 'ДА' : 'НЕТ';
+  showConfirm(
+    `🏆 Резолюция: ${sideLabel} победило?`,
+    `Рынок: "${market.title.slice(0, 80)}"`,
+    async () => {
+      showToast('⏳ Выполняем резолюцию...');
+
+      try {
+        // Шаг 1: Закрываем рынок
+        const closeResult = await sb('/rest/v1/markets?id=eq.' + id, 'PATCH', {
+          active: false,
+          yes_prob: winningSide === 'yes' ? 95 : 5
+        });
+        console.log('Market closed:', closeResult);
+
+        // Шаг 2: Загружаем ставки
+        const txData = await sb('/rest/v1/transactions?type=eq.bet&limit=1000&select=telegram_id,amount,comment');
+        console.log('Transactions loaded:', txData?.length);
+
+        const marketBets = (txData || []).filter(tx => {
+          const parts = (tx.comment || '').split(':');
+          return parts[0] === 'BET' && parseInt(parts[1]) === id;
+        });
+        console.log('Bets for market', id, ':', marketBets.length);
+
+        if (!marketBets.length) {
+          showToast('Рынок закрыт. Ставок не было.');
+          if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
+          else loadAndRenderDashboard();
+          return;
+        }
+
+        // Шаг 3: Считаем пул
+        let yesPool = 0, noPool = 0;
+        const yesBets = [], noBets = [];
+        marketBets.forEach(tx => {
+          const parts = tx.comment.split(':');
+          const side = parts[2];
+          const amount = Math.abs(parseFloat(tx.amount) || 0);
+          if (side === 'yes') { yesPool += amount; yesBets.push({...tx, amount}); }
+          else { noPool += amount; noBets.push({...tx, amount}); }
+        });
+
+        const totalPool = yesPool + noPool;
+        const payoutPool = totalPool * 0.98;
+        const winnerBets = winningSide === 'yes' ? yesBets : noBets;
+        const winnerPool = winningSide === 'yes' ? yesPool : noPool;
+
+        console.log('Total pool:', totalPool, 'Winners:', winnerBets.length);
+
+        if (!winnerBets.length) {
+          showToast(`Рынок закрыт. Победителей (${sideLabel}) не было.`);
+          if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
+          else loadAndRenderDashboard();
+          return;
+        }
+
+        // Шаг 4: Выплаты через SQL (показываем команду)
+        const sqlLines = winnerBets.map(tx => {
+          const share = tx.amount / winnerPool;
+          const payout = Math.round(payoutPool * share * 100) / 100;
+          return `UPDATE users SET balance = balance + ${payout} WHERE telegram_id = '${tx.telegram_id}';`;
+        });
+
+        const sql = `-- Резолюция рынка #${id}: ${sideLabel} победило
+-- Пул: ${totalPool.toFixed(2)} TON, Победителей: ${winnerBets.length}
+${sqlLines.join('\n')}
+UPDATE markets SET active = false, yes_prob = ${winningSide === 'yes' ? 95 : 5} WHERE id = ${id};`;
+
+        console.log('SQL для выплат:\n', sql);
+
+        // Копируем SQL в буфер
+        try {
+          await navigator.clipboard.writeText(sql);
+          showToast(`✅ SQL скопирован! Вставь в Supabase SQL Editor (${winnerBets.length} победителей, пул ${totalPool.toFixed(2)} TON)`);
+        } catch(e) {
+          // Показываем в alert если clipboard недоступен
+          alert('Скопируй этот SQL в Supabase SQL Editor:\n\n' + sql);
+        }
+
+        if (typeof loadAndRenderMarkets === 'function') loadAndRenderMarkets();
+        else loadAndRenderDashboard();
+
+      } catch(e) {
+        console.error('Resolve error:', e);
+        showToast('❌ Ошибка: ' + e.message);
+      }
+    }
+  );
+}
+
+function editMarket(id) {
+  const m = markets.find(x => x.id === id);
+  if (!m) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Редактировать рынок';
+  document.getElementById('f-title-ru').value = m.title_ru || m.title;
+  document.getElementById('f-title-uk').value = m.title_uk || '';
+  document.getElementById('f-title-en').value = m.title_en || '';
+  document.getElementById('f-cat').value = m.cat;
+  document.getElementById('f-prob').value = m.yes;
+  document.getElementById('f-deadline').value = m.deadline_days || 30;
+  document.getElementById('f-source').value = '';
+  selectedEmoji = m.emoji;
+  document.querySelectorAll('.emoji-picker span').forEach(s => s.classList.toggle('selected', s.textContent === m.emoji));
+  document.getElementById('modal-backdrop').classList.add('active');
+}
+
+function newMarket() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Новый рынок';
+  document.getElementById('f-title-ru').value = '';
+  document.getElementById('f-title-uk').value = '';
+  document.getElementById('f-title-en').value = '';
+  document.getElementById('f-cat').value = 'politics';
+  document.getElementById('f-prob').value = 50;
+  document.getElementById('f-deadline').value = 30;
+  document.getElementById('f-source').value = '';
+  selectedEmoji = '🔮';
+  document.getElementById('modal-backdrop').classList.add('active');
+}
+
+async function saveMarket() {
+  const title_ru = document.getElementById('f-title-ru').value.trim();
+  const title_uk = document.getElementById('f-title-uk').value.trim();
+  const title_en = document.getElementById('f-title-en').value.trim();
+  if (!title_ru) { showToast('⚠️ Введите название на русском'); return; }
+
+  const payload = {
+    emoji: selectedEmoji,
+    cat: document.getElementById('f-cat').value,
+    title_ru,
+    title_uk: title_uk || title_ru,
+    title_en: title_en || title_ru,
+    yes_prob: parseInt(document.getElementById('f-prob').value) || 50,
+    deadline_days: parseInt(document.getElementById('f-deadline').value) || 30,
+    active: true,
+  };
+
+  if (editingId) {
+    await sb('/rest/v1/markets?id=eq.'+editingId, 'PATCH', payload);
+    showToast('✓ Рынок обновлён');
+  } else {
+    await sb('/rest/v1/markets', 'POST', payload);
+    showToast('✓ Рынок создан');
+  }
+  closeModal();
+  loadAndRenderMarkets();
+}
+
+// ── DEPOSITS MANAGEMENT ───────────────────────────────────────────
+async function loadPendingDeposits() {
+  const data = await sb('/rest/v1/transactions?status=eq.pending&type=eq.deposit&order=created_at.desc&select=*');
+  return data || [];
+}
+
+// ── SUBMISSIONS ───────────────────────────────────────────────────
+async function renderSubmissions() {
+  const el = document.getElementById('submissions-list');
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:#6b7280;">⏳ Загрузка...</div>';
+
+  const data = await sb('/rest/v1/market_proposals?status=eq.pending&order=created_at.desc&select=*');
+  if (!data || !data.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Нет новых заявок</div></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(s => `
+    <div class="submission-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--muted2);">👤 ${s.telegram_id || 'аноним'}</div>
+        <div style="font-size:11px;color:var(--muted2);">${new Date(s.created_at).toLocaleDateString('ru')}</div>
+      </div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:10px;">${s.title_ru}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        ${catBadge(s.cat)}
+        <span style="font-size:12px;color:var(--muted2);">YES: ${s.yes_prob}% · ${s.deadline_days} дн</span>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn btn-success btn-sm" onclick="approveProposal(${s.id}, '${(s.title_ru||'').replace(/'/g,"\'")}', '${s.cat}', ${s.yes_prob}, ${s.deadline_days}, '${s.telegram_id}')">✓ Одобрить</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectProposal(${s.id})">✗ Отклонить</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function approveProposal(id, title, cat, yes_prob, deadline_days, creator_id) {
+  // Create market from proposal
+  await sb('/rest/v1/markets', 'POST', {
+    emoji: '🔮',
+    cat,
+    title_ru: title,
+    title_uk: title,
+    title_en: title,
+    yes_prob,
+    deadline_days,
+    creator_id,
+    creator_fee: 0,
+    active: true
+  });
+  // Mark proposal as approved
+  await sb('/rest/v1/market_proposals?id=eq.' + id, 'PATCH', { status: 'approved' });
+  showToast('✓ Рынок создан! Автор будет получать 0.5% с ставок.');
+  renderSubmissions();
+}
+
+async function rejectProposal(id) {
+  await sb('/rest/v1/market_proposals?id=eq.' + id, 'PATCH', { status: 'rejected' });
+  showToast('Заявка отклонена');
+  renderSubmissions();
+}
+
+
+
+// ── ANALYTICS ─────────────────────────────────────────────────────
+function renderAnalytics() {
+  const volChart = document.getElementById('vol-chart');
+  if (!volChart) return;
+  const vals = [2100,3400,2800,4200,3900,5100,4800];
+  const max = Math.max(...vals);
+  volChart.innerHTML = vals.map((v,i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+    <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
+      <div style="width:100%;background:linear-gradient(180deg,#5b8af0,#3d6fd4);border-radius:4px 4px 0 0;height:${Math.round(v/max*100)}%;min-height:4px;"></div>
+    </div>
+  </div>`).join('');
+  const labels = document.getElementById('vol-labels');
+  if (labels) labels.innerHTML = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d => `<div style="flex:1;text-align:center;font-size:10px;color:#6b7280;">${d}</div>`).join('');
+  const canvas = document.getElementById('pie-chart');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const slices = [{v:38,c:'#fbbf24'},{v:28,c:'#60a5fa'},{v:22,c:'#c084fc'},{v:12,c:'#f472b6'}];
+    let angle = 0;
+    slices.forEach(s => {
+      ctx.beginPath(); ctx.moveTo(50,50);
+      ctx.arc(50,50,45,angle,angle+s.v/100*Math.PI*2);
+      ctx.fillStyle = s.c; ctx.fill();
+      angle += s.v/100*Math.PI*2;
+    });
+  }
+  const topEl = document.getElementById('top-markets');
+  if (topEl && markets.length) {
+    topEl.innerHTML = markets.slice(0,5).map((m,i) => `
+      <div class="top-market-row">
+        <div class="top-market-num">${i+1}</div>
+        <div class="top-market-title">${m.emoji} ${m.title}</div>
+        <div class="top-market-vol">◈ ${Number(m.vol).toLocaleString()}</div>
+      </div>`).join('');
+  }
+}
+
+// ── MODAL & CONFIRM ───────────────────────────────────────────────
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('active'); editingId = null; }
+function showConfirm(title, sub, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-sub').textContent = sub;
+  confirmCallback = cb;
+  document.getElementById('confirm-backdrop').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirm-backdrop').classList.remove('open'); confirmCallback = null; }
+function confirmAction() { closeConfirm(); if (confirmCallback) confirmCallback(); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function selectEmoji(el) {
+  selectedEmoji = el.title || el.textContent.trim();
+  document.querySelectorAll('.emoji-picker span').forEach(s => {
+    s.style.background = (s.title === selectedEmoji || s.textContent.trim() === selectedEmoji) ? 'var(--accent)' : '';
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadAndRenderDashboard();
+  // Load real active markets count
+  sb('/rest/v1/markets?active=eq.true&select=id').then(data => {
+    const el = document.getElementById('active-markets-count');
+    if (el && data) el.textContent = data.length;
+  });
+});
+</script>
+</body>
+</html>
