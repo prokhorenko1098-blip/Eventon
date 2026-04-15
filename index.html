@@ -1300,17 +1300,30 @@ async function renderPositions() {
   listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Завантаження...</div>';
 
   try {
-    // Завантажуємо всі ставки та виплати користувача
-    const [txData, payoutData] = await Promise.all([
+    // Завантажуємо ставки, виплати та всі ринки (включно з закритими) паралельно
+    const [txData, payoutData, allMarketsData] = await Promise.all([
       supaFetch('/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.bet&order=created_at.desc&select=*'),
-      supaFetch('/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.payout&select=*')
+      supaFetch('/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.payout&select=*'),
+      supaFetch('/rest/v1/markets?select=id,title_ru,title_uk,title_en,emoji,active,yes_prob&limit=500')
     ]);
+
+    // Карта ринків з реальними назвами та статусом active
+    const marketsMap = {};
+    (allMarketsData || []).forEach(m => {
+      const title = lang === 'uk' ? m.title_uk : lang === 'en' ? m.title_en : m.title_ru;
+      marketsMap[m.id] = {
+        title: title || m.title_ru || ('Ринок #' + m.id),
+        emoji: m.emoji || '🔮',
+        active: m.active,
+        yes_prob: m.yes_prob
+      };
+    });
 
     if (!txData || !txData.length) {
       listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
         ${lang==='en' ? 'No positions yet' : lang==='uk' ? 'Поки немає позицій' : 'Пока нет позиций'}
       </div>`;
-      renderHistory([], []);
+      renderHistory([], {});
       return;
     }
 
@@ -1333,13 +1346,17 @@ async function renderPositions() {
       const amount = parseFloat(parts[3]) || Math.abs(parseFloat(tx.amount) || 0);
       const payout = parseFloat(parts[4]) || 0;
 
-      const mkt = T[lang].markets?.find(m => m.id === marketId);
-      const d = MARKET_DATA[marketId];
-      const title = mkt?.title || ('Ринок #' + marketId);
-      const emoji = mkt?.emoji || '🔮';
-      const isActive = d !== undefined; // рынок загружен = активный
+      // Беремо назву та статус з Supabase (працює і для закритих ринків)
+      const mktInfo = marketsMap[marketId];
+      const title = mktInfo?.title || ('Ринок #' + marketId);
+      const emoji = mktInfo?.emoji || '🔮';
+      // active=true → відкритий, active=false або відсутній → закритий
+      const isActive = mktInfo ? mktInfo.active === true : false;
 
-      const currentProb = d ? (side === 'yes' ? d.yes / 100 : (100 - d.yes) / 100) : 0.5;
+      // P&L: для активних — поточна ймовірність, для закритих не важливо
+      const d = MARKET_DATA[marketId];
+      const yesProb = d ? d.yes : (mktInfo?.yes_prob ?? 50);
+      const currentProb = side === 'yes' ? yesProb / 100 : (100 - yesProb) / 100;
       const currentValue = payout * currentProb;
       const pnl = currentValue - amount;
 
