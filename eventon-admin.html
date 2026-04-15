@@ -258,28 +258,41 @@ async function resolveMarket(marketId, winningSide) {
           yes_prob: winningSide === 'yes' ? 95 : 5
         });
 
-        // 2. Загружаем ставки
-        const allTx = await sb('/rest/v1/transactions?type=eq.bet&limit=2000&select=telegram_id,amount,comment');
+        // 2. Загружаем ВСЕ ставки с пагинацией (Supabase лимит 1000 за раз)
+        let allTx = [];
+        let offset = 0;
+        while (true) {
+          const batch = await sb(`/rest/v1/transactions?type=eq.bet&select=telegram_id,amount,comment,status&limit=1000&offset=${offset}`);
+          if (!batch || !batch.length) break;
+          allTx = allTx.concat(batch);
+          if (batch.length < 1000) break;
+          offset += 1000;
+        }
+        
+        // Фильтруем только ставки на этот рынок (формат BET:ID:side:amt:payout)
         const marketBets = (allTx || []).filter(tx => {
           const p = (tx.comment || '').split(':');
-          return p[0] === 'BET' && parseInt(p[1]) === marketId;
+          // Поддерживаем оба формата: BET:123:yes и BET:123:yes:5:10
+          return p[0] === 'BET' && String(p[1]).trim() === String(marketId);
         });
-        console.log('Bets found:', marketBets.length, marketBets);
+        console.log('All tx:', allTx?.length, 'Bets for market', marketId, ':', marketBets.length);
+        console.log('Sample comments:', (allTx||[]).slice(0,5).map(t=>t.comment));
 
         if (!marketBets.length) {
           showToast('✅ Рынок закрыт. Ставок не было.', 'success');
           await refresh(); return;
         }
 
-        // 3. Пулы
+        // 3. Пулы — формат BET:marketId:yes/no:amount:payout
         let yesPool = 0, noPool = 0;
         const yesBets = [], noBets = [];
         marketBets.forEach(tx => {
           const p = tx.comment.split(':');
-          const side = p[2];
+          const side = p[2]; // 'yes' или 'no'
           const amt = Math.abs(parseFloat(tx.amount) || 0);
+          console.log('Bet:', tx.telegram_id, side, amt);
           if (side === 'yes') { yesPool += amt; yesBets.push({...tx, amt}); }
-          else { noPool += amt; noBets.push({...tx, amt}); }
+          else if (side === 'no') { noPool += amt; noBets.push({...tx, amt}); }
         });
 
         const totalPool = yesPool + noPool;
@@ -320,7 +333,11 @@ async function resolveMarket(marketId, winningSide) {
         await refresh();
       } catch(e) {
         console.error('Resolve error:', e);
-        showToast('❌ Ошибка: ' + e.message, 'error');
+        // Генерируем SQL для ручного выполнения как запасной вариант
+        const fallbackSql = `-- Закрыть рынок #${marketId} вручную\nUPDATE markets SET active = false, yes_prob = ${winningSide === 'yes' ? 95 : 5} WHERE id = ${marketId};\n-- Возврат ставок если нет противоположных ставок:\n-- UPDATE users SET balance = balance + ABS(amount) FROM transactions WHERE transactions.telegram_id = users.telegram_id AND transactions.comment LIKE 'BET:${marketId}:%' AND transactions.type = 'bet';`;
+        try { await navigator.clipboard.writeText(fallbackSql); } catch(_) {}
+        showToast('❌ Ошибка API. SQL скопирован — вставьте в Supabase SQL Editor', 'error');
+        alert('Скопируйте в Supabase SQL Editor:\n\n' + fallbackSql);
       }
     }
   );
@@ -350,8 +367,9 @@ function closeModal() {
   confirmCallback = null;
 }
 function confirmAction() {
+  const cb = confirmCallback; // сохраняем ДО закрытия модала
   closeModal();
-  if (confirmCallback) confirmCallback();
+  if (cb) cb();
 }
 document.getElementById('modal-bg').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
