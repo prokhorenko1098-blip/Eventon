@@ -167,6 +167,16 @@
   .pos-stat-val.green { color: var(--yes); }
   .pos-stat-val.red { color: var(--no); }
 
+  /* История ставок */
+  .history-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; opacity: 0.85; }
+  .history-card.win { border-color: rgba(0,229,160,0.2); }
+  .history-card.loss { border-color: rgba(255,77,106,0.18); }
+  .history-result-badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .history-result-badge.win { background: var(--yes-dim); color: var(--yes); }
+  .history-result-badge.loss { background: var(--no-dim); color: var(--no); }
+  .history-result-badge.pending { background: rgba(107,114,128,0.15); color: var(--muted); }
+  .history-commission { font-size: 10px; color: var(--muted); padding-top: 6px; border-top: 1px solid var(--border); margin-top: 8px; display: flex; justify-content: space-between; }
+
   .lb-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
   .lb-item { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
   .lb-rank { font-family: 'Geist Mono', monospace; font-size: 15px; font-weight: 700; width: 28px; text-align: center; flex-shrink: 0; }
@@ -727,6 +737,15 @@
       </div>
       <div style="padding:0 16px 10px;"><div class="section-title" id="positions-title"></div></div>
       <div class="positions-list stagger" id="positions-list"></div>
+
+      <!-- Архив / История ставок -->
+      <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+        <div class="section-title" id="history-title">ЗАКРИТІ ПОЗИЦІЇ</div>
+        <div id="history-summary" style="font-size:11px;color:var(--muted);"></div>
+      </div>
+      <div class="positions-list" id="history-list">
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Завантаження...</div>
+      </div>
       <div style="height:24px;"></div>
     </div>
     <div class="bottom-nav">
@@ -1197,6 +1216,8 @@ function applyTranslations() {
   document.getElementById('balance-sub').textContent = t.balanceSub;
   document.getElementById('pnl-label').textContent = t.pnlLabel;
   document.getElementById('positions-title').textContent = t.positionsTitle;
+  const histTitleEl = document.getElementById('history-title');
+  if (histTitleEl) histTitleEl.textContent = lang==='en' ? 'CLOSED POSITIONS' : lang==='uk' ? 'ЗАКРИТІ ПОЗИЦІЇ' : 'ЗАКРЫТЫЕ ПОЗИЦИИ';
   document.getElementById('nav-markets2').textContent = t.navMarkets;
   document.getElementById('nav-portfolio2').textContent = t.navPortfolio;
   document.getElementById('nav-rating2').textContent = t.navRating;
@@ -1279,82 +1300,169 @@ async function renderPositions() {
   listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Завантаження...</div>';
 
   try {
-    // Завантажуємо всі ставки користувача
-    const txData = await supaFetch(
-      '/rest/v1/transactions?telegram_id=eq.' + userTelegramId +
-      '&type=eq.bet&order=created_at.desc&select=*'
-    );
+    // Завантажуємо всі ставки та виплати користувача
+    const [txData, payoutData] = await Promise.all([
+      supaFetch('/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.bet&order=created_at.desc&select=*'),
+      supaFetch('/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.payout&select=*')
+    ]);
 
     if (!txData || !txData.length) {
       listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
         ${lang==='en' ? 'No positions yet' : lang==='uk' ? 'Поки немає позицій' : 'Пока нет позиций'}
       </div>`;
+      renderHistory([], []);
       return;
     }
 
+    // Карта выплат: marketId -> сумма
+    const payoutMap = {};
+    (payoutData || []).forEach(tx => {
+      const p = (tx.comment || '').split(':');
+      if (p[0] === 'PAYOUT') {
+        const mid = parseInt(p[1]);
+        payoutMap[mid] = (payoutMap[mid] || 0) + parseFloat(tx.amount || 0);
+      }
+    });
+
     // Парсимо ставки з коментарів: "BET:marketId:side:amount:payout"
-    const positions = txData.map(tx => {
+    const allPositions = txData.map(tx => {
       const parts = (tx.comment || '').split(':');
       if (parts[0] !== 'BET') return null;
       const marketId = parseInt(parts[1]);
-      const side = parts[2]; // 'yes' or 'no'
-      const amount = parseFloat(parts[3]) || 0;
+      const side = parts[2];
+      const amount = parseFloat(parts[3]) || Math.abs(parseFloat(tx.amount) || 0);
       const payout = parseFloat(parts[4]) || 0;
 
-      // Знаходимо назву ринку
       const mkt = T[lang].markets?.find(m => m.id === marketId);
       const d = MARKET_DATA[marketId];
       const title = mkt?.title || ('Ринок #' + marketId);
       const emoji = mkt?.emoji || '🔮';
+      const isActive = d !== undefined; // рынок загружен = активный
 
-      // Поточна вартість позиції
       const currentProb = d ? (side === 'yes' ? d.yes / 100 : (100 - d.yes) / 100) : 0.5;
       const currentValue = payout * currentProb;
       const pnl = currentValue - amount;
 
       return {
-        marketId, side, amount, payout, title, emoji,
+        marketId, side, amount, payout, title, emoji, isActive,
         currentValue, pnl,
+        receivedPayout: payoutMap[marketId] || 0,
         sideLabel: side === 'yes' ? t.yesLabel : t.noLabel,
         date: new Date(tx.created_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })
       };
     }).filter(Boolean);
 
-    if (!positions.length) {
+    const activePositions = allPositions.filter(p => p.isActive);
+    const closedPositions = allPositions.filter(p => !p.isActive);
+
+    if (!activePositions.length) {
       listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
-        ${lang==='en' ? 'No positions yet' : lang==='uk' ? 'Поки немає позицій' : 'Пока нет позиций'}
+        ${lang==='en' ? 'No active positions' : lang==='uk' ? 'Немає активних позицій' : 'Нет активных позиций'}
       </div>`;
-      return;
+    } else {
+      listEl.innerHTML = activePositions.map(p => `
+        <div class="position-card">
+          <div class="position-top">
+            <span class="position-emoji">${p.emoji}</span>
+            <span class="position-title">${p.title.slice(0, 45)}${p.title.length > 45 ? '…' : ''}</span>
+            <span class="position-side ${p.side}">${p.sideLabel}</span>
+          </div>
+          <div class="position-bottom">
+            <div class="pos-stat">
+              <div class="pos-stat-val">${p.amount.toFixed(2)}</div>
+              <div class="pos-stat-lbl">${lang==='en'?'Staked':lang==='uk'?'Поставлено':'Поставлено'}</div>
+            </div>
+            <div class="pos-stat">
+              <div class="pos-stat-val">${p.payout.toFixed(2)}</div>
+              <div class="pos-stat-lbl">${lang==='en'?'Payout if win':lang==='uk'?'Виплата':'Выплата'}</div>
+            </div>
+            <div class="pos-stat">
+              <div class="pos-stat-val ${p.pnl >= 0 ? 'green' : 'red'}">${p.pnl >= 0 ? '+' : ''}${p.pnl.toFixed(2)} TON</div>
+              <div class="pos-stat-lbl">P&L</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);padding:4px 0 0;">${p.date}</div>
+        </div>
+      `).join('');
     }
 
-    listEl.innerHTML = positions.map(p => `
-      <div class="position-card">
-        <div class="position-top">
-          <span class="position-emoji">${p.emoji}</span>
-          <span class="position-title">${p.title.slice(0, 45)}${p.title.length > 45 ? '…' : ''}</span>
-          <span class="position-side ${p.side}">${p.sideLabel}</span>
-        </div>
-        <div class="position-bottom">
-          <div class="pos-stat">
-            <div class="pos-stat-val">${p.amount.toFixed(2)}</div>
-            <div class="pos-stat-lbl">${lang==='en'?'Staked':lang==='uk'?'Поставлено':'Поставлено'}</div>
-          </div>
-          <div class="pos-stat">
-            <div class="pos-stat-val">${p.payout.toFixed(2)}</div>
-            <div class="pos-stat-lbl">${lang==='en'?'Payout if win':lang==='uk'?'Виплата':'Выплата'}</div>
-          </div>
-          <div class="pos-stat">
-            <div class="pos-stat-val ${p.pnl >= 0 ? 'green' : 'red'}">${p.pnl >= 0 ? '+' : ''}${p.pnl.toFixed(2)} TON</div>
-            <div class="pos-stat-lbl">P&L</div>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);padding:4px 0 0;">${p.date}</div>
-      </div>
-    `).join('');
+    renderHistory(closedPositions, payoutMap);
 
   } catch(e) {
     listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Помилка завантаження</div>';
     console.log('Positions error:', e);
+  }
+}
+
+function renderHistory(closedPositions, payoutMap) {
+  const histEl = document.getElementById('history-list');
+  const summaryEl = document.getElementById('history-summary');
+  if (!histEl) return;
+
+  if (!closedPositions.length) {
+    histEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">
+      ${lang==='uk' ? 'Закритих позицій немає' : lang==='en' ? 'No closed positions' : 'Нет закрытых позиций'}
+    </div>`;
+    if (summaryEl) summaryEl.textContent = '';
+    return;
+  }
+
+  // Считаем итоги
+  let totalWon = 0, totalLost = 0, totalCommission = 0;
+
+  const cards = closedPositions.map(p => {
+    const received = p.receivedPayout;
+    const commission = received > 0 ? Math.round(p.amount * (1 / 0.98 - 1) * 100) / 100 : 0;
+    // Реальный P&L: получено - поставлено
+    const realPnl = received > 0 ? received - p.amount : -p.amount;
+    const isWin = received > 0;
+    const isPending = received === 0 && !p.isActive; // закрыт, но выплат не было
+
+    if (isWin) { totalWon += realPnl; totalCommission += commission; }
+    else totalLost += Math.abs(realPnl);
+
+    const resultLabel = isWin
+      ? (lang==='uk' ? '✅ Виграш' : lang==='en' ? '✅ Won' : '✅ Выигрыш')
+      : (lang==='uk' ? '❌ Програш' : lang==='en' ? '❌ Lost' : '❌ Проигрыш');
+
+    const pnlStr = isWin
+      ? `+${realPnl.toFixed(2)} TON`
+      : `${realPnl.toFixed(2)} TON`;
+
+    return `
+      <div class="history-card ${isWin ? 'win' : 'loss'}">
+        <div class="position-top" style="margin-bottom:10px;">
+          <span class="position-emoji">${p.emoji}</span>
+          <span class="position-title">${p.title.slice(0, 42)}${p.title.length > 42 ? '…' : ''}</span>
+          <span class="history-result-badge ${isWin ? 'win' : 'loss'}">${resultLabel}</span>
+        </div>
+        <div class="position-bottom">
+          <div class="pos-stat">
+            <div class="pos-stat-val">${p.amount.toFixed(2)}</div>
+            <div class="pos-stat-lbl">${lang==='uk'?'Поставлено':lang==='en'?'Staked':'Поставлено'}</div>
+          </div>
+          <div class="pos-stat">
+            <div class="pos-stat-val">${received > 0 ? received.toFixed(2) : '0.00'}</div>
+            <div class="pos-stat-lbl">${lang==='uk'?'Отримано':lang==='en'?'Received':'Получено'}</div>
+          </div>
+          <div class="pos-stat">
+            <div class="pos-stat-val ${isWin ? 'green' : 'red'}">${pnlStr}</div>
+            <div class="pos-stat-lbl">P&L</div>
+          </div>
+        </div>
+        <div class="history-commission">
+          <span>${lang==='uk'?'Ставка':lang==='en'?'Side':'Ставка'}: <b style="color:${p.side==='yes'?'var(--yes)':'var(--no)'};">${p.sideLabel}</b> · ${p.date}</span>
+          ${isWin ? `<span>${lang==='uk'?'Комісія':'Комиссия'}: ${commission.toFixed(2)} TON (2%)</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  histEl.innerHTML = `<div class="positions-list" style="padding:0 16px;gap:8px;display:flex;flex-direction:column;">${cards}</div>`;
+
+  // Итоговая статистика
+  const netPnl = totalWon - totalLost;
+  if (summaryEl) {
+    summaryEl.innerHTML = `<span style="color:${netPnl >= 0 ? 'var(--yes)' : 'var(--no)'};">${netPnl >= 0 ? '+' : ''}${netPnl.toFixed(2)} TON</span>`;
   }
 }
 
