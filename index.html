@@ -523,10 +523,26 @@
     transition: all 0.15s;
   }
   .lang-switcher:active { background: var(--surface2); }
+  /* ── TOAST ── */
+  .eventon-toast {
+    position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%) translateY(24px);
+    background: var(--surface); border: 1px solid var(--border2); border-radius: 14px;
+    padding: 11px 18px; z-index: 999; font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+    max-width: 88vw; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  }
+  .eventon-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .eventon-toast.yes  { border-color: rgba(0,229,160,0.4); color: var(--yes); }
+  .eventon-toast.no   { border-color: rgba(255,77,106,0.4); color: var(--no); }
+  .eventon-toast.info { border-color: rgba(91,138,240,0.4); color: var(--accent); }
+  .eventon-toast.payout { border-color:rgba(245,200,66,0.5);color:var(--gold);background:linear-gradient(135deg,rgba(245,200,66,0.08),var(--surface)); }
+  @keyframes payout-pulse{0%{box-shadow:0 0 0 0 rgba(245,200,66,.5)}70%{box-shadow:0 0 0 14px rgba(245,200,66,0)}100%{box-shadow:0 0 0 0 rgba(245,200,66,0)}}
+  .payout-pulse{animation:payout-pulse 0.9s ease-out 2;}
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="eventon-toast" id="eventon-toast"></div>
 
   <!-- ══ SCREEN: LANGUAGE SELECT ══ -->
   <div class="screen" id="screen-lang">
@@ -2213,12 +2229,7 @@ function addLiveBet() {
 }
 
 function showBetToast(msg, side) {
-  const t = document.getElementById('bet-toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.style.color = side==='yes'?'var(--yes)':side==='no'?'var(--no)':'var(--text)';
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2800);
+  showToast(msg, side === 'yes' ? 'yes' : side === 'no' ? 'no' : 'info');
 }
 
 // ── SUPABASE REALTIME ONLINE COUNTER ─────────────────────────────
@@ -2373,6 +2384,7 @@ async function loadUserBalance(tgUsername) {
     }
     updateBalanceDisplay();
     loadRealStats();
+    setTimeout(startRealtimePolling, 1500);
   } catch(e) {
     console.log('Balance load error:', e);
   }
@@ -3795,6 +3807,104 @@ async function placeInlineBet(matchId, label, odds) {
 
 function updateBetslipBar() {}
 
+
+// ══ TOAST ══════════════════════════════════════════════════════
+function showToast(msg, type, duration) {
+  type = type || 'info'; duration = duration || 3500;
+  const t = document.getElementById('eventon-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'eventon-toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ══ REAL-TIME POLLING (каждые 30 сек) ══════════════════════════
+const _knownClosed = new Set();
+const _knownPayouts = new Set();
+let _pollingStarted = false;
+
+async function startRealtimePolling() {
+  if (_pollingStarted || !userTelegramId) return;
+  _pollingStarted = true;
+  await _pollTick(true);
+  setInterval(() => _pollTick(false), 30000);
+}
+
+async function _pollTick(silent) {
+  if (!userTelegramId) return;
+  try {
+    const bets = await supaFetch(
+      '/rest/v1/transactions?telegram_id=eq.' + userTelegramId +
+      '&type=eq.bet&select=comment&limit=200'
+    );
+    if (!bets || !bets.length) return;
+
+    const marketIds = [...new Set(
+      bets.map(tx => { const p=(tx.comment||'').split(':'); return p[0]==='BET'?parseInt(p[1]):null; }).filter(Boolean)
+    )];
+    if (!marketIds.length) return;
+
+    const markets = await supaFetch(
+      '/rest/v1/markets?id=in.(' + marketIds.join(',') + ')&select=id,title_ru,title_uk,active,yes_prob'
+    );
+    if (!markets) return;
+
+    if (!silent) {
+      for (const m of markets) {
+        if (!m.active && !_knownClosed.has(m.id)) {
+          _knownClosed.add(m.id);
+          const result = m.yes_prob >= 70 ? 'yes' : m.yes_prob <= 30 ? 'no' : null;
+          const myBet = bets.find(tx => { const p=(tx.comment||'').split(':'); return p[0]==='BET'&&parseInt(p[1])===m.id; });
+          const mySide = myBet ? myBet.comment.split(':')[2] : null;
+          const title = (lang==='uk' ? m.title_uk : m.title_ru) || 'Ринок #'+m.id;
+          const short = title.slice(0,42) + (title.length>42?'…':'');
+          if (result && mySide) {
+            if (result === mySide) {
+              showToast('🏆 ' + short + ' — ваша ставка зіграла! Чекайте виплату.', 'payout', 7000);
+              window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+            } else {
+              showToast('❌ ' + short + ' — подія закрита, ваша ставка не зіграла.', 'no', 5000);
+            }
+          } else {
+            showToast('🔔 Подію закрито: ' + short, 'info', 4000);
+          }
+        }
+        if (m.active) _knownClosed.delete(m.id);
+      }
+
+      const payouts = await supaFetch(
+        '/rest/v1/transactions?telegram_id=eq.' + userTelegramId +
+        '&type=eq.payout&order=created_at.desc&limit=20&select=id,amount,comment'
+      );
+      for (const p of (payouts||[])) {
+        const key = p.id || p.comment;
+        if (!_knownPayouts.has(key)) {
+          _knownPayouts.add(key);
+          const amount = parseFloat(p.amount||0).toFixed(2);
+          const ud = await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId + '&select=balance');
+          if (ud?.[0]) {
+            const newBal = parseFloat(ud[0].balance);
+            if (newBal !== userBalance) {
+              userBalance = newBal;
+              updateBalanceDisplay();
+              const el = document.getElementById('portfolio-balance');
+              if (el) { el.classList.remove('payout-pulse'); void el.offsetWidth; el.classList.add('payout-pulse'); }
+            }
+          }
+          showToast('💰 Виплата +' + amount + ' TON зарахована на баланс!', 'payout', 6000);
+          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+        }
+      }
+    } else {
+      markets.forEach(m => { if (!m.active) _knownClosed.add(m.id); });
+      const payouts = await supaFetch(
+        '/rest/v1/transactions?telegram_id=eq.' + userTelegramId + '&type=eq.payout&select=id,comment&limit=100'
+      );
+      (payouts||[]).forEach(p => _knownPayouts.add(p.id || p.comment));
+    }
+  } catch(e) { console.log('Poll error:', e); }
+}
 </script>
 </body>
 </html>
