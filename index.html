@@ -538,6 +538,26 @@
   .eventon-toast.payout { border-color:rgba(245,200,66,0.5);color:var(--gold);background:linear-gradient(135deg,rgba(245,200,66,0.08),var(--surface)); }
   @keyframes payout-pulse{0%{box-shadow:0 0 0 0 rgba(245,200,66,.5)}70%{box-shadow:0 0 0 14px rgba(245,200,66,0)}100%{box-shadow:0 0 0 0 rgba(245,200,66,0)}}
   .payout-pulse{animation:payout-pulse 0.9s ease-out 2;}
+
+  /* ── SWIPE BACK ANIMATION ── */
+  .screen { will-change: transform; }
+  .screen.slide-exit {
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity   0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .screen.slide-exit-done {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  /* Подложка предыдущего экрана тоже слегка выезжает */
+  .screen.slide-reveal {
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-8%);
+  }
+  .screen.slide-reveal-done {
+    transform: translateX(0);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 </style>
 </head>
 <body>
@@ -1573,9 +1593,7 @@ async function renderLeaderboard() {
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function showScreen(name) {
   if (name === currentScreen) return;
-  // Hide ALL screens
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  // Show target
   const to = document.getElementById('screen-' + name);
   if (to) to.classList.remove('hidden');
   prevScreen = currentScreen;
@@ -1585,38 +1603,150 @@ function showScreen(name) {
 }
 
 function goBack() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  currentScreen = prevScreen === currentScreen ? 'home' : prevScreen;
+  const fromName = currentScreen;
+  const toName = prevScreen === currentScreen ? 'home' : prevScreen;
   prevScreen = 'home';
-  document.getElementById('screen-'+currentScreen).classList.remove('hidden');
+
+  const fromEl = document.getElementById('screen-' + fromName);
+  const toEl   = document.getElementById('screen-' + toName);
+  if (!fromEl || !toEl) {
+    // fallback без анимации
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    currentScreen = toName;
+    toEl?.classList.remove('hidden');
+    return;
+  }
+
+  // Показываем предыдущий экран сразу — сдвинутым влево
+  toEl.classList.remove('hidden');
+  toEl.style.transform = 'translateX(-8%)';
+  toEl.style.transition = 'none';
+
+  // Текущий экран едет вправо
+  fromEl.style.transition = 'transform 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.32s cubic-bezier(0.4,0,0.2,1)';
+  fromEl.style.transform = 'translateX(0)';
+  fromEl.style.opacity = '1';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fromEl.style.transform = 'translateX(100%)';
+      fromEl.style.opacity = '0';
+      // Предыдущий экран плавно встаёт на место
+      toEl.style.transition = 'transform 0.32s cubic-bezier(0.4,0,0.2,1)';
+      toEl.style.transform = 'translateX(0)';
+    });
+  });
+
+  setTimeout(() => {
+    fromEl.classList.add('hidden');
+    fromEl.style.transform = '';
+    fromEl.style.opacity = '';
+    fromEl.style.transition = '';
+    toEl.style.transform = '';
+    toEl.style.transition = '';
+    currentScreen = toName;
+  }, 340);
 }
 
-// ── SWIPE BACK GESTURE ─────────────────────────────────────────────
+// ── SWIPE BACK GESTURE (с анимацией) ──────────────────────────────
 (function initSwipeBack() {
   let touchStartX = 0;
   let touchStartY = 0;
-  let isSwiping = false;
+  let dragging = false;
+  let currentEl = null;
+  let prevEl = null;
+  const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
+  const W = window.innerWidth;
 
   document.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-    // Только если касание начинается в левой части экрана (первые 30px)
-    isSwiping = touchStartX < 30;
+    dragging = false;
+
+    // Только от левого края (первые 28px)
+    if (touchStartX > 28) return;
+    if (!screensWithBack.includes(currentScreen)) return;
+
+    const fromName = currentScreen;
+    const toName = prevScreen === currentScreen ? 'home' : prevScreen;
+
+    currentEl = document.getElementById('screen-' + fromName);
+    prevEl    = document.getElementById('screen-' + toName);
+    if (!currentEl || !prevEl) return;
+
+    // Подготавливаем предыдущий экран
+    prevEl.classList.remove('hidden');
+    prevEl.style.transition = 'none';
+    prevEl.style.transform = 'translateX(-8%)';
+    prevEl.style.zIndex = '0';
+    currentEl.style.transition = 'none';
+    currentEl.style.zIndex = '1';
+    dragging = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!dragging || !currentEl) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+
+    // Если движение вниз — отменяем
+    if (dy > dx && dy > 10) { dragging = false; cancelDrag(); return; }
+    if (dx < 0) return;
+
+    const progress = Math.min(dx / W, 1); // 0..1
+    // Текущий экран едет вправо
+    currentEl.style.transform = `translateX(${dx}px)`;
+    currentEl.style.opacity = `${1 - progress * 0.2}`;
+    // Предыдущий экран выезжает из-за левого края
+    const prevOffset = -8 + progress * 8; // от -8% до 0%
+    prevEl.style.transform = `translateX(${prevOffset}%)`;
   }, { passive: true });
 
   document.addEventListener('touchend', (e) => {
-    if (!isSwiping) return;
+    if (!dragging || !currentEl) return;
+    dragging = false;
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-    // Свайп вправо минимум 80px и горизонтальный (не вертикальный)
-    if (dx > 80 && dy < 60) {
-      const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
-      if (screensWithBack.includes(currentScreen)) {
-        goBack();
-      }
+    const threshold = W * 0.38; // 38% ширины — порог подтверждения
+
+    if (dx > threshold && dy < 80) {
+      // Подтверждаем свайп — завершаем анимацию
+      currentEl.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease';
+      currentEl.style.transform = `translateX(${W}px)`;
+      currentEl.style.opacity = '0';
+      prevEl.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1)';
+      prevEl.style.transform = 'translateX(0)';
+
+      const toName = prevScreen === currentScreen ? 'home' : prevScreen;
+      setTimeout(() => {
+        currentEl.classList.add('hidden');
+        currentEl.style.cssText = '';
+        prevEl.style.cssText = '';
+        prevEl.style.zIndex = '';
+        currentScreen = toName;
+        prevScreen = 'home';
+      }, 290);
+    } else {
+      // Отменяем — возвращаем на место
+      cancelDrag();
     }
-    isSwiping = false;
   }, { passive: true });
+
+  function cancelDrag() {
+    if (!currentEl) return;
+    currentEl.style.transition = 'transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease';
+    currentEl.style.transform = 'translateX(0)';
+    currentEl.style.opacity = '1';
+    if (prevEl) {
+      prevEl.style.transition = 'transform 0.25s cubic-bezier(0.4,0,0.2,1)';
+      prevEl.style.transform = 'translateX(-8%)';
+    }
+    setTimeout(() => {
+      if (currentEl) { currentEl.style.transition = ''; currentEl.style.transform = ''; currentEl.style.opacity = ''; }
+      if (prevEl) { prevEl.classList.add('hidden'); prevEl.style.cssText = ''; }
+      currentEl = null; prevEl = null;
+    }, 260);
+  }
 })();
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
