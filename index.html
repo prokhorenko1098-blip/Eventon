@@ -1653,6 +1653,7 @@ function goBack() {
   let touchStartX = 0;
   let touchStartY = 0;
   let dragging = false;
+  let tracking = false;
   let currentEl = null;
   let prevEl = null;
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
@@ -1662,8 +1663,10 @@ function goBack() {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     dragging = false;
+    tracking = false;
+    currentEl = null;
+    prevEl = null;
 
-    // Только от левого края (первые 28px)
     if (touchStartX > 28) return;
     if (!screensWithBack.includes(currentScreen)) return;
 
@@ -1674,79 +1677,82 @@ function goBack() {
     prevEl    = document.getElementById('screen-' + toName);
     if (!currentEl || !prevEl) return;
 
-    // Подготавливаем предыдущий экран
-    prevEl.classList.remove('hidden');
-    prevEl.style.transition = 'none';
-    prevEl.style.transform = 'translateX(-8%)';
-    prevEl.style.zIndex = '0';
-    currentEl.style.transition = 'none';
-    currentEl.style.zIndex = '1';
-    dragging = true;
+    tracking = true;
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    if (!dragging || !currentEl) return;
+    if (!tracking || !currentEl || !prevEl) return;
+
     const dx = e.touches[0].clientX - touchStartX;
     const dy = Math.abs(e.touches[0].clientY - touchStartY);
 
-    // Если движение вниз — отменяем
-    if (dy > dx && dy > 10) { dragging = false; cancelDrag(); return; }
-    if (dx < 0) return;
+    // Определяем направление при первом движении
+    if (!dragging) {
+      if (dy > 12) { tracking = false; return; } // вертикальный скролл — отменяем
+      if (dx < 6) return; // ждём горизонтального движения
 
-    const progress = Math.min(dx / W, 1); // 0..1
-    // Текущий экран едет вправо
-    currentEl.style.transform = `translateX(${dx}px)`;
-    currentEl.style.opacity = `${1 - progress * 0.2}`;
-    // Предыдущий экран выезжает из-за левого края
-    const prevOffset = -8 + progress * 8; // от -8% до 0%
-    prevEl.style.transform = `translateX(${prevOffset}%)`;
+      // Начинаем drag — показываем prevEl строго под currentEl
+      dragging = true;
+      prevEl.classList.remove('hidden');
+      prevEl.style.cssText = 'position:absolute;inset:0;transform:translateX(-25%);transition:none;z-index:0;';
+      currentEl.style.cssText = 'position:absolute;inset:0;transition:none;z-index:1;box-shadow:-4px 0 20px rgba(0,0,0,0.5);';
+    }
+
+    if (!dragging) return;
+    const progress = Math.min(Math.max(dx, 0) / W, 1);
+
+    currentEl.style.transform = `translateX(${Math.max(dx, 0)}px)`;
+    // prevEl выезжает из -25% до 0%
+    prevEl.style.transform = `translateX(${-25 + progress * 25}%)`;
   }, { passive: true });
 
   document.addEventListener('touchend', (e) => {
-    if (!dragging || !currentEl) return;
-    dragging = false;
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-    const threshold = W * 0.38; // 38% ширины — порог подтверждения
+    if (!tracking) return;
+    tracking = false;
 
-    if (dx > threshold && dy < 80) {
-      // Подтверждаем свайп — завершаем анимацию
-      currentEl.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease';
+    if (!dragging) { currentEl = null; prevEl = null; return; }
+    dragging = false;
+
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const threshold = W * 0.38;
+
+    if (dx > threshold) {
+      // Подтверждаем — завершаем анимацию
+      const easing = 'cubic-bezier(0.4,0,0.2,1)';
+      currentEl.style.transition = `transform 0.26s ${easing}, box-shadow 0.26s`;
       currentEl.style.transform = `translateX(${W}px)`;
-      currentEl.style.opacity = '0';
-      prevEl.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1)';
+      currentEl.style.boxShadow = 'none';
+      prevEl.style.transition = `transform 0.26s ${easing}`;
       prevEl.style.transform = 'translateX(0)';
 
       const toName = prevScreen === currentScreen ? 'home' : prevScreen;
       setTimeout(() => {
+        // Скрываем текущий, чистим стили
         currentEl.classList.add('hidden');
         currentEl.style.cssText = '';
         prevEl.style.cssText = '';
-        prevEl.style.zIndex = '';
         currentScreen = toName;
         prevScreen = 'home';
-      }, 290);
+        currentEl = null;
+        prevEl = null;
+      }, 270);
     } else {
       // Отменяем — возвращаем на место
-      cancelDrag();
+      const easing = 'cubic-bezier(0.4,0,0.2,1)';
+      currentEl.style.transition = `transform 0.22s ${easing}, box-shadow 0.22s`;
+      currentEl.style.transform = 'translateX(0)';
+      prevEl.style.transition = `transform 0.22s ${easing}`;
+      prevEl.style.transform = 'translateX(-25%)';
+
+      setTimeout(() => {
+        prevEl.classList.add('hidden');
+        currentEl.style.cssText = '';
+        prevEl.style.cssText = '';
+        currentEl = null;
+        prevEl = null;
+      }, 230);
     }
   }, { passive: true });
-
-  function cancelDrag() {
-    if (!currentEl) return;
-    currentEl.style.transition = 'transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease';
-    currentEl.style.transform = 'translateX(0)';
-    currentEl.style.opacity = '1';
-    if (prevEl) {
-      prevEl.style.transition = 'transform 0.25s cubic-bezier(0.4,0,0.2,1)';
-      prevEl.style.transform = 'translateX(-8%)';
-    }
-    setTimeout(() => {
-      if (currentEl) { currentEl.style.transition = ''; currentEl.style.transform = ''; currentEl.style.opacity = ''; }
-      if (prevEl) { prevEl.classList.add('hidden'); prevEl.style.cssText = ''; }
-      currentEl = null; prevEl = null;
-    }, 260);
-  }
 })();
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
