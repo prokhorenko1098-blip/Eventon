@@ -1648,7 +1648,7 @@ function goBack() {
   }, 340);
 }
 
-// ── SWIPE BACK GESTURE (с анимацией) ──────────────────────────────
+// ── SWIPE BACK GESTURE (iOS style) ────────────────────────────────
 (function initSwipeBack() {
   let touchStartX = 0;
   let touchStartY = 0;
@@ -1656,8 +1656,21 @@ function goBack() {
   let tracking = false;
   let currentEl = null;
   let prevEl = null;
+  let overlay = null;
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
   const W = window.innerWidth;
+
+  // Создаём тёмный оверлей-подложку
+  function getOverlay() {
+    let el = document.getElementById('swipe-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'swipe-overlay';
+      el.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
+      document.getElementById('app').appendChild(el);
+    }
+    return el;
+  }
 
   document.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
@@ -1672,11 +1685,9 @@ function goBack() {
 
     const fromName = currentScreen;
     const toName = prevScreen === currentScreen ? 'home' : prevScreen;
-
     currentEl = document.getElementById('screen-' + fromName);
     prevEl    = document.getElementById('screen-' + toName);
     if (!currentEl || !prevEl) return;
-
     tracking = true;
   }, { passive: true });
 
@@ -1686,24 +1697,35 @@ function goBack() {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = Math.abs(e.touches[0].clientY - touchStartY);
 
-    // Определяем направление при первом движении
     if (!dragging) {
-      if (dy > 12) { tracking = false; return; } // вертикальный скролл — отменяем
-      if (dx < 6) return; // ждём горизонтального движения
+      if (dy > 12) { tracking = false; return; }
+      if (dx < 6) return;
 
-      // Начинаем drag — показываем prevEl строго под currentEl
+      // Начинаем drag
       dragging = true;
+      overlay = getOverlay();
+      overlay.style.display = 'block';
+
+      // Предыдущий экран — тихо под оверлеем, не видно
       prevEl.classList.remove('hidden');
-      prevEl.style.cssText = 'position:absolute;inset:0;transform:translateX(-25%);transition:none;z-index:0;';
-      currentEl.style.cssText = 'position:absolute;inset:0;transition:none;z-index:1;box-shadow:-4px 0 20px rgba(0,0,0,0.5);';
+      prevEl.style.cssText = 'position:absolute;inset:0;z-index:1;transform:translateX(0);';
+
+      // Оверлей поверх prevEl но под currentEl
+      overlay.style.zIndex = '2';
+
+      // Текущий экран — самый верхний, будет ехать вправо
+      currentEl.style.cssText = 'position:absolute;inset:0;z-index:3;transition:none;box-shadow:-6px 0 24px rgba(0,0,0,0.4);';
     }
 
     if (!dragging) return;
-    const progress = Math.min(Math.max(dx, 0) / W, 1);
+    const px = Math.max(dx, 0);
+    const progress = Math.min(px / W, 1);
 
-    currentEl.style.transform = `translateX(${Math.max(dx, 0)}px)`;
-    // prevEl выезжает из -25% до 0%
-    prevEl.style.transform = `translateX(${-25 + progress * 25}%)`;
+    // Текущий экран едет вправо
+    currentEl.style.transform = `translateX(${px}px)`;
+
+    // Оверлей тускнеет — открывается предыдущий экран
+    overlay.style.opacity = `${1 - progress}`;
   }, { passive: true });
 
   document.addEventListener('touchend', (e) => {
@@ -1714,42 +1736,38 @@ function goBack() {
     dragging = false;
 
     const dx = e.changedTouches[0].clientX - touchStartX;
-    const threshold = W * 0.38;
+    const ease = 'cubic-bezier(0.4,0,0.2,1)';
 
-    if (dx > threshold) {
-      // Подтверждаем — завершаем анимацию
-      const easing = 'cubic-bezier(0.4,0,0.2,1)';
-      currentEl.style.transition = `transform 0.26s ${easing}, box-shadow 0.26s`;
+    if (dx > W * 0.38) {
+      // Подтверждаем — уезжаем вправо
+      currentEl.style.transition = `transform 0.26s ${ease}, box-shadow 0.26s`;
       currentEl.style.transform = `translateX(${W}px)`;
-      currentEl.style.boxShadow = 'none';
-      prevEl.style.transition = `transform 0.26s ${easing}`;
-      prevEl.style.transform = 'translateX(0)';
+      overlay.style.transition = `opacity 0.26s ease`;
+      overlay.style.opacity = '0';
 
       const toName = prevScreen === currentScreen ? 'home' : prevScreen;
       setTimeout(() => {
-        // Скрываем текущий, чистим стили
         currentEl.classList.add('hidden');
         currentEl.style.cssText = '';
         prevEl.style.cssText = '';
+        overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
         currentScreen = toName;
         prevScreen = 'home';
-        currentEl = null;
-        prevEl = null;
+        currentEl = null; prevEl = null; overlay = null;
       }, 270);
     } else {
-      // Отменяем — возвращаем на место
-      const easing = 'cubic-bezier(0.4,0,0.2,1)';
-      currentEl.style.transition = `transform 0.22s ${easing}, box-shadow 0.22s`;
+      // Отменяем — возвращаемся
+      currentEl.style.transition = `transform 0.22s ${ease}, box-shadow 0.22s`;
       currentEl.style.transform = 'translateX(0)';
-      prevEl.style.transition = `transform 0.22s ${easing}`;
-      prevEl.style.transform = 'translateX(-25%)';
+      overlay.style.transition = `opacity 0.22s ease`;
+      overlay.style.opacity = '1';
 
       setTimeout(() => {
         prevEl.classList.add('hidden');
         currentEl.style.cssText = '';
         prevEl.style.cssText = '';
-        currentEl = null;
-        prevEl = null;
+        overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
+        currentEl = null; prevEl = null; overlay = null;
       }, 230);
     }
   }, { passive: true });
