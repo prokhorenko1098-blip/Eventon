@@ -1445,22 +1445,26 @@ function renderHistory(closedPositions, payoutMap) {
 
   const cards = closedPositions.map(p => {
     const received = p.receivedPayout;
-    const commission = received > 0 ? Math.round(p.amount * (1 / 0.98 - 1) * 100) / 100 : 0;
     // Реальный P&L: получено - поставлено
-    const realPnl = received > 0 ? received - p.amount : -p.amount;
+    const realPnl = Math.round((received - p.amount) * 100) / 100;
+    // Победа = получил выплату (выиграл ставку), даже если комиссия съела немного
     const isWin = received > 0;
-    const isPending = received === 0 && !p.isActive; // закрыт, но выплат не было
+    // Реально в плюсе только если P&L > 0
+    const isProfit = realPnl > 0;
+    // Комиссия = 2% от общего пула (примерно от суммы ставки)
+    const commission = isWin ? Math.round(p.amount * (1 / 0.98 - 1) * 100) / 100 : 0;
 
-    if (isWin) { totalWon += realPnl; totalCommission += commission; }
-    else totalLost += Math.abs(realPnl);
+    if (isWin) { totalWon += Math.max(realPnl, 0); totalCommission += commission; }
+    totalLost += Math.max(-realPnl, 0);
 
     const resultLabel = isWin
       ? (lang==='uk' ? '✅ Виграш' : lang==='en' ? '✅ Won' : '✅ Выигрыш')
       : (lang==='uk' ? '❌ Програш' : lang==='en' ? '❌ Lost' : '❌ Проигрыш');
 
-    const pnlStr = isWin
-      ? `+${realPnl.toFixed(2)} TON`
-      : `${realPnl.toFixed(2)} TON`;
+    // Правильный знак: + только если реально в плюсе
+    const pnlSign = realPnl > 0 ? '+' : '';
+    const pnlStr = `${pnlSign}${realPnl.toFixed(2)} TON`;
+    const pnlColor = realPnl > 0 ? 'green' : 'red';
 
     return `
       <div class="history-card ${isWin ? 'win' : 'loss'}">
@@ -1475,17 +1479,17 @@ function renderHistory(closedPositions, payoutMap) {
             <div class="pos-stat-lbl">${lang==='uk'?'Поставлено':lang==='en'?'Staked':'Поставлено'}</div>
           </div>
           <div class="pos-stat">
-            <div class="pos-stat-val">${received > 0 ? received.toFixed(2) : '0.00'}</div>
+            <div class="pos-stat-val">${isWin ? received.toFixed(2) : '0.00'}</div>
             <div class="pos-stat-lbl">${lang==='uk'?'Отримано':lang==='en'?'Received':'Получено'}</div>
           </div>
           <div class="pos-stat">
-            <div class="pos-stat-val ${isWin ? 'green' : 'red'}">${pnlStr}</div>
+            <div class="pos-stat-val ${pnlColor}">${pnlStr}</div>
             <div class="pos-stat-lbl">P&L</div>
           </div>
         </div>
         <div class="history-commission">
           <span>${lang==='uk'?'Ставка':lang==='en'?'Side':'Ставка'}: <b style="color:${p.side==='yes'?'var(--yes)':'var(--no)'};">${p.sideLabel}</b> · ${p.date}</span>
-          ${isWin ? `<span>${lang==='uk'?'Комісія':'Комиссия'}: ${commission.toFixed(2)} TON (2%)</span>` : ''}
+          ${isWin ? `<span>${lang==='uk'?'Комісія':'Комиссія'}: ${commission.toFixed(2)} TON (2%)</span>` : ''}
         </div>
       </div>`;
   }).join('');
