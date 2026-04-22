@@ -542,28 +542,19 @@
   /* ── SCREEN TRANSITIONS ── */
   .screen { will-change: transform; }
 
-  /* Новый экран въезжает справа */
+  /* Новый экран въезжает справа поверх старого */
   @keyframes slideInRight {
     from { transform: translateX(100%); }
     to   { transform: translateX(0); }
   }
-  /* Старый экран уезжает влево */
-  @keyframes slideOutLeft {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-25%); }
-  }
-  /* Новый экран въезжает слева (при goBack) */
-  @keyframes slideInLeft {
-    from { transform: translateX(-25%); }
-    to   { transform: translateX(0); }
-  }
-
   .screen.anim-slide-in {
-    animation: slideInRight 0.32s cubic-bezier(0.4,0,0.2,1) forwards;
+    animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
+    z-index: 10 !important;
   }
+  /* Старый экран просто остаётся — новый едет поверх него */
   .screen.anim-slide-out {
-    animation: slideOutLeft 0.32s cubic-bezier(0.4,0,0.2,1) forwards;
     pointer-events: none;
+    z-index: 0 !important;
   }
 </style>
 </head>
@@ -1607,14 +1598,15 @@ function showScreen(name) {
   prevScreen = currentScreen;
   currentScreen = name;
 
+  // Новый экран едет поверх старого справа — старый просто стоит
   toEl.classList.remove('hidden');
   toEl.classList.add('anim-slide-in');
-  if (fromEl) fromEl.classList.add('anim-slide-out');
 
   setTimeout(() => {
-    if (fromEl) { fromEl.classList.add('hidden'); fromEl.classList.remove('anim-slide-out'); fromEl.style.transform = ''; }
+    if (fromEl) fromEl.classList.add('hidden');
     toEl.classList.remove('anim-slide-in');
-  }, 330);
+    toEl.style.zIndex = '';
+  }, 310);
 
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'portfolio') renderPositions();
@@ -1822,17 +1814,14 @@ function openMarket(id) {
   const detailEl = document.getElementById('screen-detail');
   const fromEl   = document.getElementById('screen-' + prevScreen);
 
-  // Показываем detail поверх текущего экрана и запускаем slide-in
   detailEl.classList.remove('hidden');
   detailEl.classList.add('anim-slide-in');
-  fromEl.classList.add('anim-slide-out');
 
   setTimeout(() => {
-    fromEl.classList.add('hidden');
-    fromEl.classList.remove('anim-slide-out');
-    fromEl.style.transform = '';
+    if (fromEl) fromEl.classList.add('hidden');
     detailEl.classList.remove('anim-slide-in');
-  }, 330);
+    detailEl.style.zIndex = '';
+  }, 310);
 
   drawChart(d.history);
 
@@ -2206,14 +2195,12 @@ function openWalletScreen() {
 
   walletEl.classList.remove('hidden');
   walletEl.classList.add('anim-slide-in');
-  fromEl.classList.add('anim-slide-out');
 
   setTimeout(() => {
-    fromEl.classList.add('hidden');
-    fromEl.classList.remove('anim-slide-out');
-    fromEl.style.transform = '';
+    if (fromEl) fromEl.classList.add('hidden');
     walletEl.classList.remove('anim-slide-in');
-  }, 330);
+    walletEl.style.zIndex = '';
+  }, 310);
 }
 
 function renderWalletScreen() {
