@@ -541,24 +541,8 @@
 
   /* ── SCREEN TRANSITIONS ── */
   .screen { will-change: transform; }
-
-  @keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to   { transform: translateX(0); }
-  }
-  @keyframes slideOutRight {
-    from { transform: translateX(0); }
-    to   { transform: translateX(100%); }
-  }
-
-  .screen.anim-enter {
-    animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
-    z-index: 10;
-  }
-  .screen.anim-leave {
-    animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
-    z-index: 10;
-    pointer-events: none;
+  .screen.screen-transitioning {
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
   }
 </style>
 </head>
@@ -1205,28 +1189,9 @@ let currentFilter = 'all';
 function selectLang(l) {
   lang = l;
   applyTranslations();
-
-  const ls = document.getElementById('screen-lang');
-  const home = document.getElementById('screen-home');
-
-  // Показываем home и слайдим lang влево (уезжает), home въезжает справа
-  home.classList.remove('hidden');
-  home.classList.add('anim-enter');
-
-  // Lang уезжает влево — просто fade out чтобы не конфликтовать
-  ls.style.transition = 'opacity 0.3s ease';
-  ls.style.opacity = '0';
-  ls.style.pointerEvents = 'none';
-
-  setTimeout(() => {
-    ls.classList.add('hidden');
-    ls.style.cssText = '';
-    home.classList.remove('anim-enter');
-    home.style.zIndex = '';
-  }, 320);
-
-  currentScreen = 'home';
   prevScreen = 'home';
+  currentScreen = 'home';
+  slideToScreen('home', 'forward');
 }
 
 function showLangScreen() {
@@ -1610,34 +1575,52 @@ function slideToScreen(toName, direction) {
   const toEl   = document.getElementById('screen-' + toName);
   if (!toEl) return;
 
-  // Чистим любые незавершённые анимации
-  document.querySelectorAll('.anim-enter, .anim-leave').forEach(el => {
-    el.classList.remove('anim-enter', 'anim-leave');
-    el.style.transform = '';
-    el.style.zIndex = '';
-  });
-
   if (direction === 'forward') {
+    // toEl стартует справа за экраном, fromEl на месте
+    toEl.style.transform = 'translateX(100%)';
     toEl.classList.remove('hidden');
-    toEl.classList.add('anim-enter');
-    setTimeout(() => {
-      if (fromEl) fromEl.classList.add('hidden');
-      toEl.classList.remove('anim-enter');
-      toEl.style.zIndex = '';
-    }, 320);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fromEl && fromEl.classList.add('screen-transitioning');
+        toEl.classList.add('screen-transitioning');
+        toEl.style.transform = 'translateX(0)';
+        if (fromEl) fromEl.style.transform = 'translateX(-30%)';
+
+        setTimeout(() => {
+          if (fromEl) {
+            fromEl.classList.add('hidden');
+            fromEl.classList.remove('screen-transitioning');
+            fromEl.style.transform = '';
+          }
+          toEl.classList.remove('screen-transitioning');
+          toEl.style.transform = '';
+        }, 310);
+      });
+    });
   } else {
-    if (fromEl) {
-      fromEl.classList.add('anim-leave');
-      toEl.classList.remove('hidden');
-      setTimeout(() => {
-        fromEl.classList.add('hidden');
-        fromEl.classList.remove('anim-leave');
-        fromEl.style.transform = '';
-        fromEl.style.zIndex = '';
-      }, 320);
-    } else {
-      toEl.classList.remove('hidden');
-    }
+    // back: fromEl уезжает вправо, toEl уже стоит слева
+    if (!fromEl) { toEl.classList.remove('hidden'); return; }
+
+    toEl.style.transform = 'translateX(-30%)';
+    toEl.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fromEl.classList.add('screen-transitioning');
+        toEl.classList.add('screen-transitioning');
+        fromEl.style.transform = 'translateX(100%)';
+        toEl.style.transform = 'translateX(0)';
+
+        setTimeout(() => {
+          fromEl.classList.add('hidden');
+          fromEl.classList.remove('screen-transitioning');
+          fromEl.style.transform = '';
+          toEl.classList.remove('screen-transitioning');
+          toEl.style.transform = '';
+        }, 310);
+      });
+    });
   }
 }
 
@@ -1652,18 +1635,16 @@ function showScreen(name) {
 
 function goBack() {
   const toName = prevScreen === currentScreen ? 'home' : prevScreen;
-  const fromName = currentScreen;
   prevScreen = 'home';
   currentScreen = toName;
   slideToScreen(toName, 'back');
-  // fromEl скрывается внутри slideToScreen
 }
 
-// ── SWIPE BACK GESTURE (чистый слайд) ─────────────────────────────
+// ── SWIPE BACK GESTURE ────────────────────────────────────────────
 (function initSwipeBack() {
   let startX = 0, startY = 0;
   let tracking = false, dragging = false;
-  let fromEl = null, toEl = null;
+  let fromEl = null, toEl = null, toName = '';
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
   const W = window.innerWidth;
 
@@ -1673,13 +1654,7 @@ function goBack() {
     tracking = dragging = false;
     fromEl = toEl = null;
     if (startX > 28 || !screensWithBack.includes(currentScreen)) return;
-    // Чистим зависшие анимации
-    document.querySelectorAll('.anim-enter, .anim-leave').forEach(el => {
-      el.classList.remove('anim-enter', 'anim-leave');
-      el.style.transform = '';
-      el.style.zIndex = '';
-    });
-    const toName = prevScreen === currentScreen ? 'home' : prevScreen;
+    toName = prevScreen === currentScreen ? 'home' : prevScreen;
     fromEl = document.getElementById('screen-' + currentScreen);
     toEl   = document.getElementById('screen-' + toName);
     if (fromEl && toEl) tracking = true;
@@ -1693,16 +1668,21 @@ function goBack() {
     if (!dragging) {
       if (dy > 10 && dy > dx) { tracking = false; return; }
       if (dx < 6) return;
-      // Начинаем — показываем предыдущий экран за текущим
       dragging = true;
+      // toEl стоит слева (-30%), fromEl на месте
       toEl.classList.remove('hidden');
-      toEl.style.cssText = 'position:absolute;inset:0;z-index:0;transform:translateX(0);';
-      fromEl.style.cssText = 'position:absolute;inset:0;z-index:1;transition:none;';
+      toEl.style.transition = 'none';
+      toEl.style.transform = 'translateX(-30%)';
+      fromEl.style.transition = 'none';
+      fromEl.style.transform = 'translateX(0)';
     }
 
     e.preventDefault();
-    const px = Math.max(dx, 0);
+    const px = Math.max(Math.min(dx, W), 0);
+    const progress = px / W; // 0..1
     fromEl.style.transform = `translateX(${px}px)`;
+    // toEl выезжает из -30% до 0 пропорционально
+    toEl.style.transform = `translateX(${-30 + progress * 30}%)`;
   }, { passive: false });
 
   document.addEventListener('touchend', (e) => {
@@ -1715,10 +1695,11 @@ function goBack() {
     const ease = 'cubic-bezier(0.4,0,0.2,1)';
 
     if (dx > W * 0.35) {
-      // Подтверждаем — уезжаем вправо
+      // Подтверждаем
       fromEl.style.transition = `transform 0.26s ${ease}`;
       fromEl.style.transform = `translateX(${W}px)`;
-      const toName = prevScreen === currentScreen ? 'home' : prevScreen;
+      toEl.style.transition = `transform 0.26s ${ease}`;
+      toEl.style.transform = 'translateX(0)';
       setTimeout(() => {
         fromEl.classList.add('hidden');
         fromEl.style.cssText = '';
@@ -1728,9 +1709,11 @@ function goBack() {
         fromEl = toEl = null;
       }, 265);
     } else {
-      // Отменяем — возвращаемся
+      // Отменяем
       fromEl.style.transition = `transform 0.22s ${ease}`;
       fromEl.style.transform = 'translateX(0)';
+      toEl.style.transition = `transform 0.22s ${ease}`;
+      toEl.style.transform = 'translateX(-30%)';
       setTimeout(() => {
         toEl.classList.add('hidden');
         fromEl.style.cssText = '';
