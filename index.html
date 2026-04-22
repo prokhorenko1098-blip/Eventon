@@ -1660,7 +1660,6 @@ function goBack() {
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
   const W = window.innerWidth;
 
-  // Создаём тёмный оверлей-подложку
   function getOverlay() {
     let el = document.getElementById('swipe-overlay');
     if (!el) {
@@ -1691,6 +1690,7 @@ function goBack() {
     tracking = true;
   }, { passive: true });
 
+  // НЕ passive — чтобы можно было вызвать preventDefault и заблокировать скролл
   document.addEventListener('touchmove', (e) => {
     if (!tracking || !currentEl || !prevEl) return;
 
@@ -1698,35 +1698,32 @@ function goBack() {
     const dy = Math.abs(e.touches[0].clientY - touchStartY);
 
     if (!dragging) {
-      if (dy > 12) { tracking = false; return; }
+      if (dy > 10 && dy > dx) {
+        // Вертикальный скролл — отменяем свайп, не мешаем скроллу
+        tracking = false;
+        return;
+      }
       if (dx < 6) return;
 
-      // Начинаем drag
+      // Горизонтальный свайп подтверждён — начинаем drag
       dragging = true;
       overlay = getOverlay();
       overlay.style.display = 'block';
-
-      // Предыдущий экран — тихо под оверлеем, не видно
       prevEl.classList.remove('hidden');
-      prevEl.style.cssText = 'position:absolute;inset:0;z-index:1;transform:translateX(0);';
-
-      // Оверлей поверх prevEl но под currentEl
+      prevEl.style.cssText = 'position:absolute;inset:0;z-index:1;';
       overlay.style.zIndex = '2';
-
-      // Текущий экран — самый верхний, будет ехать вправо
       currentEl.style.cssText = 'position:absolute;inset:0;z-index:3;transition:none;box-shadow:-6px 0 24px rgba(0,0,0,0.4);';
     }
 
-    if (!dragging) return;
+    // Блокируем скролл страницы пока тянем горизонтально
+    e.preventDefault();
+
     const px = Math.max(dx, 0);
     const progress = Math.min(px / W, 1);
-
-    // Текущий экран едет вправо
     currentEl.style.transform = `translateX(${px}px)`;
-
-    // Оверлей тускнеет — открывается предыдущий экран
     overlay.style.opacity = `${1 - progress}`;
-  }, { passive: true });
+
+  }, { passive: false });
 
   document.addEventListener('touchend', (e) => {
     if (!tracking) return;
@@ -1739,10 +1736,9 @@ function goBack() {
     const ease = 'cubic-bezier(0.4,0,0.2,1)';
 
     if (dx > W * 0.38) {
-      // Подтверждаем — уезжаем вправо
       currentEl.style.transition = `transform 0.26s ${ease}, box-shadow 0.26s`;
       currentEl.style.transform = `translateX(${W}px)`;
-      overlay.style.transition = `opacity 0.26s ease`;
+      overlay.style.transition = 'opacity 0.26s ease';
       overlay.style.opacity = '0';
 
       const toName = prevScreen === currentScreen ? 'home' : prevScreen;
@@ -1756,10 +1752,9 @@ function goBack() {
         currentEl = null; prevEl = null; overlay = null;
       }, 270);
     } else {
-      // Отменяем — возвращаемся
       currentEl.style.transition = `transform 0.22s ${ease}, box-shadow 0.22s`;
       currentEl.style.transform = 'translateX(0)';
-      overlay.style.transition = `opacity 0.22s ease`;
+      overlay.style.transition = 'opacity 0.22s ease';
       overlay.style.opacity = '1';
 
       setTimeout(() => {
