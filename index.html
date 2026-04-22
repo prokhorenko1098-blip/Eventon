@@ -542,19 +542,23 @@
   /* ── SCREEN TRANSITIONS ── */
   .screen { will-change: transform; }
 
-  /* Новый экран въезжает справа поверх старого */
   @keyframes slideInRight {
     from { transform: translateX(100%); }
     to   { transform: translateX(0); }
   }
-  .screen.anim-slide-in {
+  @keyframes slideOutRight {
+    from { transform: translateX(0); }
+    to   { transform: translateX(100%); }
+  }
+
+  .screen.anim-enter {
     animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
     z-index: 10 !important;
   }
-  /* Старый экран просто остаётся — новый едет поверх него */
-  .screen.anim-slide-out {
+  .screen.anim-leave {
+    animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
+    z-index: 10 !important;
     pointer-events: none;
-    z-index: 0 !important;
   }
 </style>
 </head>
@@ -1589,191 +1593,130 @@ async function renderLeaderboard() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
-function showScreen(name) {
-  if (name === currentScreen) return;
+// Универсальный переход между экранами
+function slideToScreen(name, direction) {
+  // direction: 'forward' = въезд справа, 'back' = уезд вправо
+  direction = direction || 'forward';
   const fromEl = document.getElementById('screen-' + currentScreen);
   const toEl   = document.getElementById('screen-' + name);
-  if (!toEl) return;
+  if (!toEl || name === currentScreen) return;
 
+  if (direction === 'forward') {
+    // Новый экран въезжает справа поверх старого
+    toEl.classList.remove('hidden');
+    toEl.classList.add('anim-enter');
+    setTimeout(() => {
+      if (fromEl) fromEl.classList.add('hidden');
+      toEl.classList.remove('anim-enter');
+      toEl.style.zIndex = '';
+    }, 310);
+  } else {
+    // Текущий экран уезжает вправо, старый открывается
+    if (fromEl) {
+      fromEl.classList.add('anim-leave');
+      toEl.classList.remove('hidden');
+      setTimeout(() => {
+        fromEl.classList.add('hidden');
+        fromEl.classList.remove('anim-leave');
+        fromEl.style.transform = '';
+        fromEl.style.zIndex = '';
+      }, 310);
+    } else {
+      toEl.classList.remove('hidden');
+    }
+  }
+}
+
+function showScreen(name) {
+  if (name === currentScreen) return;
   prevScreen = currentScreen;
   currentScreen = name;
-
-  // Новый экран едет поверх старого справа — старый просто стоит
-  toEl.classList.remove('hidden');
-  toEl.classList.add('anim-slide-in');
-
-  setTimeout(() => {
-    if (fromEl) fromEl.classList.add('hidden');
-    toEl.classList.remove('anim-slide-in');
-    toEl.style.zIndex = '';
-  }, 310);
-
+  slideToScreen(name, 'forward');
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'portfolio') renderPositions();
 }
 
 function goBack() {
-  const fromName = currentScreen;
   const toName = prevScreen === currentScreen ? 'home' : prevScreen;
+  const fromName = currentScreen;
   prevScreen = 'home';
-
-  const fromEl = document.getElementById('screen-' + fromName);
-  const toEl   = document.getElementById('screen-' + toName);
-  if (!fromEl || !toEl) {
-    // fallback без анимации
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    currentScreen = toName;
-    toEl?.classList.remove('hidden');
-    return;
-  }
-
-  // Показываем предыдущий экран сразу — сдвинутым влево
-  toEl.classList.remove('hidden');
-  toEl.style.transform = 'translateX(-8%)';
-  toEl.style.transition = 'none';
-
-  // Текущий экран едет вправо
-  fromEl.style.transition = 'transform 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.32s cubic-bezier(0.4,0,0.2,1)';
-  fromEl.style.transform = 'translateX(0)';
-  fromEl.style.opacity = '1';
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      fromEl.style.transform = 'translateX(100%)';
-      fromEl.style.opacity = '0';
-      // Предыдущий экран плавно встаёт на место
-      toEl.style.transition = 'transform 0.32s cubic-bezier(0.4,0,0.2,1)';
-      toEl.style.transform = 'translateX(0)';
-    });
-  });
-
-  setTimeout(() => {
-    fromEl.classList.add('hidden');
-    fromEl.style.transform = '';
-    fromEl.style.opacity = '';
-    fromEl.style.transition = '';
-    toEl.style.transform = '';
-    toEl.style.transition = '';
-    currentScreen = toName;
-  }, 340);
+  currentScreen = toName;
+  slideToScreen(toName, 'back');
+  // fromEl скрывается внутри slideToScreen
 }
 
-// ── SWIPE BACK GESTURE (iOS style) ────────────────────────────────
+// ── SWIPE BACK GESTURE (чистый слайд) ─────────────────────────────
 (function initSwipeBack() {
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let dragging = false;
-  let tracking = false;
-  let currentEl = null;
-  let prevEl = null;
-  let overlay = null;
+  let startX = 0, startY = 0;
+  let tracking = false, dragging = false;
+  let fromEl = null, toEl = null;
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
   const W = window.innerWidth;
 
-  function getOverlay() {
-    let el = document.getElementById('swipe-overlay');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'swipe-overlay';
-      el.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
-      document.getElementById('app').appendChild(el);
-    }
-    return el;
-  }
-
   document.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    dragging = false;
-    tracking = false;
-    currentEl = null;
-    prevEl = null;
-
-    if (touchStartX > 28) return;
-    if (!screensWithBack.includes(currentScreen)) return;
-
-    const fromName = currentScreen;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = dragging = false;
+    fromEl = toEl = null;
+    if (startX > 28 || !screensWithBack.includes(currentScreen)) return;
     const toName = prevScreen === currentScreen ? 'home' : prevScreen;
-    currentEl = document.getElementById('screen-' + fromName);
-    prevEl    = document.getElementById('screen-' + toName);
-    if (!currentEl || !prevEl) return;
-    tracking = true;
+    fromEl = document.getElementById('screen-' + currentScreen);
+    toEl   = document.getElementById('screen-' + toName);
+    if (fromEl && toEl) tracking = true;
   }, { passive: true });
 
-  // НЕ passive — чтобы можно было вызвать preventDefault и заблокировать скролл
   document.addEventListener('touchmove', (e) => {
-    if (!tracking || !currentEl || !prevEl) return;
-
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    if (!tracking) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = Math.abs(e.touches[0].clientY - startY);
 
     if (!dragging) {
-      if (dy > 10 && dy > dx) {
-        // Вертикальный скролл — отменяем свайп, не мешаем скроллу
-        tracking = false;
-        return;
-      }
+      if (dy > 10 && dy > dx) { tracking = false; return; }
       if (dx < 6) return;
-
-      // Горизонтальный свайп подтверждён — начинаем drag
+      // Начинаем — показываем предыдущий экран за текущим
       dragging = true;
-      overlay = getOverlay();
-      overlay.style.display = 'block';
-      prevEl.classList.remove('hidden');
-      prevEl.style.cssText = 'position:absolute;inset:0;z-index:1;';
-      overlay.style.zIndex = '2';
-      currentEl.style.cssText = 'position:absolute;inset:0;z-index:3;transition:none;box-shadow:-6px 0 24px rgba(0,0,0,0.4);';
+      toEl.classList.remove('hidden');
+      toEl.style.cssText = 'position:absolute;inset:0;z-index:0;transform:translateX(0);';
+      fromEl.style.cssText = 'position:absolute;inset:0;z-index:1;transition:none;';
     }
 
-    // Блокируем скролл страницы пока тянем горизонтально
     e.preventDefault();
-
     const px = Math.max(dx, 0);
-    const progress = Math.min(px / W, 1);
-    currentEl.style.transform = `translateX(${px}px)`;
-    overlay.style.opacity = `${1 - progress}`;
-
+    fromEl.style.transform = `translateX(${px}px)`;
   }, { passive: false });
 
   document.addEventListener('touchend', (e) => {
     if (!tracking) return;
     tracking = false;
-
-    if (!dragging) { currentEl = null; prevEl = null; return; }
+    if (!dragging) { fromEl = toEl = null; return; }
     dragging = false;
 
-    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dx = e.changedTouches[0].clientX - startX;
     const ease = 'cubic-bezier(0.4,0,0.2,1)';
 
-    if (dx > W * 0.38) {
-      currentEl.style.transition = `transform 0.26s ${ease}, box-shadow 0.26s`;
-      currentEl.style.transform = `translateX(${W}px)`;
-      overlay.style.transition = 'opacity 0.26s ease';
-      overlay.style.opacity = '0';
-
+    if (dx > W * 0.35) {
+      // Подтверждаем — уезжаем вправо
+      fromEl.style.transition = `transform 0.26s ${ease}`;
+      fromEl.style.transform = `translateX(${W}px)`;
       const toName = prevScreen === currentScreen ? 'home' : prevScreen;
       setTimeout(() => {
-        currentEl.classList.add('hidden');
-        currentEl.style.cssText = '';
-        prevEl.style.cssText = '';
-        overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
+        fromEl.classList.add('hidden');
+        fromEl.style.cssText = '';
+        toEl.style.cssText = '';
         currentScreen = toName;
         prevScreen = 'home';
-        currentEl = null; prevEl = null; overlay = null;
-      }, 270);
+        fromEl = toEl = null;
+      }, 265);
     } else {
-      currentEl.style.transition = `transform 0.22s ${ease}, box-shadow 0.22s`;
-      currentEl.style.transform = 'translateX(0)';
-      overlay.style.transition = 'opacity 0.22s ease';
-      overlay.style.opacity = '1';
-
+      // Отменяем — возвращаемся
+      fromEl.style.transition = `transform 0.22s ${ease}`;
+      fromEl.style.transform = 'translateX(0)';
       setTimeout(() => {
-        prevEl.classList.add('hidden');
-        currentEl.style.cssText = '';
-        prevEl.style.cssText = '';
-        overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:0;display:none;';
-        currentEl = null; prevEl = null; overlay = null;
-      }, 230);
+        toEl.classList.add('hidden');
+        fromEl.style.cssText = '';
+        toEl.style.cssText = '';
+        fromEl = toEl = null;
+      }, 225);
     }
   }, { passive: true });
 })();
@@ -1810,18 +1753,7 @@ function openMarket(id) {
 
   prevScreen = currentScreen;
   currentScreen = 'detail';
-
-  const detailEl = document.getElementById('screen-detail');
-  const fromEl   = document.getElementById('screen-' + prevScreen);
-
-  detailEl.classList.remove('hidden');
-  detailEl.classList.add('anim-slide-in');
-
-  setTimeout(() => {
-    if (fromEl) fromEl.classList.add('hidden');
-    detailEl.classList.remove('anim-slide-in');
-    detailEl.style.zIndex = '';
-  }, 310);
+  slideToScreen('detail', 'forward');
 
   drawChart(d.history);
 
@@ -2189,18 +2121,7 @@ function openWalletScreen() {
   prevScreen = currentScreen;
   currentScreen = 'wallet';
   renderWalletScreen();
-
-  const walletEl = document.getElementById('screen-wallet');
-  const fromEl   = document.getElementById('screen-' + prevScreen);
-
-  walletEl.classList.remove('hidden');
-  walletEl.classList.add('anim-slide-in');
-
-  setTimeout(() => {
-    if (fromEl) fromEl.classList.add('hidden');
-    walletEl.classList.remove('anim-slide-in');
-    walletEl.style.zIndex = '';
-  }, 310);
+  slideToScreen('wallet', 'forward');
 }
 
 function renderWalletScreen() {
