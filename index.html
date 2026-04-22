@@ -539,24 +539,31 @@
   @keyframes payout-pulse{0%{box-shadow:0 0 0 0 rgba(245,200,66,.5)}70%{box-shadow:0 0 0 14px rgba(245,200,66,0)}100%{box-shadow:0 0 0 0 rgba(245,200,66,0)}}
   .payout-pulse{animation:payout-pulse 0.9s ease-out 2;}
 
-  /* ── SWIPE BACK ANIMATION ── */
+  /* ── SCREEN TRANSITIONS ── */
   .screen { will-change: transform; }
-  .screen.slide-exit {
-    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity   0.32s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Новый экран въезжает справа */
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
   }
-  .screen.slide-exit-done {
-    transform: translateX(100%);
-    opacity: 0;
+  /* Старый экран уезжает влево */
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-25%); }
   }
-  /* Подложка предыдущего экрана тоже слегка выезжает */
-  .screen.slide-reveal {
-    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-8%);
+  /* Новый экран въезжает слева (при goBack) */
+  @keyframes slideInLeft {
+    from { transform: translateX(-25%); }
+    to   { transform: translateX(0); }
   }
-  .screen.slide-reveal-done {
-    transform: translateX(0);
-    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .screen.anim-slide-in {
+    animation: slideInRight 0.32s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  .screen.anim-slide-out {
+    animation: slideOutLeft 0.32s cubic-bezier(0.4,0,0.2,1) forwards;
+    pointer-events: none;
   }
 </style>
 </head>
@@ -1593,11 +1600,22 @@ async function renderLeaderboard() {
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function showScreen(name) {
   if (name === currentScreen) return;
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  const to = document.getElementById('screen-' + name);
-  if (to) to.classList.remove('hidden');
+  const fromEl = document.getElementById('screen-' + currentScreen);
+  const toEl   = document.getElementById('screen-' + name);
+  if (!toEl) return;
+
   prevScreen = currentScreen;
   currentScreen = name;
+
+  toEl.classList.remove('hidden');
+  toEl.classList.add('anim-slide-in');
+  if (fromEl) fromEl.classList.add('anim-slide-out');
+
+  setTimeout(() => {
+    if (fromEl) { fromEl.classList.add('hidden'); fromEl.classList.remove('anim-slide-out'); fromEl.style.transform = ''; }
+    toEl.classList.remove('anim-slide-in');
+  }, 330);
+
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'portfolio') renderPositions();
 }
@@ -1800,10 +1818,21 @@ function openMarket(id) {
 
   prevScreen = currentScreen;
   currentScreen = 'detail';
-  document.getElementById('screen-detail').classList.remove('hidden','slide-left');
-  const home = document.getElementById('screen-'+prevScreen);
-  home.classList.add('slide-left');
-  setTimeout(() => { home.classList.add('hidden'); home.classList.remove('slide-left'); }, 350);
+
+  const detailEl = document.getElementById('screen-detail');
+  const fromEl   = document.getElementById('screen-' + prevScreen);
+
+  // Показываем detail поверх текущего экрана и запускаем slide-in
+  detailEl.classList.remove('hidden');
+  detailEl.classList.add('anim-slide-in');
+  fromEl.classList.add('anim-slide-out');
+
+  setTimeout(() => {
+    fromEl.classList.add('hidden');
+    fromEl.classList.remove('anim-slide-out');
+    fromEl.style.transform = '';
+    detailEl.classList.remove('anim-slide-in');
+  }, 330);
 
   drawChart(d.history);
 
@@ -2171,10 +2200,20 @@ function openWalletScreen() {
   prevScreen = currentScreen;
   currentScreen = 'wallet';
   renderWalletScreen();
-  document.getElementById('screen-wallet').classList.remove('hidden','slide-left');
-  const from = document.getElementById('screen-' + prevScreen);
-  from.classList.add('slide-left');
-  setTimeout(() => { from.classList.add('hidden'); from.classList.remove('slide-left'); }, 350);
+
+  const walletEl = document.getElementById('screen-wallet');
+  const fromEl   = document.getElementById('screen-' + prevScreen);
+
+  walletEl.classList.remove('hidden');
+  walletEl.classList.add('anim-slide-in');
+  fromEl.classList.add('anim-slide-out');
+
+  setTimeout(() => {
+    fromEl.classList.add('hidden');
+    fromEl.classList.remove('anim-slide-out');
+    fromEl.style.transform = '';
+    walletEl.classList.remove('anim-slide-in');
+  }, 330);
 }
 
 function renderWalletScreen() {
