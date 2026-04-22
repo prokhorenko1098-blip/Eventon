@@ -553,11 +553,11 @@
 
   .screen.anim-enter {
     animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
-    z-index: 10 !important;
+    z-index: 10;
   }
   .screen.anim-leave {
     animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
-    z-index: 10 !important;
+    z-index: 10;
     pointer-events: none;
   }
 </style>
@@ -1205,18 +1205,28 @@ let currentFilter = 'all';
 function selectLang(l) {
   lang = l;
   applyTranslations();
-  // animate out lang screen
+
   const ls = document.getElementById('screen-lang');
-  ls.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+  const home = document.getElementById('screen-home');
+
+  // Показываем home и слайдим lang влево (уезжает), home въезжает справа
+  home.classList.remove('hidden');
+  home.classList.add('anim-enter');
+
+  // Lang уезжает влево — просто fade out чтобы не конфликтовать
+  ls.style.transition = 'opacity 0.3s ease';
   ls.style.opacity = '0';
-  ls.style.transform = 'scale(0.95)';
+  ls.style.pointerEvents = 'none';
+
   setTimeout(() => {
     ls.classList.add('hidden');
-    ls.style.transform = '';
-    ls.style.opacity = '';
-  }, 400);
+    ls.style.cssText = '';
+    home.classList.remove('anim-enter');
+    home.style.zIndex = '';
+  }, 320);
+
   currentScreen = 'home';
-  document.getElementById('screen-home').classList.remove('hidden');
+  prevScreen = 'home';
 }
 
 function showLangScreen() {
@@ -1593,25 +1603,29 @@ async function renderLeaderboard() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
-// Универсальный переход между экранами
-function slideToScreen(name, direction) {
-  // direction: 'forward' = въезд справа, 'back' = уезд вправо
+function slideToScreen(toName, direction) {
   direction = direction || 'forward';
-  const fromEl = document.getElementById('screen-' + currentScreen);
-  const toEl   = document.getElementById('screen-' + name);
-  if (!toEl || name === currentScreen) return;
+  const fromName = currentScreen;
+  const fromEl = document.getElementById('screen-' + fromName);
+  const toEl   = document.getElementById('screen-' + toName);
+  if (!toEl) return;
+
+  // Чистим любые незавершённые анимации
+  document.querySelectorAll('.anim-enter, .anim-leave').forEach(el => {
+    el.classList.remove('anim-enter', 'anim-leave');
+    el.style.transform = '';
+    el.style.zIndex = '';
+  });
 
   if (direction === 'forward') {
-    // Новый экран въезжает справа поверх старого
     toEl.classList.remove('hidden');
     toEl.classList.add('anim-enter');
     setTimeout(() => {
       if (fromEl) fromEl.classList.add('hidden');
       toEl.classList.remove('anim-enter');
       toEl.style.zIndex = '';
-    }, 310);
+    }, 320);
   } else {
-    // Текущий экран уезжает вправо, старый открывается
     if (fromEl) {
       fromEl.classList.add('anim-leave');
       toEl.classList.remove('hidden');
@@ -1620,7 +1634,7 @@ function slideToScreen(name, direction) {
         fromEl.classList.remove('anim-leave');
         fromEl.style.transform = '';
         fromEl.style.zIndex = '';
-      }, 310);
+      }, 320);
     } else {
       toEl.classList.remove('hidden');
     }
@@ -1659,6 +1673,12 @@ function goBack() {
     tracking = dragging = false;
     fromEl = toEl = null;
     if (startX > 28 || !screensWithBack.includes(currentScreen)) return;
+    // Чистим зависшие анимации
+    document.querySelectorAll('.anim-enter, .anim-leave').forEach(el => {
+      el.classList.remove('anim-enter', 'anim-leave');
+      el.style.transform = '';
+      el.style.zIndex = '';
+    });
     const toName = prevScreen === currentScreen ? 'home' : prevScreen;
     fromEl = document.getElementById('screen-' + currentScreen);
     toEl   = document.getElementById('screen-' + toName);
