@@ -540,10 +540,7 @@
   .payout-pulse{animation:payout-pulse 0.9s ease-out 2;}
 
   /* ── SCREEN TRANSITIONS ── */
-  .screen { will-change: transform; }
-  .screen.screen-transitioning {
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-  }
+  .screen { will-change: auto; }
 </style>
 </head>
 <body>
@@ -1189,31 +1186,10 @@ let currentFilter = 'all';
 function selectLang(l) {
   lang = l;
   applyTranslations();
-  // Оставляем currentScreen = 'lang' чтобы slideToScreen нашёл fromEl корректно
-  // slideToScreen сам обновит currentScreen через showScreen не нужен
-  const langEl = document.getElementById('screen-lang');
-  const homeEl = document.getElementById('screen-home');
-
-  // Простой и надёжный переход без slideToScreen
-  homeEl.style.transform = 'translateX(100%)';
-  homeEl.classList.remove('hidden');
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      langEl.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-      langEl.style.transform = 'translateX(-30%)';
-      homeEl.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-      homeEl.style.transform = 'translateX(0)';
-
-      setTimeout(() => {
-        langEl.classList.add('hidden');
-        langEl.style.cssText = '';
-        homeEl.style.cssText = '';
-        currentScreen = 'home';
-        prevScreen = 'home';
-      }, 310);
-    });
-  });
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('screen-home').classList.remove('hidden');
+  currentScreen = 'home';
+  prevScreen = 'home';
 }
 
 function showLangScreen() {
@@ -1589,68 +1565,19 @@ async function renderLeaderboard() {
   }
 }
 
-// ── NAVIGATION ─────────────────────────────────────────────────────
-function slideToScreen(toName, direction) {
-  direction = direction || 'forward';
-  const fromName = currentScreen;
-  const fromEl = document.getElementById('screen-' + fromName);
-  const toEl   = document.getElementById('screen-' + toName);
-  if (!toEl) return;
-
-  if (direction === 'forward') {
-    // toEl стартует справа за экраном, fromEl на месте
-    toEl.style.transform = 'translateX(100%)';
-    toEl.classList.remove('hidden');
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fromEl && fromEl.classList.add('screen-transitioning');
-        toEl.classList.add('screen-transitioning');
-        toEl.style.transform = 'translateX(0)';
-        if (fromEl) fromEl.style.transform = 'translateX(-30%)';
-
-        setTimeout(() => {
-          if (fromEl) {
-            fromEl.classList.add('hidden');
-            fromEl.classList.remove('screen-transitioning');
-            fromEl.style.transform = '';
-          }
-          toEl.classList.remove('screen-transitioning');
-          toEl.style.transform = '';
-        }, 310);
-      });
-    });
-  } else {
-    // back: fromEl уезжает вправо, toEl уже стоит слева
-    if (!fromEl) { toEl.classList.remove('hidden'); return; }
-
-    toEl.style.transform = 'translateX(-30%)';
-    toEl.classList.remove('hidden');
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fromEl.classList.add('screen-transitioning');
-        toEl.classList.add('screen-transitioning');
-        fromEl.style.transform = 'translateX(100%)';
-        toEl.style.transform = 'translateX(0)';
-
-        setTimeout(() => {
-          fromEl.classList.add('hidden');
-          fromEl.classList.remove('screen-transitioning');
-          fromEl.style.transform = '';
-          toEl.classList.remove('screen-transitioning');
-          toEl.style.transform = '';
-        }, 310);
-      });
-    });
-  }
+// ── NAVIGATION ────────────────────────────────────────────────────
+function switchScreen(toName) {
+  if (toName === currentScreen) return;
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const toEl = document.getElementById('screen-' + toName);
+  if (toEl) toEl.classList.remove('hidden');
 }
 
 function showScreen(name) {
   if (name === currentScreen) return;
   prevScreen = currentScreen;
   currentScreen = name;
-  slideToScreen(name, 'forward');
+  switchScreen(name);
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'portfolio') renderPositions();
 }
@@ -1659,90 +1586,25 @@ function goBack() {
   const toName = prevScreen === currentScreen ? 'home' : prevScreen;
   prevScreen = 'home';
   currentScreen = toName;
-  slideToScreen(toName, 'back');
+  switchScreen(toName);
 }
 
 // ── SWIPE BACK GESTURE ────────────────────────────────────────────
 (function initSwipeBack() {
   let startX = 0, startY = 0;
-  let tracking = false, dragging = false;
-  let fromEl = null, toEl = null, toName = '';
   const screensWithBack = ['detail', 'portfolio', 'leaderboard', 'wallet', 'lang'];
-  const W = window.innerWidth;
 
   document.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    tracking = dragging = false;
-    fromEl = toEl = null;
-    if (startX > 28 || !screensWithBack.includes(currentScreen)) return;
-    toName = prevScreen === currentScreen ? 'home' : prevScreen;
-    fromEl = document.getElementById('screen-' + currentScreen);
-    toEl   = document.getElementById('screen-' + toName);
-    if (fromEl && toEl) tracking = true;
   }, { passive: true });
 
-  document.addEventListener('touchmove', (e) => {
-    if (!tracking) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = Math.abs(e.touches[0].clientY - startY);
-
-    if (!dragging) {
-      if (dy > 10 && dy > dx) { tracking = false; return; }
-      if (dx < 6) return;
-      dragging = true;
-      // toEl стоит слева (-30%), fromEl на месте
-      toEl.classList.remove('hidden');
-      toEl.style.transition = 'none';
-      toEl.style.transform = 'translateX(-30%)';
-      fromEl.style.transition = 'none';
-      fromEl.style.transform = 'translateX(0)';
-    }
-
-    e.preventDefault();
-    const px = Math.max(Math.min(dx, W), 0);
-    const progress = px / W; // 0..1
-    fromEl.style.transform = `translateX(${px}px)`;
-    // toEl выезжает из -30% до 0 пропорционально
-    toEl.style.transform = `translateX(${-30 + progress * 30}%)`;
-  }, { passive: false });
-
   document.addEventListener('touchend', (e) => {
-    if (!tracking) return;
-    tracking = false;
-    if (!dragging) { fromEl = toEl = null; return; }
-    dragging = false;
-
+    if (startX > 28) return;
+    if (!screensWithBack.includes(currentScreen)) return;
     const dx = e.changedTouches[0].clientX - startX;
-    const ease = 'cubic-bezier(0.4,0,0.2,1)';
-
-    if (dx > W * 0.35) {
-      // Подтверждаем
-      fromEl.style.transition = `transform 0.26s ${ease}`;
-      fromEl.style.transform = `translateX(${W}px)`;
-      toEl.style.transition = `transform 0.26s ${ease}`;
-      toEl.style.transform = 'translateX(0)';
-      setTimeout(() => {
-        fromEl.classList.add('hidden');
-        fromEl.style.cssText = '';
-        toEl.style.cssText = '';
-        currentScreen = toName;
-        prevScreen = 'home';
-        fromEl = toEl = null;
-      }, 265);
-    } else {
-      // Отменяем
-      fromEl.style.transition = `transform 0.22s ${ease}`;
-      fromEl.style.transform = 'translateX(0)';
-      toEl.style.transition = `transform 0.22s ${ease}`;
-      toEl.style.transform = 'translateX(-30%)';
-      setTimeout(() => {
-        toEl.classList.add('hidden');
-        fromEl.style.cssText = '';
-        toEl.style.cssText = '';
-        fromEl = toEl = null;
-      }, 225);
-    }
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    if (dx > 80 && dy < 60) goBack();
   }, { passive: true });
 })();
 
@@ -1778,7 +1640,7 @@ function openMarket(id) {
 
   prevScreen = currentScreen;
   currentScreen = 'detail';
-  slideToScreen('detail', 'forward');
+  switchScreen('detail');
 
   drawChart(d.history);
 
@@ -2146,7 +2008,7 @@ function openWalletScreen() {
   prevScreen = currentScreen;
   currentScreen = 'wallet';
   renderWalletScreen();
-  slideToScreen('wallet', 'forward');
+  switchScreen('wallet');
 }
 
 function renderWalletScreen() {
