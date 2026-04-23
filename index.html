@@ -913,6 +913,14 @@
 </div>
 
 <script>
+// ── Глобальные переменные — ДОЛЖНЫ быть первыми ──────────────────
+let lang = 'en';
+let currentScreen = 'lang';
+let prevScreen = 'home';
+let currentMarketId = null;
+let selectedSide = null;
+let currentFilter = 'all';
+
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
   const tgApp = window.Telegram.WebApp;
@@ -1176,12 +1184,7 @@ const LEADERBOARD = [
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────
-let lang = 'en';
-let currentScreen = 'lang';
-let prevScreen = 'home';
-let currentMarketId = null;
-let selectedSide = null;
-let currentFilter = 'all';
+// (объявлены в начале скрипта)
 
 // ── LANGUAGE SELECT ────────────────────────────────────────────────
 function selectLang(l) {
