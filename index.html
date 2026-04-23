@@ -488,10 +488,10 @@
   .lang-arrow { color: var(--muted); font-size: 18px; }
 
   /* splash animation */
-  #screen-lang .lang-logo { animation: splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
-  #screen-lang .lang-tagline { animation: fadeIn 0.5s 0.3s ease both; }
-  #screen-lang .lang-prompt { animation: fadeIn 0.5s 0.5s ease both; }
-  #screen-lang .lang-options { animation: fadeIn 0.5s 0.6s ease both; }
+  #screen-lang .lang-logo { animation: splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  #screen-lang .lang-tagline { animation: fadeIn 0.5s 0.3s ease forwards; }
+  #screen-lang .lang-prompt { animation: fadeIn 0.5s 0.5s ease forwards; }
+  #screen-lang .lang-options { animation: fadeIn 0.5s 0.6s ease forwards; }
   @keyframes splashLogo {
     from { transform: scale(0.5) translateY(20px); opacity: 0; }
     to   { transform: scale(1) translateY(0); opacity: 1; }
@@ -1189,9 +1189,31 @@ let currentFilter = 'all';
 function selectLang(l) {
   lang = l;
   applyTranslations();
-  prevScreen = 'home';
-  currentScreen = 'home';
-  slideToScreen('home', 'forward');
+  // Оставляем currentScreen = 'lang' чтобы slideToScreen нашёл fromEl корректно
+  // slideToScreen сам обновит currentScreen через showScreen не нужен
+  const langEl = document.getElementById('screen-lang');
+  const homeEl = document.getElementById('screen-home');
+
+  // Простой и надёжный переход без slideToScreen
+  homeEl.style.transform = 'translateX(100%)';
+  homeEl.classList.remove('hidden');
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      langEl.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+      langEl.style.transform = 'translateX(-30%)';
+      homeEl.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+      homeEl.style.transform = 'translateX(0)';
+
+      setTimeout(() => {
+        langEl.classList.add('hidden');
+        langEl.style.cssText = '';
+        homeEl.style.cssText = '';
+        currentScreen = 'home';
+        prevScreen = 'home';
+      }, 310);
+    });
+  });
 }
 
 function showLangScreen() {
