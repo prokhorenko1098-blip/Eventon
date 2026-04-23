@@ -29,7 +29,7 @@
 
   #app { height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
   .screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%; box-sizing: border-box; padding-top: var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)); }
-  .screen.hidden { display: none !important; }
+  .screen.hidden { display: none !important; pointer-events: none !important; }
 
   .scroll-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .scroll-body::-webkit-scrollbar { display: none; }
@@ -432,7 +432,7 @@
     align-items: center;
     justify-content: center;
     padding: 32px 24px;
-    z-index: 200;
+    z-index: 50;
   }
   .lang-logo {
     font-family: 'Clash Display', sans-serif;
@@ -489,9 +489,10 @@
 
   /* splash animation */
   #screen-lang .lang-logo { animation: splashLogo 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-  #screen-lang .lang-tagline { animation: fadeIn 0.5s 0.3s ease forwards; }
-  #screen-lang .lang-prompt { animation: fadeIn 0.5s 0.5s ease forwards; }
-  #screen-lang .lang-options { animation: fadeIn 0.5s 0.6s ease forwards; }
+  #screen-lang .lang-tagline { animation: fadeIn 0.5s 0.2s ease forwards; }
+  #screen-lang .lang-prompt { animation: fadeIn 0.5s 0.3s ease forwards; }
+  /* lang-options БЕЗ анимации — чтобы кнопки были кликабельны сразу */
+  #screen-lang .lang-options { opacity: 1; }
   @keyframes splashLogo {
     from { transform: scale(0.5) translateY(20px); opacity: 0; }
     to   { transform: scale(1) translateY(0); opacity: 1; }
@@ -506,7 +507,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 36px;
     margin-bottom: 24px;
-    animation: splashLogo 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation: splashLogo 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
     box-shadow: 0 0 40px rgba(91,138,240,0.15);
   }
 
