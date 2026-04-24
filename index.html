@@ -1280,15 +1280,19 @@ function renderTabs() {
 function renderFeed(filter='all') {
   const t = T[lang];
   const markets = filter === 'all' ? t.markets : t.markets.filter(m => m.cat === filter);
+  if (!markets.length) {
+    document.getElementById('market-feed').innerHTML =
+      '<div style="text-align:center;padding:40px;color:var(--muted);">Завантаження ринків...</div>';
+    return;
+  }
   document.getElementById('market-feed').innerHTML = markets.map(m => {
-    const d = MARKET_DATA[m.id];
-    if (!d) return '';
+    const d = MARKET_DATA[parseInt(m.id)] || { yes: 50, vol: 0, trades: 0, deadline: '—' };
     return `
-    <div class="card market-card" onclick="openMarket(${m.id})">
+    <div class="card market-card" onclick="openMarket(${parseInt(m.id)})">
       <div class="market-card-top">
         <div class="market-emoji">${m.emoji}</div>
         <div class="market-info">
-          <div class="market-category">${t.catLabels[m.cat]}</div>
+          <div class="market-category">${t.catLabels[m.cat] || m.cat}</div>
           <div class="market-title">${m.title}</div>
         </div>
       </div>
@@ -1300,7 +1304,7 @@ function renderFeed(filter='all') {
         </div>
         <div>
           <div class="market-vol" id="card-vol-${m.id}">◈ ${d.vol.toLocaleString()}</div>
-          <div class="market-deadline">⏱ ${d.deadline}${lang==='en'?' days':' дн'}</div>
+          <div class="market-deadline">⏱ ${d.deadline}${lang==='en'?' days':d.deadline==='—'?'':' дн'}</div>
         </div>
       </div>
     </div>`;
@@ -1614,9 +1618,17 @@ function goBack() {
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
 function openMarket(id) {
+  id = parseInt(id); // всегда число
   const t = T[lang];
-  const m = t.markets.find(x => x.id === id);
+  // ищем по числовому id — после загрузки из Supabase id числовые
+  const m = t.markets.find(x => parseInt(x.id) === id);
   const d = MARKET_DATA[id];
+
+  if (!m || !d) {
+    console.warn('openMarket: market not found', id, 'markets:', t.markets.length);
+    return;
+  }
+
   currentMarketId = id;
   selectedSide = null;
   document.getElementById('amount-input').value = '';
@@ -1656,19 +1668,16 @@ function openMarket(id) {
     const freshVol = parseFloat(fresh.volume) || 0;
     const freshTrades = parseInt(fresh.trades) || 0;
 
-    // Оновлюємо MARKET_DATA
     d.yes = freshYes;
     d.vol = freshVol;
     d.trades = freshTrades;
 
-    // Оновлюємо відображення
     document.getElementById('d-yes-prob').textContent = freshYes + '%';
     document.getElementById('d-no-prob').textContent = (100 - freshYes) + '%';
     document.getElementById('d-bar').style.width = freshYes + '%';
     document.getElementById('d-vol').textContent = freshVol.toLocaleString(undefined, {maximumFractionDigits: 2});
     document.getElementById('d-trades').textContent = freshTrades.toLocaleString();
 
-    // Оновлюємо коефіцієнти
     const newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
     const newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
     document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsYes}</span>`;
@@ -2587,7 +2596,9 @@ async function loadMarketsFromSupabase() {
 
     if (!newMarkets.length) return;
 
-    // Повністю замінюємо MARKET_DATA реальними даними
+    // Очищаем старые хардкодные рынки, оставляем только реальные из Supabase
+    Object.keys(MARKET_DATA).forEach(k => { delete MARKET_DATA[k]; });
+
     newMarkets.forEach(m => {
       const existing = MARKET_DATA[m.id];
       const history = existing?.history || [];
