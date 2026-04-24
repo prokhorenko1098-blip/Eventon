@@ -958,7 +958,7 @@ if (window.visualViewport) {
   });
 }
 // ── MARKETS DATA (топ события по мотивам Polymarket, март 2026) ───
-const ALL_MARKETS = [
+var ALL_MARKETS = [
   // ── ПОЛИТИКА ──
   { id:1,  emoji:'🇺🇸', cat:'politics', yes:72, vol:0, trades:0, deadline:'296', title_ru:'Республиканцы выиграют промежуточные выборы в Конгресс 2026?', title_uk:'Республіканці виграють проміжні вибори до Конгресу 2026?', title_en:'Will Republicans win the 2026 midterm elections?' },
   { id:2,  emoji:'🗳', cat:'politics', yes:61, vol:0, trades:0, deadline:'180', title_ru:'Трамп останется президентом до конца срока в 2029?', title_uk:'Трамп залишиться президентом до кінця терміну у 2029?', title_en:'Will Trump serve his full term until 2029?' },
@@ -1021,7 +1021,7 @@ const ALL_MARKETS = [
 ];
 
 // Строим MARKET_DATA из ALL_MARKETS
-const MARKET_DATA = {};
+var MARKET_DATA = {};
 ALL_MARKETS.forEach(m => {
   const history = [];
   let val = m.yes + (Math.random()-0.5)*20;
@@ -1041,7 +1041,7 @@ ALL_MARKETS.forEach(m => {
 
 
 // ── TRANSLATIONS ──────────────────────────────────────────────────
-const T = {
+var T = {
   uk: {
     navMarkets: 'Ринки',
     navBet: 'Ставки',
@@ -2330,7 +2330,7 @@ function generateDepositComment() {
   return code;
 }
 
-const DEMO_START_BALANCE = 1000; // Демо баланс для бета-теста
+var DEMO_START_BALANCE = 1000; // Демо баланс для бета-теста
 
 async function loadUserBalance(tgUsername) {
   try {
