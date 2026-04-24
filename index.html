@@ -1212,61 +1212,39 @@ function showLangScreen() {
 
 function applyTranslations() {
   const t = T[lang];
-  // lang button
-  document.getElementById('lang-flag-btn').textContent = t.langFlag;
-  // home
-  document.getElementById('home-greeting').textContent = t.greeting;
-  document.getElementById('hero-label').textContent = t.heroLabel;
-  document.getElementById('hero-sub').textContent = t.heroSub;
-  document.getElementById('stat-markets').textContent = t.statMarkets;
-  document.getElementById('stat-users').textContent = t.statUsers;
-  // nav 1 (home)
-  ['nav-markets','nav-portfolio','nav-rating'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = [t.navMarkets, t.navPortfolio, t.navRating][i];
-  });
-  // portfolio
-  document.getElementById('portfolio-title').textContent = t.portfolioTitle;
-  document.getElementById('balance-label').textContent = t.balanceLabel;
-  document.getElementById('balance-sub').textContent = t.balanceSub;
-  document.getElementById('pnl-label').textContent = t.pnlLabel;
-  document.getElementById('positions-title').textContent = t.positionsTitle;
-  const histTitleEl = document.getElementById('history-title');
-  if (histTitleEl) histTitleEl.textContent = lang==='en' ? 'CLOSED POSITIONS' : lang==='uk' ? 'ЗАКРИТІ ПОЗИЦІЇ' : 'ЗАКРЫТЫЕ ПОЗИЦИИ';
-  document.getElementById('nav-markets2').textContent = t.navMarkets;
-  document.getElementById('nav-portfolio2').textContent = t.navPortfolio;
-  document.getElementById('nav-rating2').textContent = t.navRating;
-  // leaderboard
-  document.getElementById('lb-header-title').textContent = t.lbHeader;
-  document.getElementById('lb-your-pos').textContent = t.lbYourPos;
-  document.getElementById('lb-of-total').textContent = t.lbOfTotal;
-  document.getElementById('lb-your-stats').textContent = t.lbYourStats;
-  document.getElementById('lb-top-title').textContent = t.lbTopTitle;
-  document.getElementById('nav-markets3').textContent = t.navMarkets;
-  document.getElementById('nav-portfolio3').textContent = t.navPortfolio;
-  document.getElementById('nav-rating3').textContent = t.navRating;
-  // detail labels
-  document.getElementById('chart-title').textContent = t.chartTitle;
-  document.getElementById('bet-title').textContent = t.betTitle;
-  document.getElementById('btn-yes').textContent = t.btnYes;
-  document.getElementById('btn-no').textContent = t.btnNo;
-  document.getElementById('place-bet-btn').textContent = t.betPlaceholder;
-  document.getElementById('prev-lbl-stake').textContent = t.prevStake;
-  document.getElementById('prev-lbl-win').textContent = t.prevWin;
-  document.getElementById('prev-lbl-profit').textContent = t.prevProfit;
-  document.getElementById('prev-lbl-fee').textContent = t.prevFee;
-  document.getElementById('d-yes-label').textContent = t.yesLabel;
-  document.getElementById('d-no-label').textContent = t.noLabel;
-  document.getElementById('d-vol-lbl').textContent = t.volLbl;
-  document.getElementById('d-trades-lbl').textContent = t.tradesLbl;
-  document.getElementById('d-deadline-lbl').textContent = t.deadlineLbl;
-  document.getElementById('overlay-title').textContent = t.overlayTitle;
-  document.getElementById('overlay-ok-btn').textContent = t.overlayOk;
+  // Безопасный setter - не падает если элемент не найден
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = val; };
 
-  renderTabs();
-  renderFeed(currentFilter);
-  renderPositions();
-  renderLeaderboard();
+  set('lang-flag-btn', t.langFlag);
+  set('home-greeting', t.greeting);
+  set('hero-label', t.heroLabel);
+  set('hero-sub', t.heroSub);
+  set('stat-markets', t.statMarkets);
+  set('stat-users', t.statUsers);
+  ['nav-markets','nav-portfolio','nav-rating'].forEach((id,i) => set(id, [t.navMarkets, t.navPortfolio, t.navRating][i]));
+  set('portfolio-title', t.portfolioTitle);
+  set('balance-label', t.balanceLabel);
+  set('balance-sub', t.balanceSub);
+  set('pnl-label', t.pnlLabel);
+  set('positions-title', t.positionsTitle);
+  set('history-title', lang==='en' ? 'CLOSED POSITIONS' : lang==='uk' ? 'ЗАКРИТІ ПОЗИЦІЇ' : 'ЗАКРЫТЫЕ ПОЗИЦИИ');
+  set('nav-markets2', t.navMarkets); set('nav-portfolio2', t.navPortfolio); set('nav-rating2', t.navRating);
+  set('lb-header-title', t.lbHeader); set('lb-your-pos', t.lbYourPos);
+  set('lb-of-total', t.lbOfTotal); set('lb-your-stats', t.lbYourStats);
+  set('lb-top-title', t.lbTopTitle);
+  set('nav-markets3', t.navMarkets); set('nav-portfolio3', t.navPortfolio); set('nav-rating3', t.navRating);
+  set('chart-title', t.chartTitle); set('bet-title', t.betTitle);
+  set('btn-yes', t.btnYes); set('btn-no', t.btnNo);
+  set('place-bet-btn', t.betPlaceholder);
+  set('prev-lbl-stake', t.prevStake); set('prev-lbl-win', t.prevWin);
+  set('prev-lbl-profit', t.prevProfit); set('prev-lbl-fee', t.prevFee);
+  set('d-yes-label', t.yesLabel); set('d-no-label', t.noLabel);
+  set('d-vol-lbl', t.volLbl); set('d-trades-lbl', t.tradesLbl);
+  set('d-deadline-lbl', t.deadlineLbl);
+  set('overlay-title', t.overlayTitle); set('overlay-ok-btn', t.overlayOk);
+
+  try { renderTabs(); } catch(e) { console.warn('renderTabs:', e); }
+  try { renderFeed(currentFilter); } catch(e) { console.warn('renderFeed:', e); }
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────
@@ -1634,7 +1612,7 @@ function openMarket(id) {
   document.getElementById('amount-input').value = '';
 
   document.getElementById('d-emoji').textContent = m.emoji;
-  document.getElementById('d-cat').textContent = t.catLabels[m.cat].toUpperCase();
+  document.getElementById('d-cat').textContent = (t.catLabels[m.cat] || m.cat).toUpperCase();
   document.getElementById('d-title').textContent = m.title;
   document.getElementById('d-yes-prob').textContent = Math.round(d.yes) + '%';
   document.getElementById('d-no-prob').textContent = Math.round(100 - d.yes) + '%';
@@ -1642,7 +1620,7 @@ function openMarket(id) {
   document.getElementById('d-vol').textContent = d.vol.toLocaleString();
   document.getElementById('d-trades').textContent = d.trades.toLocaleString();
   document.getElementById('d-deadline').textContent = d.deadline + (lang==='en'?' days':' дн');
-  document.getElementById('detail-header-title').textContent = t.catLabels[m.cat];
+  document.getElementById('detail-header-title').textContent = t.catLabels[m.cat] || m.cat;
   document.getElementById('btn-yes').className = 'bet-btn yes';
   document.getElementById('btn-no').className = 'bet-btn no';
   const oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
