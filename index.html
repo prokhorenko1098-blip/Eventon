@@ -2228,6 +2228,22 @@ async function supaFetch(path, method='GET', body=null) {
   return res.json().catch(() => null);
 }
 
+async function supaFetchCount(table) {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?select=id', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      }
+    });
+    const range = res.headers.get('content-range');
+    if (range) return parseInt(range.split('/')[1]) || 0;
+    return 0;
+  } catch(e) { return 0; }
+}
+
 async function pingOnline() {
   // Wait until we have a user ID
   if (!userTelegramId) return;
@@ -2380,11 +2396,10 @@ async function loadRealStats() {
     const mktEl = document.getElementById('hero-markets-count');
     if (mktEl) mktEl.textContent = mktCount;
 
-    // Реальное кол-во пользователей
-    const usersData = await supaFetch('/rest/v1/users?select=id&limit=1000');
-    const usersCount = usersData ? usersData.length : 0;
+    // Реальное кол-во пользователей через count
+    const usersCount = await supaFetchCount('/rest/v1/users');
     const usersEl = document.getElementById('hero-users-count');
-    if (usersEl) usersEl.textContent = usersCount.toLocaleString();
+    if (usersEl) usersEl.textContent = (usersCount || 0).toLocaleString();
 
   } catch(e) {
     console.log('Stats load error:', e);
