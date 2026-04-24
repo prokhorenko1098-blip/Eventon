@@ -924,18 +924,16 @@ let currentFilter = 'all';
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
   const tgApp = window.Telegram.WebApp;
-  tgApp.expand();
-  tgApp.setBackgroundColor('#0a0b0f');
-  tgApp.setHeaderColor('#0a0b0f');
-  if (tgApp.disableVerticalSwipes) tgApp.disableVerticalSwipes();
-  if (tgApp.requestFullscreen) tgApp.requestFullscreen();
+  try { tgApp.expand(); } catch(e) {}
+  try { tgApp.setBackgroundColor('#0a0b0f'); } catch(e) {}
+  try { tgApp.setHeaderColor('#0a0b0f'); } catch(e) {}
+  if (tgApp.disableVerticalSwipes) try { tgApp.disableVerticalSwipes(); } catch(e) {}
   // Сховати системну шапку Telegram
   if (tgApp.isVersionAtLeast && tgApp.isVersionAtLeast('6.1')) {
     document.documentElement.style.setProperty('--tg-header-height', '0px');
   }
   setTimeout(() => {
-    tgApp.expand();
-    if (tgApp.requestFullscreen) tgApp.requestFullscreen();
+    try { tgApp.expand(); } catch(e) {}
   }, 300);
 }
 
