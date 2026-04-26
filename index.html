@@ -1630,73 +1630,83 @@ function goBack() {
 function openMarket(id) {
   id = parseInt(id);
   var t = T[lang];
-  var m = t.markets.find(function(x) { return parseInt(x.id) === id; });
+  var m = null;
+  for (var i = 0; i < t.markets.length; i++) {
+    if (parseInt(t.markets[i].id) === id) { m = t.markets[i]; break; }
+  }
   var d = MARKET_DATA[id];
 
-  // Если m не найден в t.markets но d есть — строим m из MARKET_DATA
   if (!m && d) {
     m = { id: id, emoji: d.emoji || '🔮', cat: d.cat || 'politics', title: d.title || ('Event #' + id) };
   }
 
   if (!m || !d) {
-    console.warn('openMarket: market not found', id, 'markets:', t.markets.length, 'MARKET_DATA keys:', Object.keys(MARKET_DATA).length);
+    console.warn('openMarket: not found', id);
     return;
   }
 
   currentMarketId = id;
   selectedSide = null;
-  document.getElementById('amount-input').value = '';
 
-  document.getElementById('d-emoji').textContent = m.emoji;
-  document.getElementById('d-cat').textContent = (t.catLabels[m.cat] || m.cat).toUpperCase();
-  document.getElementById('d-title').textContent = m.title;
-  document.getElementById('d-yes-prob').textContent = Math.round(d.yes) + '%';
-  document.getElementById('d-no-prob').textContent = Math.round(100 - d.yes) + '%';
-  document.getElementById('d-bar').style.width = Math.round(d.yes) + '%';
-  document.getElementById('d-vol').textContent = d.vol.toLocaleString();
-  document.getElementById('d-trades').textContent = d.trades.toLocaleString();
-  document.getElementById('d-deadline').textContent = formatDeadline(d.deadline_at || d.deadline);
-  document.getElementById('detail-header-title').textContent = t.catLabels[m.cat] || m.cat;
-  document.getElementById('btn-yes').className = 'bet-btn yes';
-  document.getElementById('btn-no').className = 'bet-btn no';
-  const oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
-  const oddsNo  = (1 / ((100 - d.yes) / 100) * 0.98).toFixed(2);
-  document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsYes}</span>`;
-  document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsNo}</span>`;
-  document.getElementById('place-bet-btn').disabled = true;
-  document.getElementById('place-bet-btn').className = 'cta-btn';
-  document.getElementById('place-bet-btn').textContent = t.betPlaceholder;
+  var el;
+  el = document.getElementById('amount-input'); if (el) el.value = '';
+  el = document.getElementById('d-emoji'); if (el) el.textContent = m.emoji || '🔮';
+  el = document.getElementById('d-cat'); if (el) el.textContent = (t.catLabels[m.cat] || m.cat).toUpperCase();
+  el = document.getElementById('d-title'); if (el) el.textContent = m.title;
+  el = document.getElementById('d-yes-prob'); if (el) el.textContent = Math.round(d.yes) + '%';
+  el = document.getElementById('d-no-prob'); if (el) el.textContent = Math.round(100 - d.yes) + '%';
+  el = document.getElementById('d-bar'); if (el) el.style.width = Math.round(d.yes) + '%';
+  el = document.getElementById('d-vol'); if (el) el.textContent = (d.vol || 0).toLocaleString();
+  el = document.getElementById('d-trades'); if (el) el.textContent = (d.trades || 0).toLocaleString();
+  el = document.getElementById('d-deadline'); if (el) el.textContent = formatDeadline(d.deadline_at || d.deadline);
+  el = document.getElementById('detail-header-title'); if (el) el.textContent = t.catLabels[m.cat] || m.cat;
+
+  var oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
+  var oddsNo  = (1 / ((100 - d.yes) / 100) * 0.98).toFixed(2);
+
+  var btnYes = document.getElementById('btn-yes');
+  if (btnYes) {
+    btnYes.className = 'bet-btn yes';
+    btnYes.innerHTML = t.btnYes + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">\xD7' + oddsYes + '</span>';
+  }
+  var btnNo = document.getElementById('btn-no');
+  if (btnNo) {
+    btnNo.className = 'bet-btn no';
+    btnNo.innerHTML = t.btnNo + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">\xD7' + oddsNo + '</span>';
+  }
+
+  var placeBetBtn = document.getElementById('place-bet-btn');
+  if (placeBetBtn) {
+    placeBetBtn.disabled = true;
+    placeBetBtn.className = 'cta-btn';
+    placeBetBtn.textContent = t.betPlaceholder;
+  }
+
   updatePreviewDisplay(null, null);
 
   prevScreen = currentScreen;
   currentScreen = 'detail';
   switchScreen('detail');
-
   drawChart(d.history);
 
-  // Підвантажуємо свіжі дані з Supabase
-  supaFetch('/rest/v1/markets?id=eq.' + id + '&select=yes_prob,volume,trades').then(data => {
+  supaFetch('/rest/v1/markets?id=eq.' + id + '&select=yes_prob,volume,trades').then(function(data) {
     if (!data || !data.length) return;
-    const fresh = data[0];
-    const freshYes = Math.round(parseFloat(fresh.yes_prob) || d.yes);
-    const freshVol = parseFloat(fresh.volume) || 0;
-    const freshTrades = parseInt(fresh.trades) || 0;
-
-    d.yes = freshYes;
-    d.vol = freshVol;
-    d.trades = freshTrades;
-
-    document.getElementById('d-yes-prob').textContent = freshYes + '%';
-    document.getElementById('d-no-prob').textContent = (100 - freshYes) + '%';
-    document.getElementById('d-bar').style.width = freshYes + '%';
-    document.getElementById('d-vol').textContent = freshVol.toLocaleString(undefined, {maximumFractionDigits: 2});
-    document.getElementById('d-trades').textContent = freshTrades.toLocaleString();
-
-    const newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
-    const newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
-    document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsYes}</span>`;
-    document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsNo}</span>`;
-  }).catch(() => {});
+    var fresh = data[0];
+    var freshYes = Math.round(parseFloat(fresh.yes_prob) || d.yes);
+    var freshVol = parseFloat(fresh.volume) || 0;
+    var freshTrades = parseInt(fresh.trades) || 0;
+    d.yes = freshYes; d.vol = freshVol; d.trades = freshTrades;
+    var el2;
+    el2 = document.getElementById('d-yes-prob'); if (el2) el2.textContent = freshYes + '%';
+    el2 = document.getElementById('d-no-prob');  if (el2) el2.textContent = (100 - freshYes) + '%';
+    el2 = document.getElementById('d-bar');      if (el2) el2.style.width = freshYes + '%';
+    el2 = document.getElementById('d-vol');      if (el2) el2.textContent = freshVol.toLocaleString(undefined, {maximumFractionDigits:2});
+    el2 = document.getElementById('d-trades');   if (el2) el2.textContent = freshTrades.toLocaleString();
+    var newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
+    var newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
+    var b1 = document.getElementById('btn-yes'); if (b1) b1.innerHTML = t.btnYes + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">\xD7' + newOddsYes + '</span>';
+    var b2 = document.getElementById('btn-no');  if (b2) b2.innerHTML = t.btnNo  + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">\xD7' + newOddsNo  + '</span>';
+  }).catch(function() {});
 }
 
 // ── CHART ──────────────────────────────────────────────────────────
