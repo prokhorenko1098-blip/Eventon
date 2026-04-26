@@ -1185,6 +1185,26 @@ const LEADERBOARD = [
 // (объявлены в начале скрипта)
 
 // ── LANGUAGE SELECT ────────────────────────────────────────────────
+// Конвертирует количество дней или deadline_at в формат ДД/ММ/ГГГГ
+function formatDeadline(daysOrDate) {
+  try {
+    var d;
+    if (!daysOrDate || daysOrDate === '—') return '—';
+    // если это ISO дата (deadline_at из Supabase)
+    if (String(daysOrDate).includes('-') || String(daysOrDate).includes('T')) {
+      d = new Date(daysOrDate);
+    } else {
+      // это количество дней
+      d = new Date();
+      d.setDate(d.getDate() + parseInt(daysOrDate));
+    }
+    var dd = String(d.getDate()).padStart(2, '0');
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var yyyy = d.getFullYear();
+    return dd + '/' + mm + '/' + yyyy;
+  } catch(e) { return '—'; }
+}
+
 function selectLang(l) {
   lang = l;
   applyTranslations();
@@ -1280,7 +1300,7 @@ function renderFeed(filter='all') {
         </div>
         <div>
           <div class="market-vol" id="card-vol-${m.id}">◈ ${d.vol.toLocaleString()}</div>
-          <div class="market-deadline">⏱ ${d.deadline}${lang==='en'?' days':d.deadline==='—'?'':' дн'}</div>
+          <div class="market-deadline">⏱ ${formatDeadline(d.deadline_at || d.deadline)}</div>
         </div>
       </div>
     </div>`;
@@ -1631,7 +1651,7 @@ function openMarket(id) {
   document.getElementById('d-bar').style.width = Math.round(d.yes) + '%';
   document.getElementById('d-vol').textContent = d.vol.toLocaleString();
   document.getElementById('d-trades').textContent = d.trades.toLocaleString();
-  document.getElementById('d-deadline').textContent = d.deadline + (lang==='en'?' days':' дн');
+  document.getElementById('d-deadline').textContent = formatDeadline(d.deadline_at || d.deadline);
   document.getElementById('detail-header-title').textContent = t.catLabels[m.cat] || m.cat;
   document.getElementById('btn-yes').className = 'bet-btn yes';
   document.getElementById('btn-no').className = 'bet-btn no';
@@ -2568,21 +2588,8 @@ async function loadMarketsFromSupabase() {
 
     const newMarkets = eventMarkets.map(m => {
       // Считаем сколько дней осталось до дедлайна
-      let deadlineText = String(m.deadline_days || 30);
       let deadlineAt = m.deadline_at || null;
-
-      if (deadlineAt) {
-        const now = new Date();
-        const expires = new Date(deadlineAt);
-        const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
-        if (daysLeft <= 0) {
-          deadlineText = lang === 'en' ? 'Expired' : lang === 'uk' ? 'Завершено' : 'Завершён';
-        } else if (daysLeft === 1) {
-          deadlineText = lang === 'en' ? '1 day' : '1 дн';
-        } else {
-          deadlineText = daysLeft + (lang === 'en' ? ' days' : ' дн');
-        }
-      }
+      let deadlineDays = m.deadline_days || 30;
 
       return {
         id: m.id,
@@ -2594,7 +2601,7 @@ async function loadMarketsFromSupabase() {
         yes: m.yes_prob || 50,
         vol: m.volume || 0,
         trades: m.trades || 0,
-        deadline: deadlineText,
+        deadline: deadlineAt || deadlineDays,
         deadline_at: deadlineAt,
       };
     });
@@ -2615,7 +2622,7 @@ async function loadMarketsFromSupabase() {
         }
       }
       history[history.length-1] = m.yes;
-      MARKET_DATA[m.id] = { yes:m.yes, vol:m.vol, trades:m.trades, deadline:m.deadline, history };
+      MARKET_DATA[m.id] = { yes:m.yes, vol:m.vol, trades:m.trades, deadline: m.deadline_at || deadlineDays, deadline_at: m.deadline_at, history };
     });
 
     // Замінюємо переклади тільки реальними ринками
