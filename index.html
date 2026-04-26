@@ -1628,14 +1628,18 @@ function goBack() {
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
 function openMarket(id) {
-  id = parseInt(id); // всегда число
-  const t = T[lang];
-  // ищем по числовому id — после загрузки из Supabase id числовые
-  const m = t.markets.find(x => parseInt(x.id) === id);
-  const d = MARKET_DATA[id];
+  id = parseInt(id);
+  var t = T[lang];
+  var m = t.markets.find(function(x) { return parseInt(x.id) === id; });
+  var d = MARKET_DATA[id];
+
+  // Если m не найден в t.markets но d есть — строим m из MARKET_DATA
+  if (!m && d) {
+    m = { id: id, emoji: d.emoji || '🔮', cat: d.cat || 'politics', title: d.title || ('Event #' + id) };
+  }
 
   if (!m || !d) {
-    console.warn('openMarket: market not found', id, 'markets:', t.markets.length);
+    console.warn('openMarket: market not found', id, 'markets:', t.markets.length, 'MARKET_DATA keys:', Object.keys(MARKET_DATA).length);
     return;
   }
 
@@ -2622,7 +2626,8 @@ async function loadMarketsFromSupabase() {
         }
       }
       history[history.length-1] = m.yes;
-      MARKET_DATA[m.id] = { yes:m.yes, vol:m.vol, trades:m.trades, deadline: m.deadline_at || deadlineDays, deadline_at: m.deadline_at, history };
+      MARKET_DATA[m.id] = { yes: m.yes, vol: m.vol, trades: m.trades, deadline: m.deadline_at || deadlineDays, deadline_at: m.deadline_at, history,
+        emoji: m.emoji, cat: m.cat, title: lang === 'ru' ? m.title_ru : lang === 'uk' ? m.title_uk : m.title_en };
     });
 
     // Замінюємо переклади тільки реальними ринками
