@@ -914,12 +914,12 @@
 
 <script>
 // ── Глобальные переменные — ДОЛЖНЫ быть первыми ──────────────────
-let lang = 'en';
-let currentScreen = 'lang';
-let prevScreen = 'home';
-let currentMarketId = null;
-let selectedSide = null;
-let currentFilter = 'all';
+var lang = 'en';
+var currentScreen = 'lang';
+var prevScreen = 'home';
+var currentMarketId = null;
+var selectedSide = null;
+var currentFilter = 'all';
 
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
@@ -1567,14 +1567,12 @@ async function renderLeaderboard() {
 
 // ── NAVIGATION ────────────────────────────────────────────────────
 function switchScreen(toName) {
-  if (toName === currentScreen) return;
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  const toEl = document.getElementById('screen-' + toName);
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('hidden'); });
+  var toEl = document.getElementById('screen-' + toName);
   if (toEl) toEl.classList.remove('hidden');
 }
 
 function showScreen(name) {
-  if (name === currentScreen) return;
   prevScreen = currentScreen;
   currentScreen = name;
   switchScreen(name);
@@ -2005,7 +2003,7 @@ applyTranslations();
 // ══════════════════════════════════════════════════════════════════
 // ── TONCONNECT ────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
-let walletConnected = false;
+var walletConnected = false;
 let walletAddress = '';
 let walletBalance = 0;
 
@@ -2133,7 +2131,7 @@ function updateTCButton() {
 // ══════════════════════════════════════════════════════════════════
 // ── LIVE FEED ──────────────────────────────────────────────────────
 const BET_AMOUNTS = [0.5,1,1.5,2,3,5,7,10,15,20,25,50];
-let liveFeedItems = [];
+var liveFeedItems = [];
 let onlineCount = 1;
 
 const EMOJIS = ['🐳','🦅','⚽','🌙','⚡','🦁','🔥','💎','🐺','🎮','🗳','₿','📊','🎯','🦉','🚀','😎','🦊','🐯','🌟'];
@@ -2301,10 +2299,10 @@ setInterval(() => loadRealLiveFeed(), 30000);
 const OWNER_TON_ADDRESS = 'UQBzbya6szQcMYujoUB85GCvPa2LV6ijVE62uyknqdEL5rBJ';
 const DEPOSIT_AMOUNTS = [1, 5, 10, 25, 50, 100, 250, 500];
 
-let currentDepositAmount = 0;
+var currentDepositAmount = 0;
 let currentDepositComment = '';
-let userTelegramId = null;
-let userBalance = 0;
+var userTelegramId = null;
+var userBalance = 0;
 
 // Generate Telegram user ID from WebApp or random for demo
 function initTelegramUser() {
@@ -2413,7 +2411,7 @@ async function loadRealStats() {
     if (mktEl) mktEl.textContent = mktCount;
 
     // Реальное кол-во пользователей через count
-    const usersCount = await supaFetchCount('/rest/v1/users');
+    const usersCount = await supaFetchCount('users');
     const usersEl = document.getElementById('hero-users-count');
     if (usersEl) usersEl.textContent = (usersCount || 0).toLocaleString();
 
@@ -2733,9 +2731,9 @@ setInterval(loadUserBalance, 30000);
 // ── BET SCREEN ────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
 
-let betMatches = [];
-let betslip = []; // { matchId, matchTitle, pick, label, odds }
-let currentBetSportFilter = 'all';
+var betMatches = [];
+var betslip = []; // { matchId, matchTitle, pick, label, odds }
+var currentBetSportFilter = 'all';
 
 // Hardcoded sample matches (will be replaced by Supabase data)
 const SAMPLE_MATCHES = [
@@ -3620,7 +3618,7 @@ function toggleMatchExtra(matchId) {
 }
 
 // ── EXPRESS BETSLIP ───────────────────────────────────────────────
-let expressBets = []; // { matchId, matchTitle, pick, label, odds }
+var expressBets = []; // { matchId, matchTitle, pick, label, odds }
 
 function toggleBetslipItem(matchId, matchTitle, pick, label, odds) {
   const btnId = 'odds_' + matchId + '_' + pick.replace(/[^a-zA-Z0-9]/g,'_');
