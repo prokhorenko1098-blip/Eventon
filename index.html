@@ -684,6 +684,19 @@
         </div>
         <div class="live-feed-scroll" id="live-feed-list"></div>
       </div>
+
+      <!-- Поиск и сортировка -->
+      <div style="padding:8px 16px 0;display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;">🔍</span>
+          <input id="search-input" type="text" placeholder="Пошук подій..." oninput="onSearchInput(this.value)"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 12px 9px 36px;font-size:13px;color:var(--text);outline:none;font-family:'Geist',sans-serif;">
+        </div>
+        <div id="sort-btn" onclick="toggleSort()" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;">
+          ↕ <span id="sort-label">За замовч.</span>
+        </div>
+      </div>
+
       <div class="tabs" id="category-tabs"></div>
       <div class="feed stagger" id="market-feed"></div>
     </div>
@@ -815,6 +828,30 @@
         </div>
       </div>
       <div style="padding:0 16px 10px;"><div class="section-title" id="positions-title"></div></div>
+
+      <!-- Статистика пользователя -->
+      <div id="user-stats-card" style="margin:0 16px 16px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:none;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;" id="stats-title-label">СТАТИСТИКА</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--yes);" id="stat-winrate">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="stat-winrate-lbl">Вінрейт</div>
+          </div>
+          <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+            <div style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--gold);" id="stat-streak">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="stat-streak-lbl">Серія перемог</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--accent);" id="stat-best">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="stat-best-lbl">Краща ставка</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+          <div style="font-size:12px;color:var(--muted);">Всього ставок: <span style="color:var(--text);font-weight:600;" id="stat-total">0</span></div>
+          <div style="font-size:12px;color:var(--muted);">Перемог: <span style="color:var(--yes);font-weight:600;" id="stat-wins">0</span> · Поразок: <span style="color:var(--no);font-weight:600;" id="stat-losses">0</span></div>
+        </div>
+      </div>
+
       <div class="positions-list stagger" id="positions-list"></div>
 
       <!-- Архив / История ставок -->
@@ -979,6 +1016,8 @@ var prevScreen = 'home';
 var currentMarketId = null;
 var selectedSide = null;
 var currentFilter = 'all';
+var currentSearch = '';
+var currentSort = 'default'; // default | volume | deadline | yes_prob
 
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
@@ -1315,8 +1354,13 @@ function showLangScreen() {
 
 function applyTranslations() {
   const t = T[lang];
-  // Безопасный setter - не падает если элемент не найден
   const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = val; };
+
+  // Обновляем поиск и сортировку
+  var si = document.getElementById('search-input');
+  if (si) si.placeholder = lang==='en' ? 'Search events...' : lang==='uk' ? 'Пошук подій...' : 'Поиск событий...';
+  var sl = document.getElementById('sort-label');
+  if (sl) sl.textContent = (sortLabels[lang] || sortLabels['ru'])[currentSort] || 'Default';
 
   set('lang-flag-btn', t.langFlag);
   set('home-greeting', t.greeting);
@@ -1358,38 +1402,140 @@ function renderTabs() {
   `).join('');
 }
 
-function renderFeed(filter='all') {
-  const t = T[lang];
-  const markets = filter === 'all' ? t.markets : t.markets.filter(m => m.cat === filter);
+function renderFeed(filter) {
+  if (filter !== undefined) currentFilter = filter;
+  var t = T[lang];
+  var markets = currentFilter === 'all' ? t.markets.slice() : t.markets.filter(function(m) { return m.cat === currentFilter; });
+
+  // Поиск
+  if (currentSearch.trim()) {
+    var q = currentSearch.trim().toLowerCase();
+    markets = markets.filter(function(m) { return m.title && m.title.toLowerCase().indexOf(q) !== -1; });
+  }
+
+  // Сортировка
+  if (currentSort === 'volume') {
+    markets.sort(function(a, b) { return (MARKET_DATA[b.id] ? MARKET_DATA[b.id].vol : 0) - (MARKET_DATA[a.id] ? MARKET_DATA[a.id].vol : 0); });
+  } else if (currentSort === 'deadline') {
+    markets.sort(function(a, b) {
+      var da = MARKET_DATA[a.id]; var db = MARKET_DATA[b.id];
+      var dateA = da && da.deadline_at ? new Date(da.deadline_at) : new Date(9999,0,1);
+      var dateB = db && db.deadline_at ? new Date(db.deadline_at) : new Date(9999,0,1);
+      return dateA - dateB;
+    });
+  } else if (currentSort === 'hot') {
+    markets.sort(function(a, b) { return (MARKET_DATA[b.id] ? MARKET_DATA[b.id].trades : 0) - (MARKET_DATA[a.id] ? MARKET_DATA[a.id].trades : 0); });
+  }
+
   if (!markets.length) {
     document.getElementById('market-feed').innerHTML =
-      '<div style="text-align:center;padding:40px;color:var(--muted);">Завантаження ринків...</div>';
+      '<div style="text-align:center;padding:40px;color:var(--muted);">' +
+      (currentSearch ? (lang==='en'?'Nothing found':'Нічого не знайдено') : 'Завантаження ринків...') + '</div>';
     return;
   }
-  document.getElementById('market-feed').innerHTML = markets.map(m => {
-    const d = MARKET_DATA[parseInt(m.id)] || { yes: 50, vol: 0, trades: 0, deadline: '—' };
-    return `
-    <div class="card market-card" onclick="openMarket(${parseInt(m.id)})">
-      <div class="market-card-top">
-        <div class="market-emoji">${m.emoji}</div>
-        <div class="market-info">
-          <div class="market-category">${t.catLabels[m.cat] || m.cat}</div>
-          <div class="market-title">${m.title}</div>
-        </div>
-      </div>
-      <div class="market-bar"><div class="market-bar-fill" id="card-bar-${m.id}" style="width:${d.yes}%"></div></div>
-      <div class="market-meta">
-        <div class="market-prob">
-          <span class="prob-yes" id="card-yes-${m.id}">${t.yesLabel} ${d.yes.toFixed(0)}%</span>
-          <span class="prob-no" id="card-no-${m.id}">${t.noLabel} ${(100-d.yes).toFixed(0)}%</span>
-        </div>
-        <div>
-          <div class="market-vol" id="card-vol-${m.id}">◈ ${d.vol.toLocaleString()}</div>
-          <div class="market-deadline">⏱ ${formatDeadline(d.deadline_at || d.deadline)}</div>
-        </div>
-      </div>
-    </div>`;
+  document.getElementById('market-feed').innerHTML = markets.map(function(m) {
+    var d = MARKET_DATA[parseInt(m.id)] || { yes: 50, vol: 0, trades: 0, deadline: '—' };
+    return '<div class="card market-card" onclick="openMarket(' + parseInt(m.id) + ')">' +
+      '<div class="market-card-top">' +
+        '<div class="market-emoji">' + (m.emoji||'🔮') + '</div>' +
+        '<div class="market-info">' +
+          '<div class="market-category">' + (t.catLabels[m.cat] || m.cat) + '</div>' +
+          '<div class="market-title">' + m.title + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="market-bar"><div class="market-bar-fill" id="card-bar-' + m.id + '" style="width:' + d.yes + '%"></div></div>' +
+      '<div class="market-meta">' +
+        '<div class="market-prob">' +
+          '<span class="prob-yes" id="card-yes-' + m.id + '">' + t.yesLabel + ' ' + (d.yes||50).toFixed(0) + '%</span>' +
+          '<span class="prob-no" id="card-no-' + m.id + '">' + t.noLabel + ' ' + (100-(d.yes||50)).toFixed(0) + '%</span>' +
+        '</div>' +
+        '<div>' +
+          '<div class="market-vol" id="card-vol-' + m.id + '">&#9672; ' + (d.vol||0).toLocaleString() + '</div>' +
+          '<div class="market-deadline">&#9201; ' + formatDeadline(d.deadline_at || d.deadline) + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
+}
+
+// ── SEARCH & SORT ──────────────────────────────────────────────────
+var _searchTimer = null;
+function onSearchInput(val) {
+  clearTimeout(_searchTimer);
+  currentSearch = val;
+  _searchTimer = setTimeout(function() { renderFeed(); }, 200);
+}
+
+var sortModes = ['default', 'hot', 'volume', 'deadline'];
+var sortLabels = {
+  uk: { default: 'За замовч.', hot: '🔥 Популярні', volume: '💰 Обсяг', deadline: '⏰ Дедлайн' },
+  ru: { default: 'По умолч.', hot: '🔥 Популярные', volume: '💰 Объём', deadline: '⏰ Дедлайн' },
+  en: { default: 'Default', hot: '🔥 Hot', volume: '💰 Volume', deadline: '⏰ Deadline' }
+};
+function toggleSort() {
+  var idx = sortModes.indexOf(currentSort);
+  currentSort = sortModes[(idx + 1) % sortModes.length];
+  var lbl = (sortLabels[lang] || sortLabels['ru'])[currentSort];
+  var el = document.getElementById('sort-label');
+  if (el) el.textContent = lbl;
+  renderFeed();
+}
+
+// ── USER STATS ─────────────────────────────────────────────────────
+function calcAndShowStats(closedTxs, payoutTxs) {
+  var card = document.getElementById('user-stats-card');
+  if (!card) return;
+  if (!closedTxs || !closedTxs.length) { card.style.display = 'none'; return; }
+
+  var wins = 0, losses = 0, bestProfit = 0, streak = 0, maxStreak = 0, curStreak = 0;
+  var bets = closedTxs.map(function(tx) {
+    var parts = (tx.comment || '').split(':');
+    if (parts[0] !== 'BET') return null;
+    var marketId = parts[1];
+    var side = parts[2];
+    var stake = parseFloat(parts[3]) || 0;
+    var expectedPayout = parseFloat(parts[4]) || 0;
+    // Проверяем есть ли выплата
+    var payout = payoutTxs ? payoutTxs.find(function(p) {
+      return p.comment && p.comment.indexOf('PAYOUT:' + marketId) !== -1;
+    }) : null;
+    return { marketId: marketId, side: side, stake: stake, expectedPayout: expectedPayout, payout: payout };
+  }).filter(Boolean);
+
+  bets.forEach(function(b) {
+    if (b.payout) {
+      wins++;
+      var profit = parseFloat(b.payout.amount) - b.stake;
+      if (profit > bestProfit) bestProfit = profit;
+      curStreak++;
+      if (curStreak > maxStreak) maxStreak = curStreak;
+    } else {
+      losses++;
+      curStreak = 0;
+    }
+  });
+
+  var total = wins + losses;
+  var winrate = total > 0 ? Math.round(wins / total * 100) : 0;
+
+  var el;
+  el = document.getElementById('stat-winrate'); if (el) el.textContent = winrate + '%';
+  el = document.getElementById('stat-streak');  if (el) el.textContent = maxStreak + (lang==='en'?' 🔥':'🔥');
+  el = document.getElementById('stat-best');    if (el) el.textContent = bestProfit > 0 ? '+' + bestProfit.toFixed(1) + ' TON' : '—';
+  el = document.getElementById('stat-total');   if (el) el.textContent = total;
+  el = document.getElementById('stat-wins');    if (el) el.textContent = wins;
+  el = document.getElementById('stat-losses');  if (el) el.textContent = losses;
+
+  var lbl = document.getElementById('stats-title-label');
+  if (lbl) lbl.textContent = lang==='en' ? 'STATISTICS' : lang==='uk' ? 'СТАТИСТИКА' : 'СТАТИСТИКА';
+  var wlbl = document.getElementById('stat-winrate-lbl');
+  if (wlbl) wlbl.textContent = lang==='en' ? 'Win Rate' : 'Вінрейт';
+  var slbl = document.getElementById('stat-streak-lbl');
+  if (slbl) slbl.textContent = lang==='en' ? 'Best Streak' : lang==='uk' ? 'Серія перемог' : 'Серия побед';
+  var blbl = document.getElementById('stat-best-lbl');
+  if (blbl) blbl.textContent = lang==='en' ? 'Best Bet' : lang==='uk' ? 'Краща ставка' : 'Лучшая ставка';
+
+  card.style.display = total > 0 ? 'block' : 'none';
 }
 
 async function renderPositions() {
@@ -1471,6 +1617,9 @@ async function renderPositions() {
 
     const activePositions = allPositions.filter(p => p.isActive);
     const closedPositions = allPositions.filter(p => !p.isActive);
+
+    // Считаем и показываем статистику
+    calcAndShowStats(txData, payoutData);
 
     if (!activePositions.length) {
       listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">
