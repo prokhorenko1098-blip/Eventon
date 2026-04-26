@@ -2397,7 +2397,7 @@ async function loadRealStats() {
     if (mktEl) mktEl.textContent = mktCount;
 
     // Реальное кол-во пользователей через count
-    const usersCount = await supaFetchCount('/rest/v1/users');
+    const usersCount = await supaFetchCount('users');
     const usersEl = document.getElementById('hero-users-count');
     if (usersEl) usersEl.textContent = (usersCount || 0).toLocaleString();
 
