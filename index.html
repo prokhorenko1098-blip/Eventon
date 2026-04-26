@@ -2622,8 +2622,7 @@ async function loadMarketsFromSupabase() {
 
     if (!newMarkets.length) return;
 
-    // Очищаем старые хардкодные рынки, оставляем только реальные из Supabase
-    Object.keys(MARKET_DATA).forEach(k => { delete MARKET_DATA[k]; });
+    // Обновляем MARKET_DATA только новыми данными, не очищаем старые
 
     newMarkets.forEach(m => {
       const existing = MARKET_DATA[m.id];
@@ -2636,7 +2635,7 @@ async function loadMarketsFromSupabase() {
         }
       }
       history[history.length-1] = m.yes;
-      MARKET_DATA[m.id] = { yes: m.yes, vol: m.vol, trades: m.trades, deadline: m.deadline_at || deadlineDays, deadline_at: m.deadline_at, history,
+      MARKET_DATA[m.id] = { yes: m.yes, vol: m.vol, trades: m.trades, deadline: m.deadline_at || m.deadline_days || 30, deadline_at: m.deadline_at, history,
         emoji: m.emoji, cat: m.cat, title: lang === 'ru' ? m.title_ru : lang === 'uk' ? m.title_uk : m.title_en };
     });
 
