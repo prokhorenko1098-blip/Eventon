@@ -914,12 +914,12 @@
 
 <script>
 // ── Глобальные переменные — ДОЛЖНЫ быть первыми ──────────────────
-var lang = 'en';
-var currentScreen = 'lang';
-var prevScreen = 'home';
-var currentMarketId = null;
-var selectedSide = null;
-var currentFilter = 'all';
+let lang = 'en';
+let currentScreen = 'lang';
+let prevScreen = 'home';
+let currentMarketId = null;
+let selectedSide = null;
+let currentFilter = 'all';
 
 // ── Telegram WebApp: раскрыть на весь экран сразу ──
 if (window.Telegram && window.Telegram.WebApp) {
@@ -1188,9 +1188,10 @@ const LEADERBOARD = [
 function selectLang(l) {
   lang = l;
   applyTranslations();
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('screen-home').classList.remove('hidden');
   currentScreen = 'home';
   prevScreen = 'home';
-  switchScreen('home');
 }
 
 function showLangScreen() {
@@ -1482,64 +1483,80 @@ function renderHistory(closedPositions, payoutMap) {
 }
 
 async function renderLeaderboard() {
-  const listEl = document.getElementById('lb-list');
-  const totalEl = document.getElementById('lb-of-total');
-  const yourPosEl = document.getElementById('lb-your-pos');
-  const yourStatsEl = document.getElementById('lb-your-stats');
+  var listEl = document.getElementById('lb-list');
+  var totalEl = document.getElementById('lb-of-total');
+  var yourPosEl = document.getElementById('lb-your-pos');
+  var yourStatsEl = document.getElementById('lb-your-stats');
+  var rankDisplay = document.querySelector('[style*="font-size:28px"][style*="font-weight:700"]');
   if (!listEl) return;
 
-  listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Загрузка...</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Завантаження...</div>';
 
   try {
-    // Загружаем топ пользователей по балансу
-    const data = await supaFetch('/rest/v1/users?order=balance.desc&limit=50&select=telegram_id,username,balance');
-    if (!data || !data.length) {
-      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Пока нет участников</div>';
+    // Загружаем только активных пользователей (у кого есть хотя бы одна ставка)
+    var txData = await supaFetch('/rest/v1/transactions?type=eq.bet&select=telegram_id');
+    var activeIds = txData ? [...new Set(txData.map(t => t.telegram_id))] : [];
+
+    // Загружаем данные этих пользователей
+    var data = [];
+    if (activeIds.length > 0) {
+      var chunk = activeIds.slice(0, 50).join(',');
+      data = await supaFetch('/rest/v1/users?telegram_id=in.(' + chunk + ')&select=telegram_id,username,balance') || [];
+    }
+
+    // Если нет активных — показываем всех
+    if (!data.length) {
+      data = await supaFetch('/rest/v1/users?order=balance.desc&limit=30&select=telegram_id,username,balance') || [];
+    }
+
+    // Сортируем по P&L (balance - стартовый баланс)
+    data.sort(function(a, b) {
+      return (parseFloat(b.balance) - DEMO_START_BALANCE) - (parseFloat(a.balance) - DEMO_START_BALANCE);
+    });
+
+    if (!data.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">' +
+        (lang==='en' ? 'No participants yet' : lang==='uk' ? 'Поки немає учасників' : 'Пока нет участников') + '</div>';
       return;
     }
 
-    const emojis = ['😎','🦊','🐺','🦁','🐯','🦅','🔥','⚡','💎','🚀','🎯','🌙'];
+    var emojis = ['😎','🦊','🐺','🦁','🐯','🦅','🔥','⚡','💎','🚀','🎯','🌙','🏆','🎲','🦉','🐉','🌊','⭐','🎯','🔮'];
     if (totalEl) totalEl.textContent = data.length;
 
-    // Найти позицию текущего пользователя
-    const myPos = data.findIndex(u => String(u.telegram_id) === String(userTelegramId));
-    if (myPos !== -1 && yourPosEl) {
+    // Позиция текущего пользователя
+    var myPos = data.findIndex(function(u) { return String(u.telegram_id) === String(userTelegramId); });
+    if (yourPosEl) {
       yourPosEl.textContent = lang==='en' ? 'YOUR POSITION' : lang==='uk' ? 'ВАША ПОЗИЦІЯ' : 'ВАША ПОЗИЦИЯ';
-      const posCard = document.querySelector('.balance-card');
-      if (posCard) {
-        posCard.querySelector('.font-size\\:28px, [style*="font-size:28px"]')?.remove();
-      }
-      const rankDisplay = document.querySelector('[style*="font-size:28px"][style*="font-weight:700"]');
-      if (rankDisplay) rankDisplay.textContent = '#' + (myPos + 1);
+    }
+    if (rankDisplay) {
+      rankDisplay.textContent = myPos !== -1 ? '#' + (myPos + 1) : '—';
     }
     if (yourStatsEl) {
-      const myData = data.find(u => String(u.telegram_id) === String(userTelegramId));
-      const myBalance = myData ? parseFloat(myData.balance).toFixed(1) : userBalance.toFixed(1);
-      const pnl = (parseFloat(myBalance) - DEMO_START_BALANCE).toFixed(1);
-      const pnlStr = pnl >= 0 ? '+' + pnl : pnl;
-      yourStatsEl.textContent = (lang==='en' ? 'Balance: ' : lang==='uk' ? 'Баланс: ' : 'Баланс: ') + myBalance + ' TON · P&L: ' + pnlStr + ' TON';
+      var myData = data.find(function(u) { return String(u.telegram_id) === String(userTelegramId); });
+      var myBal = myData ? parseFloat(myData.balance) : userBalance;
+      var myPnl = myBal - DEMO_START_BALANCE;
+      yourStatsEl.textContent = (lang==='en' ? 'Balance: ' : 'Баланс: ') + myBal.toFixed(1) + ' TON · P&L: ' + (myPnl >= 0 ? '+' : '') + myPnl.toFixed(1) + ' TON';
     }
 
-    listEl.innerHTML = data.slice(0, 20).map((u, i) => {
-      const rank = i + 1;
-      const rankIcon = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
-      const emoji = emojis[i % emojis.length];
-      const name = u.username ? '@' + u.username : 'user_' + String(u.telegram_id).slice(-4);
-      const balance = parseFloat(u.balance).toFixed(1);
-      const pnl = (parseFloat(u.balance) - DEMO_START_BALANCE).toFixed(1);
-      const pnlColor = parseFloat(pnl) >= 0 ? 'var(--yes)' : 'var(--no)';
-      const pnlStr = parseFloat(pnl) >= 0 ? '+' + pnl : pnl;
-      const isMe = String(u.telegram_id) === String(userTelegramId);
-      return `
-        <div class="lb-item" style="${isMe ? 'background:rgba(91,138,240,0.08);border:1px solid rgba(91,138,240,0.2);border-radius:12px;' : ''}">
-          <div class="lb-rank">${rankIcon}</div>
-          <div class="lb-avatar">${emoji}</div>
-          <div class="lb-name">${name}${isMe ? ' <span style="font-size:10px;color:var(--accent);">◀ ты</span>' : ''}</div>
-          <div>
-            <div class="lb-profit" style="color:${pnlColor}">${pnlStr} TON</div>
-            <div class="lb-accuracy">${balance} TON</div>
-          </div>
-        </div>`;
+    listEl.innerHTML = data.slice(0, 30).map(function(u, i) {
+      var rank = i + 1;
+      var rankIcon = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+      var emoji = emojis[i % emojis.length];
+      var name = u.username ? '@' + u.username : 'user_' + String(u.telegram_id).slice(-4);
+      var balance = parseFloat(u.balance);
+      var pnl = balance - DEMO_START_BALANCE;
+      var pnlColor = pnl >= 0 ? 'var(--yes)' : 'var(--no)';
+      var pnlStr = (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + ' TON';
+      var isMe = String(u.telegram_id) === String(userTelegramId);
+      return '<div class="lb-item" style="' + (isMe ? 'background:rgba(91,138,240,0.08);border:1px solid rgba(91,138,240,0.2);' : '') + '">' +
+        '<div class="lb-rank' + (rank <= 3 ? ' gold' : '') + '">' + rankIcon + '</div>' +
+        '<div class="lb-avatar">' + emoji + '</div>' +
+        '<div class="lb-name">' + name + (isMe ? ' <span style="font-size:10px;color:var(--accent);">◀ ' + (lang==='uk'?'ти':lang==='en'?'you':'ты') + '</span>' : '') + '</div>' +
+        '<div>' +
+          '<div class="lb-profit" style="color:' + pnlColor + '">' + pnlStr + '</div>' +
+          '<div class="lb-accuracy">' + balance.toFixed(1) + ' TON</div>' +
+        '</div>' +
+        '</div>';
     }).join('');
 
   } catch(e) {
@@ -1550,26 +1567,19 @@ async function renderLeaderboard() {
 
 // ── NAVIGATION ────────────────────────────────────────────────────
 function switchScreen(toName) {
+  if (toName === currentScreen) return;
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  var toEl = document.getElementById('screen-' + toName);
+  const toEl = document.getElementById('screen-' + toName);
   if (toEl) toEl.classList.remove('hidden');
 }
 
 function showScreen(name) {
+  if (name === currentScreen) return;
   prevScreen = currentScreen;
   currentScreen = name;
   switchScreen(name);
   if (name === 'leaderboard') renderLeaderboard();
   if (name === 'portfolio') renderPositions();
-  // update nav active states
-  document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
-  var navMap = { home: 'nav-markets', portfolio: 'nav-portfolio', leaderboard: 'nav-rating' };
-  // mark all matching nav items active
-  ['', '2', '3'].forEach(function(sfx) {
-    var id = (name === 'home' ? 'nav-markets' : name === 'portfolio' ? 'nav-portfolio' : name === 'leaderboard' ? 'nav-rating' : '') + sfx;
-    var el = document.getElementById(id);
-    if (el) el.closest('.nav-item')?.classList.add('active');
-  });
 }
 
 function goBack() {
@@ -1600,67 +1610,59 @@ function goBack() {
 
 // ── MARKET DETAIL ──────────────────────────────────────────────────
 function openMarket(id) {
-  id = parseInt(id);
-  var t = T[lang];
-  var m = null;
-  for (var i = 0; i < t.markets.length; i++) {
-    if (parseInt(t.markets[i].id) === id) { m = t.markets[i]; break; }
-  }
-  var d = MARKET_DATA[id];
+  id = parseInt(id); // всегда число
+  const t = T[lang];
+  // ищем по числовому id — после загрузки из Supabase id числовые
+  const m = t.markets.find(x => parseInt(x.id) === id);
+  const d = MARKET_DATA[id];
 
   if (!m || !d) {
-    console.warn('openMarket: market not found', id, 'total markets:', t.markets.length);
+    console.warn('openMarket: market not found', id, 'markets:', t.markets.length);
     return;
   }
 
   currentMarketId = id;
   selectedSide = null;
+  document.getElementById('amount-input').value = '';
 
-  var inp = document.getElementById('amount-input');
-  if (inp) inp.value = '';
-
-  document.getElementById('d-emoji').textContent = m.emoji || '🔮';
+  document.getElementById('d-emoji').textContent = m.emoji;
   document.getElementById('d-cat').textContent = (t.catLabels[m.cat] || m.cat).toUpperCase();
   document.getElementById('d-title').textContent = m.title;
   document.getElementById('d-yes-prob').textContent = Math.round(d.yes) + '%';
   document.getElementById('d-no-prob').textContent = Math.round(100 - d.yes) + '%';
   document.getElementById('d-bar').style.width = Math.round(d.yes) + '%';
-  document.getElementById('d-vol').textContent = (d.vol || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
-  document.getElementById('d-trades').textContent = (d.trades || 0).toLocaleString();
-  document.getElementById('d-deadline').textContent = d.deadline || '—';
-  document.getElementById('detail-header-title').textContent = (t.catLabels[m.cat] || m.cat).toUpperCase();
-
-  var btnYes = document.getElementById('btn-yes');
-  var btnNo = document.getElementById('btn-no');
-  btnYes.className = 'bet-btn yes';
-  btnNo.className = 'bet-btn no';
-
-  var oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
-  var oddsNo  = (1 / ((100 - d.yes) / 100) * 0.98).toFixed(2);
-  btnYes.innerHTML = t.btnYes + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">×' + oddsYes + '</span>';
-  btnNo.innerHTML  = t.btnNo  + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">×' + oddsNo  + '</span>';
-
-  var placeBetBtn = document.getElementById('place-bet-btn');
-  placeBetBtn.disabled = true;
-  placeBetBtn.className = 'cta-btn';
-  placeBetBtn.textContent = t.betPlaceholder;
-
+  document.getElementById('d-vol').textContent = d.vol.toLocaleString();
+  document.getElementById('d-trades').textContent = d.trades.toLocaleString();
+  document.getElementById('d-deadline').textContent = d.deadline + (lang==='en'?' days':' дн');
+  document.getElementById('detail-header-title').textContent = t.catLabels[m.cat] || m.cat;
+  document.getElementById('btn-yes').className = 'bet-btn yes';
+  document.getElementById('btn-no').className = 'bet-btn no';
+  const oddsYes = (1 / (d.yes / 100) * 0.98).toFixed(2);
+  const oddsNo  = (1 / ((100 - d.yes) / 100) * 0.98).toFixed(2);
+  document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsYes}</span>`;
+  document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${oddsNo}</span>`;
+  document.getElementById('place-bet-btn').disabled = true;
+  document.getElementById('place-bet-btn').className = 'cta-btn';
+  document.getElementById('place-bet-btn').textContent = t.betPlaceholder;
   updatePreviewDisplay(null, null);
 
   prevScreen = currentScreen;
   currentScreen = 'detail';
   switchScreen('detail');
+
   drawChart(d.history);
 
-  // Load fresh data from Supabase
-  supaFetch('/rest/v1/markets?id=eq.' + id + '&select=yes_prob,volume,trades').then(function(data) {
+  // Підвантажуємо свіжі дані з Supabase
+  supaFetch('/rest/v1/markets?id=eq.' + id + '&select=yes_prob,volume,trades').then(data => {
     if (!data || !data.length) return;
-    var fresh = data[0];
-    var freshYes = Math.round(parseFloat(fresh.yes_prob) || d.yes);
-    var freshVol = parseFloat(fresh.volume) || 0;
-    var freshTrades = parseInt(fresh.trades) || 0;
+    const fresh = data[0];
+    const freshYes = Math.round(parseFloat(fresh.yes_prob) || d.yes);
+    const freshVol = parseFloat(fresh.volume) || 0;
+    const freshTrades = parseInt(fresh.trades) || 0;
 
-    d.yes = freshYes; d.vol = freshVol; d.trades = freshTrades;
+    d.yes = freshYes;
+    d.vol = freshVol;
+    d.trades = freshTrades;
 
     document.getElementById('d-yes-prob').textContent = freshYes + '%';
     document.getElementById('d-no-prob').textContent = (100 - freshYes) + '%';
@@ -1668,13 +1670,12 @@ function openMarket(id) {
     document.getElementById('d-vol').textContent = freshVol.toLocaleString(undefined, {maximumFractionDigits: 2});
     document.getElementById('d-trades').textContent = freshTrades.toLocaleString();
 
-    var newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
-    var newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
-    document.getElementById('btn-yes').innerHTML = t.btnYes + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">×' + newOddsYes + '</span>';
-    document.getElementById('btn-no').innerHTML  = t.btnNo  + ' <span style="font-size:11px;opacity:0.8;margin-left:4px;">×' + newOddsNo  + '</span>';
-  }).catch(function() {});
+    const newOddsYes = (1 / (freshYes / 100) * 0.98).toFixed(2);
+    const newOddsNo  = (1 / ((100 - freshYes) / 100) * 0.98).toFixed(2);
+    document.getElementById('btn-yes').innerHTML = `${t.btnYes} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsYes}</span>`;
+    document.getElementById('btn-no').innerHTML  = `${t.btnNo} <span style="font-size:11px;opacity:0.8;margin-left:4px;">×${newOddsNo}</span>`;
+  }).catch(() => {});
 }
-
 
 // ── CHART ──────────────────────────────────────────────────────────
 function drawChart(data) {
@@ -2004,9 +2005,9 @@ applyTranslations();
 // ══════════════════════════════════════════════════════════════════
 // ── TONCONNECT ────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
-var walletConnected = false;
-var walletAddress = '';
-var walletBalance = 0;
+let walletConnected = false;
+let walletAddress = '';
+let walletBalance = 0;
 
 function openWalletScreen() {
   prevScreen = currentScreen;
@@ -2132,8 +2133,8 @@ function updateTCButton() {
 // ══════════════════════════════════════════════════════════════════
 // ── LIVE FEED ──────────────────────────────────────────────────────
 const BET_AMOUNTS = [0.5,1,1.5,2,3,5,7,10,15,20,25,50];
-var liveFeedItems = [];
-var onlineCount = 1;
+let liveFeedItems = [];
+let onlineCount = 1;
 
 const EMOJIS = ['🐳','🦅','⚽','🌙','⚡','🦁','🔥','💎','🐺','🎮','🗳','₿','📊','🎯','🦉','🚀','😎','🦊','🐯','🌟'];
 
@@ -2300,10 +2301,10 @@ setInterval(() => loadRealLiveFeed(), 30000);
 const OWNER_TON_ADDRESS = 'UQBzbya6szQcMYujoUB85GCvPa2LV6ijVE62uyknqdEL5rBJ';
 const DEPOSIT_AMOUNTS = [1, 5, 10, 25, 50, 100, 250, 500];
 
-var currentDepositAmount = 0;
-var currentDepositComment = '';
-var userTelegramId = null;
-var userBalance = 0;
+let currentDepositAmount = 0;
+let currentDepositComment = '';
+let userTelegramId = null;
+let userBalance = 0;
 
 // Generate Telegram user ID from WebApp or random for demo
 function initTelegramUser() {
@@ -2412,7 +2413,7 @@ async function loadRealStats() {
     if (mktEl) mktEl.textContent = mktCount;
 
     // Реальное кол-во пользователей через count
-    const usersCount = await supaFetchCount('users');
+    const usersCount = await supaFetchCount('/rest/v1/users');
     const usersEl = document.getElementById('hero-users-count');
     if (usersEl) usersEl.textContent = (usersCount || 0).toLocaleString();
 
@@ -2732,9 +2733,9 @@ setInterval(loadUserBalance, 30000);
 // ── BET SCREEN ────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
 
-var betMatches = [];
-var betslip = []; // { matchId, matchTitle, pick, label, odds }
-var currentBetSportFilter = 'all';
+let betMatches = [];
+let betslip = []; // { matchId, matchTitle, pick, label, odds }
+let currentBetSportFilter = 'all';
 
 // Hardcoded sample matches (will be replaced by Supabase data)
 const SAMPLE_MATCHES = [
@@ -3619,7 +3620,7 @@ function toggleMatchExtra(matchId) {
 }
 
 // ── EXPRESS BETSLIP ───────────────────────────────────────────────
-var expressBets = []; // { matchId, matchTitle, pick, label, odds }
+let expressBets = []; // { matchId, matchTitle, pick, label, odds }
 
 function toggleBetslipItem(matchId, matchTitle, pick, label, odds) {
   const btnId = 'odds_' + matchId + '_' + pick.replace(/[^a-zA-Z0-9]/g,'_');
@@ -3830,7 +3831,7 @@ function showToast(msg, type, duration) {
 // ══ REAL-TIME POLLING (каждые 30 сек) ══════════════════════════
 const _knownClosed = new Set();
 const _knownPayouts = new Set();
-var _pollingStarted = false;
+let _pollingStarted = false;
 
 async function startRealtimePolling() {
   if (_pollingStarted || !userTelegramId) return;
