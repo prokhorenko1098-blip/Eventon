@@ -2589,6 +2589,41 @@ function generateDepositComment() {
 
 var DEMO_START_BALANCE = 1000; // Демо баланс для бета-теста
 
+const SUPABASE_URL = 'https://puwyrjejaaqfhcjwgrog.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_k19dhvmixv_YnZDkCTSygg_s9cNqCfW';
+
+async function supaFetch(path, method='GET', body=null) {
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : '',
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  var res = await fetch(SUPABASE_URL + path, opts);
+  if (!res.ok) return null;
+  return res.json().catch(function() { return null; });
+}
+
+async function supaFetchCount(table) {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?select=id', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      }
+    });
+    const range = res.headers.get('content-range');
+    if (range) return parseInt(range.split('/')[1]) || 0;
+    return 0;
+  } catch(e) { return 0; }
+}
+
 async function loadUserBalance(tgUsername) {
   try {
     const data = await supaFetch('/rest/v1/users?telegram_id=eq.' + userTelegramId + '&select=balance,username');
