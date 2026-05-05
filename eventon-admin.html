@@ -79,12 +79,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .auth-btn { width: 100%; background: #5b8af0; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .auth-btn:hover { background: #4a79df; }
 .auth-error { color: #ff4d6a; font-size: 13px; margin-top: 10px; min-height: 18px; }
-.auth-hint { font-size: 11px; color: #4b5563; margin-top: 16px; line-height: 1.6; }
 </style>
 </head>
 <body>
 
-<!-- Auth overlay: hidden after successful password check -->
 <div id="auth-overlay">
   <div class="auth-box">
     <div class="auth-logo">Event<span>on</span></div>
@@ -92,11 +90,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <input class="auth-input" type="password" id="auth-pwd" placeholder="Пароль" autocomplete="current-password">
     <button class="auth-btn" onclick="doLogin()">Войти</button>
     <div class="auth-error" id="auth-error"></div>
-    <div class="auth-hint">
-      Для смены пароля выполните в консоли браузера:<br>
-      <code>sha256('новый_пароль')</code><br>
-      и вставьте хеш в константу ADMIN_HASH в этом файле.
-    </div>
   </div>
 </div>
 
@@ -156,22 +149,13 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 <script>
 // ── AUTH ────────────────────────────────────────────────────────────────
-// SHA-256 hash of the admin password.
-// To change: run sha256('your_new_password') in the browser console
-// and replace this constant. Default password: eventon-admin
-const ADMIN_HASH = 'c2dba8d1e98b6d6e6d21bb2b2f11c6e428c25cb0b3a3c2e6c0f1b3e6c9d1a2e4';
+// Пароль для входа в админку. Меняйте здесь.
+const ADMIN_PASSWORD = 'eventon-admin';
 
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function doLogin() {
+function doLogin() {
   const pwd = document.getElementById('auth-pwd').value;
-  if (!pwd) return;
-  const hash = await sha256(pwd);
-  if (hash === ADMIN_HASH) {
-    sessionStorage.setItem('admin_auth', hash);
+  if (pwd === ADMIN_PASSWORD) {
+    sessionStorage.setItem('admin_auth', '1');
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('app').style.display = '';
     init();
@@ -186,20 +170,12 @@ document.getElementById('auth-pwd').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
-// Check if already authenticated in this session
-(async () => {
-  const stored = sessionStorage.getItem('admin_auth');
-  if (stored && stored === ADMIN_HASH) {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    init();
-  }
-})();
+if (sessionStorage.getItem('admin_auth') === '1') {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('app').style.display = '';
+}
 
-// Helper for console: sha256('your_password') to generate a hash
-window.sha256 = sha256;
-
-// ── SUPABASE ──────────────────────────────────────────────────────────
+// ── SUPABASE ────────────────────────────────────────────────────────────
 const SB_URL = 'https://puwyrjejaaqfhcjwgrog.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1d3lyamVqYWFxZmhjandncm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNjEyOTAsImV4cCI6MjA4ODczNzI5MH0.KYg21yyOfaW73Nu7qmqt_5TLTl0SW6TljxTJHAMoNiA';
 
@@ -222,7 +198,6 @@ async function sb(path, method = 'GET', body = null) {
   } catch(e) { console.error('Fetch error:', e); return null; }
 }
 
-// ── SECURITY: HTML escape all user-supplied data before inserting into DOM ──
 function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -341,15 +316,12 @@ async function resolveMarket(marketId, winningSide) {
     `"${title}"\n\nПобедители получат выплаты автоматически.`,
     async () => {
       showToast('⏳ Обрабатываем...', '');
-
       try {
-        // 1. Close market
         await sb(`/rest/v1/markets?id=eq.${marketId}`, 'PATCH', {
           active: false,
           yes_prob: winningSide === 'yes' ? 95 : 5
         });
 
-        // 2. Load only bets for this market using DB-level filter
         let allTx = [];
         let offset = 0;
         while (true) {
@@ -360,14 +332,11 @@ async function resolveMarket(marketId, winningSide) {
           offset += 1000;
         }
 
-        console.log('Bets for market', marketId, ':', allTx.length);
-
         if (!allTx.length) {
           showToast('✅ Рынок закрыт. Ставок не было.', 'success');
           await refresh(); return;
         }
 
-        // 3. Split into pools
         let yesPool = 0, noPool = 0;
         const yesBets = [], noBets = [];
         allTx.forEach(tx => {
@@ -388,14 +357,12 @@ async function resolveMarket(marketId, winningSide) {
           await refresh(); return;
         }
 
-        // 4. Payouts via atomic RPC
         let count = 0;
         for (const tx of winnerBets) {
           const share = winnerPool > 0 ? tx.amt / winnerPool : 0;
           const payout = Math.round(payoutPool * share * 100) / 100;
           if (payout <= 0) continue;
 
-          // Atomic balance increment
           await sb('/rest/v1/rpc/add_balance', 'POST', {
             p_telegram_id: tx.telegram_id,
             p_amount: payout,
@@ -409,7 +376,6 @@ async function resolveMarket(marketId, winningSide) {
             status: 'completed'
           });
           count++;
-          console.log('Paid', payout, 'to', tx.telegram_id);
         }
 
         showToast(`✅ ${count} победителей получили выплаты! Пул: ${totalPool.toFixed(2)} TON`, 'success');
@@ -459,6 +425,8 @@ function showToast(msg, type = '') {
   clearTimeout(t._t);
   t._t = setTimeout(() => t.classList.remove('show'), 4000);
 }
+
+if (sessionStorage.getItem('admin_auth') === '1') init();
 </script>
 </body>
 </html>
